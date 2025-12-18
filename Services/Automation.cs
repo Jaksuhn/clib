@@ -177,7 +177,7 @@ public abstract class AutoTask {
     }
 }
 
-internal interface IAutoTaskHooks {
+public interface IAutoTaskHooks {
     void SetupHooks();
     void EnableHooks();
     void DisableHooks();
