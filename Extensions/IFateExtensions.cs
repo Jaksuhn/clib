@@ -1,4 +1,5 @@
 ﻿using Dalamud.Game.ClientState.Fates;
+using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 
 namespace clib.Extensions;
 
@@ -7,4 +8,6 @@ public static class IFateExtensions {
         public ItemWrapper? EventItem => fate.GameData.Value.EventItem.RowId is not 0 ? fate.GameData.Value.EventItem : null;
         public int EventItemInventoryCount => fate.EventItem?.GetCount() ?? 0;
     }
+
+    public static unsafe FateContext* Struct(this IFate fate) => (FateContext*)fate.Address;
 }
