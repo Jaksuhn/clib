@@ -44,6 +44,9 @@ public static class IDataManagerExtensions {
     public static bool TryFindRow<T>(this IDataManager data, Predicate<T> predicate, ClientLanguage? language, out T row) where T : struct, IExcelRow<T>
         => GetSheet<T>(data, language ?? Svc.ClientState.ClientLanguage).TryGetFirst(predicate, out row);
 
+    public static T? FindRow<T>(this IDataManager data, Func<T, bool> predicate) where T : struct, IExcelRow<T>
+         => GetSheet<T>(data).FirstOrNull(row => predicate(row));
+
     public static IReadOnlyList<T> FindRows<T>(this IDataManager data, Predicate<T> predicate, ClientLanguage? language = null) where T : struct, IExcelRow<T>
         => [.. GetSheet<T>(data, language ?? Svc.ClientState.ClientLanguage).Where(row => predicate(row))];
 
