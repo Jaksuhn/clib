@@ -78,7 +78,7 @@ public class ItemWrapper {
         var logMessageId = InventoryManager.CanEquip(ItemId,
         PlayerState.Instance()->Race,
         PlayerState.Instance()->Sex,
-        (ushort)PlayerState.Instance()->GetClassJobLevel(uint.MaxValue, false), // -1 when this gets changed to int
+        PlayerState.Instance()->GetClassJobLevel(-1, false),
         PlayerState.Instance()->CurrentClassJobId,
         PlayerState.Instance()->GrandCompany,
         PvPProfile.Instance()->GetPvPRank(),
