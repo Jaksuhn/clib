@@ -1,8 +1,5 @@
 ﻿using Dalamud.Game.NativeWrapper;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace clib.Extensions;
 
