@@ -2,6 +2,7 @@
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs;
 
 namespace clib.Internal;
 
@@ -24,4 +25,10 @@ internal class Svc {
         pi.Create<Svc>();
         Navmesh = new NavmeshIPC();
     }
+}
+
+internal static class LogExtensions {
+    public static void Print(this IPluginLog log, string message) => log.Debug($"[{nameof(clib)}] {message}");
+    public static void PrintWarning(this IPluginLog log, string message) => log.Warning($"[{nameof(clib)}] {message}");
+    public static void PrintError(this IPluginLog log, string message) => log.Error($"[{nameof(clib)}] {message}");
 }

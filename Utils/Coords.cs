@@ -50,7 +50,6 @@ public static class Coords {
     public static bool IsTeleportingFaster(Vector3 dest) {
         if (FindClosestAetheryte(Svc.ClientState.TerritoryType, dest, false) is not { } aetheryteId) return false;
         var aetherytePos = AetherytePosition(aetheryteId);
-        Svc.Log.Info($"DistFromAetheryte: {(dest - aetherytePos).Length()}, DistFromPlayer: {(dest - Svc.Objects.LocalPlayer?.Position ?? Vector3.Zero).Length()}");
         return (dest - aetherytePos).Length() + 300 < (dest - Svc.Objects.LocalPlayer?.Position ?? Vector3.Zero).Length(); // 300 is roughly the distance you can travel in the time it takes to teleport and remount
     }
 

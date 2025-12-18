@@ -22,11 +22,11 @@ public static class AddonLifecycleExtensions {
     private static void Logger(AddonEvent type, AddonArgs args) {
         switch (args) {
             case AddonReceiveEventArgs receiveEventArgs:
-                Svc.Log.Debug($"[{args.AddonName}] {(AtkEventType)receiveEventArgs.AtkEventType}: {receiveEventArgs.EventParam}");
+                Svc.Log.Print($"[{args.AddonName}] {(AtkEventType)receiveEventArgs.AtkEventType}: {receiveEventArgs.EventParam}");
                 break;
 
             default:
-                Svc.Log.Debug($"{args.AddonName} called {type}");
+                Svc.Log.Print($"{args.AddonName} called {type}");
                 break;
         }
     }

@@ -11,7 +11,7 @@ public static class VectorExtensions {
     public static Vector3 OnMesh(this Vector3 position) {
         var floor = Svc.Navmesh.NearestPoint(position);
         if (floor is null)
-            Svc.Log.Warning($"Failed to find point on mesh near {position}");
+            Svc.Log.PrintWarning($"Failed to find point on mesh near {position}");
         return floor ?? position;
     }
 

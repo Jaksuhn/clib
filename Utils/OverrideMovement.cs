@@ -52,13 +52,13 @@ public unsafe class OverrideMovement : IDisposable {
 
     public OverrideMovement() {
         Svc.Hook.InitializeFromAttributes(this);
-        Svc.Log.Information($"RMIWalk address: 0x{_rmiWalkHook.Address:X}");
-        Svc.Log.Information($"RMIFly address: 0x{_rmiFlyHook.Address:X}");
+        Svc.Log.Print($"RMIWalk address: 0x{_rmiWalkHook.Address:X}");
+        Svc.Log.Print($"RMIFly address: 0x{_rmiFlyHook.Address:X}");
 
         var rmiWalkIsInputEnabled1Addr = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 84 C0 75 10 38 43 3C");
         var rmiWalkIsInputEnabled2Addr = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 84 C0 75 03 88 47 3F");
-        Svc.Log.Information($"RMIWalkIsInputEnabled1 address: 0x{rmiWalkIsInputEnabled1Addr:X}");
-        Svc.Log.Information($"RMIWalkIsInputEnabled2 address: 0x{rmiWalkIsInputEnabled2Addr:X}");
+        Svc.Log.Print($"RMIWalkIsInputEnabled1 address: 0x{rmiWalkIsInputEnabled1Addr:X}");
+        Svc.Log.Print($"RMIWalkIsInputEnabled2 address: 0x{rmiWalkIsInputEnabled2Addr:X}");
         _rmiWalkIsInputEnabled1 = Marshal.GetDelegateForFunctionPointer<RMIWalkIsInputEnabled>(rmiWalkIsInputEnabled1Addr);
         _rmiWalkIsInputEnabled2 = Marshal.GetDelegateForFunctionPointer<RMIWalkIsInputEnabled>(rmiWalkIsInputEnabled2Addr);
 
@@ -117,7 +117,7 @@ public unsafe class OverrideMovement : IDisposable {
         var newMode = Svc.GameConfig.UiControl.TryGetUInt("MoveMode", out var mode) && mode == 1;
         if (_legacyMode != newMode) {
             _legacyMode = newMode;
-            Svc.Log.Debug($"Legacy mode is now {(_legacyMode ? "enabled" : "disabled")}");
+            Svc.Log.Print($"Legacy mode is now {(_legacyMode ? "enabled" : "disabled")}");
         }
     }
 }
