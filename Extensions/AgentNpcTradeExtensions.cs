@@ -8,6 +8,9 @@ namespace clib.Extensions;
 
 public static unsafe class AgentNpcTradeExtensions {
     extension(AgentNpcTrade) {
+        public static bool IsTurnInRequestInProgress(uint itemId)
+            => AgentNpcTrade.Instance()->IsAgentActive() && UIState.Instance()->NpcTrade.Requests.Count == 1 && UIState.Instance()->NpcTrade.Requests.Items[0].ItemId == itemId;
+
         public static void TurnInRequests() {
             var agent = AgentNpcTrade.Instance();
             if (!agent->IsAgentActive()) {

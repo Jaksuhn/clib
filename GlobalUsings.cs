@@ -1,4 +1,5 @@
-﻿global using clib.Extensions;
+﻿global using clib.Enums;
+global using clib.Extensions;
 global using clib.Internal;
 global using clib.Internal.Extensions;
 global using clib.Utils;

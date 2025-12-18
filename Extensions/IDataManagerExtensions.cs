@@ -1,13 +1,51 @@
 ﻿using Dalamud.Game;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
+using Lumina.Data.Files;
+using Lumina.Data.Parsing.Layer;
 using Lumina.Excel;
+using Lumina.Excel.Sheets;
 using Lumina.Extensions;
 
 namespace clib.Extensions;
 
 // https://github.com/Haselnussbomber/HaselCommon/blob/main/HaselCommon/Services/ExcelService.cs
 public static class IDataManagerExtensions {
+    public record class NPCInfo(ulong Id, Vector3 Location, uint ShopId);
+
+    public static NPCInfo? GetNPCInfo(this IDataManager data, uint enpcId, uint territoryId, uint itemId = 0) {
+        var scene = GetRow<TerritoryType>(data, territoryId)!.Value.Bg.ToString();
+        var filenameStart = scene.LastIndexOf('/') + 1;
+        var planeventLayerGroup = "bg/" + scene[0..filenameStart] + "planevent.lgb";
+        Svc.Log.Print($"Territory {territoryId} -> {planeventLayerGroup}");
+        var lvb = Svc.Data.GetFile<LgbFile>(planeventLayerGroup);
+        if (lvb != null) {
+            foreach (var layer in lvb.Layers) {
+                foreach (var instance in layer.InstanceObjects) {
+                    if (instance.AssetType != LayerEntryType.EventNPC)
+                        continue;
+                    var baseId = ((LayerCommon.ENPCInstanceObject)instance.Object).ParentData.ParentData.BaseId;
+                    if (baseId == enpcId) {
+                        var npcId = (1ul << 32) | instance.InstanceId;
+                        Vector3 npcLocation = new(instance.Transform.Translation.X, instance.Transform.Translation.Y, instance.Transform.Translation.Z);
+                        Svc.Log.Print($"Found npc {baseId} {instance.InstanceId} '{GetRow<ENpcResident>(data, baseId)?.Singular}' at {npcLocation}");
+                        if (itemId != 0) {
+                            var vendor = FindVendorItem(data, baseId, itemId);
+                            if (vendor.itemIndex >= 0) {
+                                Svc.Log.Print($"Found shop #{vendor.shopId} and item index #{vendor.itemIndex}");
+                                return new NPCInfo(npcId, npcLocation, vendor.shopId);
+                            }
+                        }
+                        return new NPCInfo(npcId, npcLocation, 0);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+
     public static RowRef<T> GetRef<T>(this IDataManager data, uint rowId, ClientLanguage? language = null) where T : struct, IExcelRow<T>
         => new(data.Excel, rowId, (language ?? Svc.ClientState.ClientLanguage).ToLumina());
 
@@ -115,4 +153,24 @@ public static class IDataManagerExtensions {
 
     public static bool TryGetRawRow(this IDataManager data, string sheetName, uint rowId, ClientLanguage? language, out RawRow rawRow)
         => TryGetRow(data, sheetName, rowId, language, out rawRow);
+
+    private static (uint shopId, int itemIndex) FindVendorItem(IDataManager data, uint enpcId, uint itemId) {
+        var enpcBase = data.GetRow<ENpcBase>(enpcId);
+        if (enpcBase == null)
+            return (0, -1);
+
+        foreach (var handler in enpcBase.Value.ENpcData) {
+            if ((handler.RowId >> 16) != (uint)EventHandlerContent.Shop)
+                continue;
+
+            if (data.TryGetSubrows<GilShopItem>(handler.RowId, out var items)) {
+                for (var i = 0; i < items.Count; ++i) {
+                    var shopItem = items[i];
+                    if (shopItem.Item.RowId == itemId)
+                        return (handler.RowId, i);
+                }
+            }
+        }
+        return (0, -1);
+    }
 }

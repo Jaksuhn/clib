@@ -1,4 +1,5 @@
-﻿using clib.Services;
+﻿using clib.Extensions;
+using clib.Services;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -7,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.Network;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace clib.TaskSystem;
@@ -161,7 +163,7 @@ public abstract class TaskBase : AutoTask {
 
     protected async Task Mount() {
         using var scope = BeginScope("Mount");
-        if (Player.Mounted) return;
+        if (Player is null || Player.Mounted) return;
         Status = "Mounting";
         await WaitUntil(() => ActionManager.UseAction(ActionType.GeneralAction, 24), "MountCast");
         await WaitUntil(() => Player.Mounted, "Mounting");
@@ -170,15 +172,14 @@ public abstract class TaskBase : AutoTask {
 
     protected async Task Dismount() {
         using var scope = BeginScope("Dismount");
-        if (!Player.Mounted) return;
+        if (Player is null || !Player.Mounted) return;
 
         if (Player.InFlight) {
-            //GameMain.ExecuteLocationCommand(LocationCommand.Dismount, );
-            ActionManager.UseAction(ActionType.GeneralAction, 23); // TODO use ELC
+            ActionManager.UseAction(ActionType.GeneralAction, 23); // or GameMain.ExecuteLocationCommand((int)LocationCommandFlag.Dismount, Player.Position, (int)Player.PackedRotation);
             await WaitWhile(() => Player.InFlight, "WaitingToLand");
         }
         if (Player.Mounted && !Player.InFlight) {
-            ActionManager.UseAction(ActionType.GeneralAction, 23);
+            ActionManager.UseAction(ActionType.GeneralAction, 23); // or GameMain.ExecuteCommand(CommandFlag.Dismount.Value, 1);
             await WaitWhile(() => Player.Mounted, "WaitingToDismount");
         }
         ErrorIf(Player.Mounted, "Failed to dismount");

@@ -1,9 +1,12 @@
 ﻿using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace clib.Extensions;
 
 public static class IConditionExtensions {
+    public static unsafe bool HasPermission(this ICondition condition, IEnumerable<uint> ids) => ids.All(id => Conditions.Instance()->HasPermission(id));
+
     public static bool IsBoundByDuty(this ICondition condition)
         => condition.Any(ConditionFlag.BoundByDuty, ConditionFlag.BoundByDuty56, ConditionFlag.BoundByDuty95);
 
