@@ -3,7 +3,6 @@
 		<RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
         <Use_DalamudPackager>false</Use_DalamudPackager>
 		<LangVersion>preview</LangVersion>
-		<TargetFramework>net10.0-windows</TargetFramework>
     </PropertyGroup>
 
 	<Target Name="CheckDalamudSdkVersion" BeforeTargets="Build">

@@ -74,14 +74,18 @@ public class ItemWrapper {
         => ignoreHq ? InventoryManager.Instance()->GetInventoryItemCount(BaseItemId) + InventoryManager.Instance()->GetInventoryItemCount(ItemId, true)
         : InventoryManager.Instance()->GetInventoryItemCount(ItemId);
 
-    public unsafe bool CanEquip() => InventoryManager.CanEquip(ItemId,
+    public unsafe bool CanEquip(out RowRef<LogMessage> errorMsg) {
+        var logMessageId = InventoryManager.CanEquip(ItemId,
         PlayerState.Instance()->Race,
         PlayerState.Instance()->Sex,
         (ushort)PlayerState.Instance()->GetClassJobLevel(uint.MaxValue, false), // -1 when this gets changed to int
         PlayerState.Instance()->CurrentClassJobId,
         PlayerState.Instance()->GrandCompany,
         PvPProfile.Instance()->GetPvPRank(),
-        ExcelRow) is 0;
+        ExcelRow);
+        errorMsg = Svc.Data.GetRef<LogMessage>((uint)logMessageId);
+        return logMessageId is 0;
+    }
 
     /// <summary>
     /// Be sure to check <see cref="CanEquip"/> first. This only handles the move operation
