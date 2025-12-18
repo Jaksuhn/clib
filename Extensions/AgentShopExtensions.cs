@@ -1,4 +1,6 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game.Event;
+﻿using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
@@ -6,6 +8,39 @@ namespace clib.Extensions;
 
 public static unsafe class AgentShopExtensions {
     extension(AgentShop) {
+        public static bool OpenShop(GameObject* vendor, uint shopId) {
+            Svc.Log.Print($"Interacting with {(ulong)vendor->GetGameObjectId():X}");
+            TargetSystem.Instance()->InteractWithObject(vendor);
+            var selector = EventHandlerSelector.Instance();
+            if (selector->Target == null)
+                return true; // assume interaction was successful without selector
+
+            if (selector->Target != vendor) {
+                Svc.Log.PrintError($"Unexpected selector target {(ulong)selector->Target->GetGameObjectId():X} when trying to interact with {(ulong)vendor->GetGameObjectId():X}");
+                return false;
+            }
+
+            for (var i = 0; i < selector->OptionsCount; ++i) {
+                if (selector->Options[i].Handler->Info.EventId.Id == shopId) {
+                    Svc.Log.Print($"Selecting selector option {i} for shop {shopId:X}");
+                    EventFramework.Instance()->InteractWithHandlerFromSelector(i);
+                    return true;
+                }
+            }
+
+            Svc.Log.PrintError($"Failed to find shop {shopId:X} in selector for {(ulong)vendor->GetGameObjectId():X}");
+            return false;
+        }
+
+        public static bool OpenShop(ulong vendorInstanceId, uint shopId) {
+            var vendor = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(vendorInstanceId);
+            if (vendor == null) {
+                Svc.Log.PrintError($"Failed to find vendor {vendorInstanceId:X}");
+                return false;
+            }
+            return OpenShop(vendor, shopId);
+        }
+
         public static bool IsShopOpen(uint shopId = 0) {
             var agent = AgentShop.Instance();
             if (agent == null || !agent->IsAgentActive() || agent->EventReceiver == null || !agent->IsAddonReady())
