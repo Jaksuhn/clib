@@ -1,0 +1,24 @@
+﻿using Dalamud.Game.ClientState.Objects.Types;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Common.Component.BGCollision;
+
+namespace clib.Extensions;
+
+public static class IGameObjectExtensions {
+    public static float DistanceTo(this IGameObject? obj, Vector3 position) => obj is not null ? Vector3.Distance(obj.Position, position) : 0f;
+    public static bool WithinRange(this IGameObject? obj, Vector3 position, float range) => obj is not null && Vector3.Distance(obj.Position, position) < range;
+    public static unsafe bool IsTargetingPlayer(this IGameObject obj) => obj.TargetObjectId == GameObjectManager.Instance()->Objects.IndexSorted[0].Value->GetGameObjectId().ObjectId;
+    public static unsafe EventHandlerInfo? EventInfo(this IGameObject obj) {
+        if (obj == null) return null;
+        var cs = (GameObject*)obj.Address;
+        return cs == null || cs->EventHandler == null ? null : cs->EventHandler->Info;
+    }
+    public static unsafe bool IsInInteractRange(this IGameObject obj) => EventFramework.Instance()->CheckInteractRange((GameObject*)Control.GetLocalPlayer(), (GameObject*)obj.Address, 1, false);
+    public static unsafe bool IsInLineOfSight(this IGameObject obj, Vector3 point) {
+        var adjustedOrigin = obj.Position.AddY(2);
+        var adjustedTarget = point.AddY(2);
+        return !BGCollisionModule.RaycastMaterialFilter(adjustedOrigin, Vector3.Normalize(adjustedTarget - adjustedOrigin), out _, Vector3.Distance(adjustedOrigin, adjustedTarget));
+    }
+}
