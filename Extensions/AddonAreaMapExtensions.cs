@@ -1,7 +1,7 @@
-﻿using FFXIVClientStructs.FFXIV.Client.UI;
+﻿using Dalamud.Game.Text.SeStringHandling.Payloads;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,7 +11,7 @@ namespace clib.Extensions;
 public static unsafe partial class AddonAreaMapExtensions {
     public static Vector2? GetMouseWorldCoords(ref this AddonAreaMap areaMap) {
         var mapCoords = areaMap.GetMouseMapCoords();
-        return mapCoords is null ? null : MapToWorld(mapCoords.Value, Svc.Data.GetRef<Map>(AgentMap.Instance()->SelectedMapId));
+        return mapCoords is null ? null : MapToWorld(mapCoords.Value, Svc.Data.GetRef<Map>(AgentMap.Instance()->SelectedMapId).Value);
     }
 
     public static Vector2? GetMouseMapCoords(ref this AddonAreaMap areaMap) {
@@ -49,19 +49,9 @@ public static unsafe partial class AddonAreaMapExtensions {
         return result.ToString();
     }
 
-    public static float MapToWorld(float value, uint scale, int offset)
-    => -offset * (scale / 100.0f) + 50.0f * (value - 1) * (scale / 100.0f);
-
-    public static Vector2 MapToWorld(Vector2 coordinates, RowRef<Map> map) {
-        var scalar = map.ValueNullable?.SizeFactor ?? 100f / 100.0f;
-
-        var xWorldCoord = MapToWorld(coordinates.X, map.ValueNullable?.SizeFactor ?? 100, map.ValueNullable?.OffsetX ?? 0);
-        var yWorldCoord = MapToWorld(coordinates.Y, map.ValueNullable?.SizeFactor ?? 100, map.ValueNullable?.OffsetY ?? 0);
-
-        var objectPosition = new Vector2(xWorldCoord, yWorldCoord);
-        var center = new Vector2(1024.0f, 1024.0f);
-
-        return objectPosition / scalar - center / scalar;
+    private static Vector2 MapToWorld(Vector2 pos, Map zone) {
+        MapLinkPayload maplink = new(zone.TerritoryType.Value.RowId, zone.RowId, pos.X, pos.Y);
+        return new(maplink.RawX / 1000f, maplink.RawY / 1000f);
     }
 
     [GeneratedRegex(@"X:\s*(.*?)\s+Y:\s*(.*)", RegexOptions.IgnoreCase, "en-US")]

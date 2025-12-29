@@ -12,6 +12,12 @@ public static class IGameObjectExtensions {
     public static unsafe Character* Character(this IGameObject obj) => (Character*)obj.Address;
 
     public static float DistanceTo(this IGameObject? obj, Vector3 position) => obj is not null ? Vector3.Distance(obj.Position, position) : 0f;
+    public static float FlatDistanceTo(this IGameObject? obj, Vector3 position) {
+        if (obj is null) return 0f;
+        var dx = obj.Position.X - position.X;
+        var dz = obj.Position.Z - position.Z;
+        return MathF.Sqrt(dx * dx + dz * dz);
+    }
     public static bool WithinRange(this IGameObject? obj, Vector3 position, float range) => obj is not null && Vector3.Distance(obj.Position, position) < range;
     public static unsafe bool IsTargetingPlayer(this IGameObject obj) => obj.TargetObjectId == GameObjectManager.Instance()->Objects.IndexSorted[0].Value->GetGameObjectId().ObjectId;
     public static unsafe EventHandlerInfo? EventInfo(this IGameObject obj) {
