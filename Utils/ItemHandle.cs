@@ -112,7 +112,7 @@ public class ItemHandle {
         PvPProfile.Instance()->GetPvPRank(),
         ExcelRow);
         errorMsg = Svc.Data.GetRef<LogMessage>((uint)logMessageId);
-        return logMessageId is 0;
+        return logMessageId is 0 || logMessageId is 703 && GameData.Value.ClassJobCategory.Value.HasJobAtLevel(GameData.Value.LevelEquip);
     }
 
     /// <summary>
