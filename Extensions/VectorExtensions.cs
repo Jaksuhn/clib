@@ -15,6 +15,13 @@ public static class VectorExtensions {
         return floor ?? position;
     }
 
+    public static Vector3 OnMesh(this Vector2 position) {
+        var floor = Svc.Navmesh.PointOnFloor(new Vector3(position.X, 1024, position.Y));
+        if (floor is null)
+            Svc.Log.PrintWarning($"Failed to find point on floor from {position}");
+        return floor ?? new Vector3(position.X, Svc.Objects.LocalPlayer?.Position.Y ?? 0, position.Y);
+    }
+
     public static Vector3 RotatePoint(this Vector3 p, float cx, float cy, float angle) {
         if (angle == 0f) return p;
         var s = (float)Math.Sin(angle);
