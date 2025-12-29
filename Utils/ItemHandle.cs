@@ -118,7 +118,7 @@ public class ItemHandle {
     /// <summary>
     /// Be sure to check <see cref="CanEquip"/> first. This only handles the move operation
     /// </summary>
-    /// <param name="equipRingR">Rings will be equipped in the L slot unless specified</param>
+    /// TODO: ring slots
     public unsafe void Equip() {
         if (ItemLocation is null) return;
         Svc.Log.Debug($"Equipping item [{this}] from {ItemLocation} to {new ItemLocation(InventoryType.EquippedItems, (ushort)GameData.Value.EquipSlot)}");
