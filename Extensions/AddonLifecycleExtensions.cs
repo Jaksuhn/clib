@@ -7,10 +7,12 @@ namespace clib.Extensions;
 
 // https://github.com/MidoriKami/VanillaPlus/blob/5f5be8496f3562ec4ffc8f9425a68467d3853070/VanillaPlus/Extensions/AddonLifecycleExtensions.cs
 public static class AddonLifecycleExtensions {
-    public static void LogAddon(this IAddonLifecycle addonLifecycle, string addonName, AddonEvent? events = null) => LogAddon(addonLifecycle, addonName, events?.Flags);
+    public static void LogAddonNonTicks(this IAddonLifecycle addonLifecycle, string addonName)
+        => LogAddon(addonLifecycle, addonName, [.. AddonEvent.Values.Where(e => e is not (AddonEvent.PreDraw or AddonEvent.PostDraw or AddonEvent.PreUpdate or AddonEvent.PostUpdate))]);
+
     public static void LogAddon(this IAddonLifecycle addonLifecycle, string addonName, AddonEvent[]? events = null) {
         if (events is not null) {
-            foreach (var evt in AddonEvent.Values.Intersect(events))
+            foreach (var evt in events)
                 addonLifecycle.RegisterListener(evt, addonName, Logger);
         }
         else {
