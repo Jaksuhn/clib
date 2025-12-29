@@ -7,6 +7,15 @@ namespace clib.Extensions;
 public static class IConditionExtensions {
     public static unsafe bool HasPermission(this ICondition condition, IEnumerable<uint> ids) => ids.All(id => Conditions.Instance()->HasPermission(id));
 
+    public static bool CanQueue(this ICondition condition)
+        => HasPermission(condition, [119, 120]);
+
+    public static bool CanMoveItems(this ICondition condition)
+         => HasPermission(condition, [134]); // checked when calling MoveItemSlot (136/137?)
+
+    public static bool CanLowerItemQuality(this ICondition condition)
+        => HasPermission(condition, [135]); // checked when lowering item quality
+
     public static bool IsBoundByDuty(this ICondition condition)
         => condition.Any(ConditionFlag.BoundByDuty, ConditionFlag.BoundByDuty56, ConditionFlag.BoundByDuty95);
 

@@ -1,6 +1,7 @@
 ﻿using Dalamud.Game;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using Lumina.Data.Files;
 using Lumina.Data.Parsing.Layer;
@@ -45,6 +46,11 @@ public static class IDataManagerExtensions {
         return null;
     }
 
+    public static List<Recipe> GetCraftableRecipes(this IDataManager data)
+        => [.. GetSheet<Recipe>(data).Where(r => r.ItemResult.RowId != 0).Where(r => r.IngredientsWithAmounts.All(x => x.item.GetCount() >= x.amount))];
+
+    public static unsafe List<Recipe> GetUncompletedRecipes(this IDataManager data)
+        => [.. GetSheet<Recipe>(data).Where(r => r.ItemResult.RowId != 0 && r.SecretRecipeBook.RowId == 0 && r.RecipeNotebookList.RowId == 0 && !QuestManager.IsRecipeComplete(r.RowId))];
 
     public static RowRef<T> GetRef<T>(this IDataManager data, uint rowId, ClientLanguage? language = null) where T : struct, IExcelRow<T>
         => new(data.Excel, rowId, (language ?? Svc.ClientState.ClientLanguage).ToLumina());

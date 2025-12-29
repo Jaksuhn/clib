@@ -18,7 +18,28 @@ public static class ItemExtensions {
             { Wrists: 1 } => InventoryType.ArmoryWrist,
             { FingerL: 1 } => InventoryType.ArmoryRings,
             { FingerR: 1 } => InventoryType.ArmoryRings,
+            { SoulCrystal: 1 } => InventoryType.ArmorySoulCrystal,
             _ => throw new ArgumentOutOfRangeException(nameof(item), item, null)
         };
+
+        public uint EquipSlot => item.EquipSlotCategory.Value switch {
+            { MainHand: 1 } => 0,
+            { OffHand: 1 } => 1,
+            { Head: 1 } => 2,
+            { Body: 1 } => 3,
+            { Gloves: 1 } => 4,
+            { Waist: 1 } => 5,
+            { Legs: 1 } => 6,
+            { Feet: 1 } => 7,
+            { Ears: 1 } => 8,
+            { Neck: 1 } => 9,
+            { Wrists: 1 } => 10,
+            { FingerL: 1 } => 11,
+            { FingerR: 1 } => 12,
+            { SoulCrystal: 1 } => 13,
+            _ => throw new ArgumentOutOfRangeException(nameof(item), item, null)
+        };
+
+        public ItemHandle Handle => (ItemHandle)item;
     }
 }
