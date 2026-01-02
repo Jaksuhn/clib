@@ -51,10 +51,11 @@ public class ItemHandle {
     public unsafe ExcelRow* ExcelRow { get; }
 
     [MemberNotNullWhen(true, nameof(ItemLocation))]
-    public unsafe bool TrySetItemLocation() {
+    public unsafe bool TrySetItemLocation(InventoryItem.ItemFlags requiredFlag = InventoryItem.ItemFlags.None) {
         if (ItemLocation is not null) return true;
         foreach (var inv in InventoryType.FullInventory) {
-            if (InventoryManager.Instance()->GetItems(inv).FirstOrDefault(i => i.Value != null && i.Value->ItemId == ItemId) is { } item && item.Value != null) {
+            if (InventoryManager.Instance()->GetItems(inv).FirstOrDefault(i => i.Value != null && i.Value->ItemId == ItemId && (requiredFlag is InventoryItem.ItemFlags.None || i.Value->Flags.HasFlag(requiredFlag)))
+                is { } item && item.Value != null) {
                 ItemLocation = new ItemLocation(inv, item.Value->GetSlot());
                 return true;
             }
@@ -62,7 +63,7 @@ public class ItemHandle {
         return false;
     }
 
-    public RowRef<Item> GameData => Svc.Data.GetRef<Item>(ItemId);
+    public RowRef<Item> GameData => Svc.Data.GetRef<Item>(ItemUtil.GetBaseId(ItemId).ItemId);
     public bool IsValid => ItemId is not 0;
 
     public uint BaseItemId => ItemUtil.GetBaseId(ItemId).ItemId;
@@ -97,7 +98,7 @@ public class ItemHandle {
         if (RaptureAtkModule.Instance()->AgentUpdateFlag.HasFlag(RaptureAtkModule.AgentUpdateFlags.InventoryUpdate)) return false;
         if (!Svc.Condition.CanLowerItemQuality()) return false;
         var item = InventoryManager.Instance()->GetInventorySlot(ItemLocation.Container, ItemLocation.Slot);
-        if (!item->IsHighQuality()) return false;
+        if (!item->IsHighQuality()) return true;
         AgentInventoryContext.Instance()->LowerItemQuality(item, ItemLocation.Container, ItemLocation.Slot, 0);
         return true;
     }
