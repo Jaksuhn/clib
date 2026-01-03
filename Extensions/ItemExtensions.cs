@@ -22,6 +22,9 @@ public static class ItemExtensions {
             _ => throw new ArgumentOutOfRangeException(nameof(item), item, null)
         };
 
+        /// <summary>
+        /// The slot index for <see cref="InventoryType.EquippedItems"/>
+        /// </summary>
         public uint EquipSlot => item.EquipSlotCategory.Value switch {
             { MainHand: 1 } => 0,
             { OffHand: 1 } => 1,
