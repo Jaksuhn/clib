@@ -54,7 +54,7 @@ public class ItemHandle {
     public unsafe bool TrySetItemLocation(InventoryItem.ItemFlags requiredFlag = InventoryItem.ItemFlags.None) {
         if (ItemLocation is not null) return true;
         foreach (var inv in InventoryType.FullInventory) {
-            if (InventoryManager.Instance()->GetItems(inv).FirstOrDefault(i => i.Value != null && i.Value->ItemId == ItemId && (requiredFlag is InventoryItem.ItemFlags.None || i.Value->Flags.HasFlag(requiredFlag)))
+            if (InventoryManager.Instance()->GetInventoryItems(inv).FirstOrDefault(i => i.Value != null && i.Value->ItemId == ItemId && (requiredFlag is InventoryItem.ItemFlags.None || i.Value->Flags.HasFlag(requiredFlag)))
                 is { } item && item.Value != null) {
                 ItemLocation = new ItemLocation(inv, item.Value->GetSlot());
                 return true;
@@ -74,7 +74,7 @@ public class ItemHandle {
     public bool IsEventItem => ItemUtil.IsEventItem(ItemId);
 
     public bool HasItem => GetCount() > 0;
-    public unsafe bool IsEquipped => InventoryManager.Instance()->GetItems(InventoryType.EquippedItems).Any(i => i.Value != null && i.Value->ItemId == ItemId);
+    public unsafe bool IsEquipped => InventoryManager.Instance()->GetInventoryItems(InventoryType.EquippedItems).Any(i => i.Value != null && i.Value->ItemId == ItemId);
 
     public unsafe bool InGearset {
         get {
@@ -135,6 +135,25 @@ public class ItemHandle {
         //    Svc.Log.Debug($"Equipping item [{this}] from {ItemLocation}/{ItemLocation.GetODR()} to {(InventoryType.EquippedItems, GameData.Value.EquipSlot)}");
         //    RaptureAtkModule.Instance()->HandleItemMove(dropOut, eis, 4);
         //}
+    }
+
+    public unsafe void MoveTo(InventoryType[] containers) {
+        foreach (var cont in containers) {
+            if (InventoryManager.Instance()->GetFirstEmptySlot(cont) is { } slot) {
+                MoveTo(cont, (ushort)slot);
+            }
+        }
+    }
+
+    private unsafe void MoveTo(InventoryType cont) {
+        if (InventoryManager.Instance()->GetFirstEmptySlot(cont) is { } slot) {
+            MoveTo(cont, (ushort)slot);
+        }
+    }
+
+    private unsafe void MoveTo(InventoryType cont, ushort slot) {
+        if (ItemLocation is null) return;
+        InventoryManager.Instance()->MoveItemSlot(ItemLocation.Container, ItemLocation.Slot, cont, slot, true);
     }
 
     public override string ToString() => IsValid ? $"[#{ItemId}] {GameData.Value.Name}" : $"{nameof(ItemHandle)}#Invalid";

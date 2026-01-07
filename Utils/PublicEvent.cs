@@ -21,21 +21,48 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     public FateType FateType { get; } = fateType;
     public uint Id { get; } = id;
 
-    public static implicit operator PublicEvent(FateContext* fate) => new((nint)fate, FateType.Normal, fate->FateId);
-    public static implicit operator PublicEvent(Pointer<FateContext> fate) => new((nint)fate.Value, FateType.Normal, fate.Value->FateId);
-    public static implicit operator PublicEvent(DynamicEvent* dynamicEvent) => new((nint)dynamicEvent, FateType.DynamicEvent, dynamicEvent->DynamicEventId);
+    public static implicit operator PublicEvent(FateContext* fate) {
+        ArgumentNullException.ThrowIfNull(fate);
+        return new((nint)fate, FateType.Normal, fate->FateId);
+    }
+    public static implicit operator PublicEvent(Pointer<FateContext> fate) {
+        ArgumentNullException.ThrowIfNull(fate.Value);
+        return new((nint)fate.Value, FateType.Normal, fate.Value->FateId);
+    }
+    public static implicit operator PublicEvent(DynamicEvent* dynamicEvent) {
+        ArgumentNullException.ThrowIfNull(dynamicEvent);
+        return new((nint)dynamicEvent, FateType.DynamicEvent, dynamicEvent->DynamicEventId);
+    }
     public static implicit operator PublicEvent(DynamicEvent dynamicEvent) => new((nint)(&dynamicEvent), FateType.DynamicEvent, dynamicEvent.DynamicEventId);
-    public static implicit operator PublicEvent(WKSMechaEvent* mechaEvent) => new((nint)mechaEvent, FateType.MechaEvent, mechaEvent->WKSMechaEventDataRowId);
+    public static implicit operator PublicEvent(WKSMechaEvent* mechaEvent) {
+        ArgumentNullException.ThrowIfNull(mechaEvent);
+        return new((nint)mechaEvent, FateType.MechaEvent, mechaEvent->WKSMechaEventDataRowId);
+    }
     public static implicit operator PublicEvent(WKSMechaEvent mechaEvent) => new((nint)(&mechaEvent), FateType.MechaEvent, mechaEvent.WKSMechaEventDataRowId);
 
-    public static PublicEvent? CurrentFate => (TerritoryIntendedUse)Svc.Data.GetRef<Sheets.TerritoryType>(Svc.ClientState.TerritoryType).Value.TerritoryIntendedUse.RowId switch {
-        TerritoryIntendedUse.Overworld => FateManager.Instance()->CurrentFate != null ? FateManager.Instance()->CurrentFate : null,
-        TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => DynamicEventContainer.GetInstance()->GetCurrentEvent() != null ? DynamicEventContainer.GetInstance()->GetCurrentEvent() : null,
-        TerritoryIntendedUse.CosmicExploration => WKSManager.Instance()->MechaEventModule->CurrentEvent != null ? WKSManager.Instance()->MechaEventModule->CurrentEvent : null,
+    public static PublicEvent? CurrentFate => Svc.Objects.LocalPlayer.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
+        TerritoryIntendedUse.Overworld => GetCurrentFateOverworld(),
+        TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetCurrentDynamicEvent(),
+        TerritoryIntendedUse.CosmicExploration => GetCurrentMechaEvent(),
         _ => throw new NotImplementedException(),
     };
 
-    public static unsafe IEnumerable<PublicEvent> Fates => (TerritoryIntendedUse)Svc.Data.GetRef<Sheets.TerritoryType>(Svc.ClientState.TerritoryType).Value.TerritoryIntendedUse.RowId switch {
+    private static PublicEvent? GetCurrentFateOverworld() {
+        var fate = FateManager.Instance()->CurrentFate;
+        return fate != null ? (PublicEvent)fate : null;
+    }
+
+    private static PublicEvent? GetCurrentDynamicEvent() {
+        var dynamicEvent = DynamicEventContainer.GetInstance()->GetCurrentEvent();
+        return dynamicEvent != null ? (PublicEvent)dynamicEvent : null;
+    }
+
+    private static PublicEvent? GetCurrentMechaEvent() {
+        var mechaEvent = WKSManager.Instance()->MechaEventModule->CurrentEvent;
+        return mechaEvent != null ? (PublicEvent)mechaEvent : null;
+    }
+
+    public static IEnumerable<PublicEvent> Fates => Svc.Objects.LocalPlayer.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
         TerritoryIntendedUse.Overworld => FateManager.Instance()->Fates.Select(evt => (PublicEvent)evt),
         TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => DynamicEventContainer.GetInstance()->Events.ToArray().Select(evt => (PublicEvent)evt),
         TerritoryIntendedUse.CosmicExploration => WKSManager.Instance()->MechaEventModule->Events.ToArray().Select(evt => (PublicEvent)evt),

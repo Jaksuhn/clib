@@ -17,8 +17,8 @@ public unsafe class OverrideCamera : IDisposable {
     }
 
     public bool IgnoreUserInput; // if true - override even if user tries to change camera orientation, otherwise override only if user does nothing
-    internal Angle DesiredAzimuth;
-    internal Angle DesiredAltitude;
+    internal Angle DesiredAzimuth = default;
+    internal Angle DesiredAltitude = default;
     internal Angle SpeedH = 360.Degrees(); // per second
     internal Angle SpeedV = 360.Degrees(); // per second
 

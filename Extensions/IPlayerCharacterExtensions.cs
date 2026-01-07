@@ -3,6 +3,8 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using Lumina.Excel;
+using Lumina.Excel.Sheets;
 
 namespace clib.Extensions;
 
@@ -21,6 +23,8 @@ public static unsafe class IPlayerCharacterExtensions {
             ActionManager.Instance()->AnimationLock > 0 ||
             Svc.Condition[ConditionFlag.InCombat] ||
             !GameMain.IsTerritoryLoaded;
+
+        public RowRef<TerritoryType> Territory => Svc.Data.GetRef<TerritoryType>(Svc.ClientState.TerritoryType);
 
         public bool Mounted => Svc.Condition[ConditionFlag.Mounted];
         public bool InFlight => Svc.Condition[ConditionFlag.InFlight];
