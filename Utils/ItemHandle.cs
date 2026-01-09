@@ -34,10 +34,10 @@ public class ItemHandle {
         }
     }
 
-    public static unsafe implicit operator ItemHandle(InventoryItem* item) => new(item->ItemId);
-    public static unsafe implicit operator ItemHandle(Pointer<InventoryItem> item) => new(new ItemLocation(item.Value->Container, (ushort)item.Value->Slot));
-    public static implicit operator ItemHandle(InventoryItem item) => new(new ItemLocation(item.Container, (ushort)item.Slot));
-    public static implicit operator ItemHandle(GameInventoryItem item) => new(new ItemLocation((InventoryType)item.ContainerType, (ushort)item.InventorySlot));
+    public static unsafe implicit operator ItemHandle(InventoryItem* item) => new((item->Container, (ushort)item->Slot));
+    public static unsafe implicit operator ItemHandle(Pointer<InventoryItem> item) => new((item.Value->Container, (ushort)item.Value->Slot));
+    public static implicit operator ItemHandle(InventoryItem item) => new((item.Container, (ushort)item.Slot));
+    public static implicit operator ItemHandle(GameInventoryItem item) => new(((InventoryType)item.ContainerType, (ushort)item.InventorySlot));
     public static implicit operator ItemHandle(Item item) => new(item.RowId);
     public static implicit operator ItemHandle(RowRef<Item> rowRef) => new(rowRef.RowId);
     public static implicit operator ItemHandle(EventItem eventItem) => new(eventItem.RowId);
