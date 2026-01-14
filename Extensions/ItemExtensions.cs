@@ -43,6 +43,8 @@ public static class ItemExtensions {
             _ => throw new ArgumentOutOfRangeException(nameof(item), item, null)
         };
 
+        public bool IsMoochable => item.ItemUICategory.RowId is 47 && Svc.Data.FindRow<FishingBaitParameter>(r => r.Item.RowId == item.RowId) is { };
+
         public ItemHandle Handle => (ItemHandle)item;
     }
 }

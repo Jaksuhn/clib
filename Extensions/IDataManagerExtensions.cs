@@ -52,6 +52,12 @@ public static class IDataManagerExtensions {
     public static unsafe List<Recipe> GetUncompletedRecipes(this IDataManager data)
         => [.. GetSheet<Recipe>(data).Where(r => r.ItemResult.RowId != 0 && r.SecretRecipeBook.RowId == 0 && r.RecipeNotebookList.RowId == 0 && !QuestManager.IsRecipeComplete(r.RowId))];
 
+    public static List<Item> GetMoochableFish(this IDataManager data)
+        // 33 for tackle, 47 for fish
+        => FindRows<FishingBaitParameter>(data, x => x is { Item.RowId: not 0, Item.Value.ItemUICategory.RowId: 47 }).Select(f => f.Item.Value).ToList() ?? [];
+
+    // Regular sheets
+
     public static RowRef<T> GetRef<T>(this IDataManager data, uint rowId, ClientLanguage? language = null) where T : struct, IExcelRow<T>
         => new(data.Excel, rowId, (language ?? Svc.ClientState.ClientLanguage).ToLumina());
 
