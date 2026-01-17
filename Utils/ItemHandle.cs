@@ -113,7 +113,7 @@ public class ItemHandle {
         PvPProfile.Instance()->GetPvPRank(),
         ExcelRow);
         errorMsg = Svc.Data.GetRef<LogMessage>((uint)logMessageId);
-        return logMessageId is 0 || logMessageId is 703 && GameData.Value.ClassJobCategory.Value.HasJobsAtLevel(GameData.Value.LevelEquip);
+        return logMessageId is 0 || logMessageId is 703 && GameData.Value.ClassJobCategory.Value.HasJobsAtLevel(GameData.Value.LevelEquip); // 703 = Cannot equip as current class. It shows erronously so we check ourselves
     }
 
     /// <summary>

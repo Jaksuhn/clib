@@ -8,6 +8,7 @@ namespace clib.Extensions;
 public static class GameInventoryItemExtensions {
     extension(GameInventoryItem item) {
         public RowRef<Item> GameData => Svc.Data.GetRef<Item>(item.BaseItemId);
+        public ItemHandle Handle => (ItemHandle)item;
     }
 
     public static unsafe InventoryItem* Struct(this GameInventoryItem item) => (InventoryItem*)item.Address;

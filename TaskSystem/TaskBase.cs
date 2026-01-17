@@ -57,13 +57,17 @@ public abstract class TaskBase : AutoTask {
     private async Task NavmeshReady() {
         using var scope = BeginScope("WaitingForNavmesh");
         Status = "Waiting for Navmesh";
-        await WaitWhile(() => Svc.Navmesh.BuildProgress >= 0, "BuildMesh");
+        await WaitUntil(() => Svc.Navmesh.IsReady || Svc.Navmesh.BuildProgress >= 0, "WaitForBuildStart");
+        if (Svc.Navmesh.BuildProgress >= 0) {
+            await WaitWhile(() => Svc.Navmesh.BuildProgress >= 0, "BuildMesh");
+        }
         ErrorIf(!Svc.Navmesh.IsReady, "Failed to build navmesh for the zone");
     }
 
     protected async Task MoveTo(FlagMapMarker flag, MovementConfig config, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
         using var scope = BeginScope("MoveToFlag");
-        await TeleportTo(flag.TerritoryId, flag.ToVector3());
+        await TeleportTo(flag.TerritoryId, flag);
+        await NavmeshReady();
         await MoveTo(flag.ToVector3(), config, stopCondition, onStopReached);
     }
 
@@ -120,6 +124,9 @@ public abstract class TaskBase : AutoTask {
         using var scope = BeginScope("MoveDirectlyWithTolerance");
         await MoveToDirectly(dest, () => Player.WithinRange(dest, tolerance));
     }
+
+    protected async Task TeleportTo(uint territoryId, FlagMapMarker flag, bool allowSameZoneTeleport = false)
+        => await TeleportTo(territoryId, new Vector3(flag.XFloat, 0, flag.YFloat), allowSameZoneTeleport);
 
     protected async Task TeleportTo(uint territoryId, Vector3 destination, bool allowSameZoneTeleport = false) {
         using var scope = BeginScope("Teleport");
