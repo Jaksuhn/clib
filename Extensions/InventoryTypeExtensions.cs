@@ -52,6 +52,7 @@ public static class InventoryTypeExtensions {
 
         public static InventoryType[] Armoury => [.. get_Weapons(), .. get_LeftSideArmory(), .. get_RightSideArmory(), InventoryType.ArmorySoulCrystal, InventoryType.EquippedItems];
         public static InventoryType[] FullInventory => [.. get_Bags(), .. get_Armoury()];
+        public static InventoryType[] AllPlayer => [.. get_Bags(), .. get_Armoury(), .. get_SaddleBag()];
 
         public unsafe int InventoryStartIndex => inventoryType switch {
             InventoryType.Inventory2 => inventoryType.GetSorter()->ItemsPerPage,

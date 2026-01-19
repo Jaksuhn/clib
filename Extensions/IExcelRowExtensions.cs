@@ -3,7 +3,13 @@
 namespace clib.Extensions;
 
 public static class IExcelRowExtensions {
-    extension<T>(IExcelRow<T> sheet) where T : struct, IExcelRow<T> {
+    extension<T>(IExcelRow<T> row) where T : struct, IExcelRow<T> {
+        public T WithLanguage(Dalamud.Game.ClientLanguage language)
+            => Svc.Data.GetExcelSheet<T>(language: language).GetRow(row.RowId);
+
+        public T WithLanguage(Lumina.Data.Language language)
+            => Svc.Data.GetExcelSheet<T>(language: (Dalamud.Game.ClientLanguage)language).GetRow(row.RowId);
+
         public static RowRef<T> GetRowRef(uint id, Lumina.Data.Language? language = null)
             => new(Svc.Data.Excel, id, language);
 

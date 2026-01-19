@@ -32,4 +32,8 @@
 		</PropertyGroup>
 		<Warning Condition="'$(_LatestVer)' != '' AND '$(_SdkVer)' != '' AND '$(_LatestVer)' != '$(_SdkVer)'" Text="Outdated $(_SdkName): Current version is $(_SdkVer), latest version is $(_LatestVer)." />
 	</Target>
+
+	<ItemGroup>
+	  <PackageReference Include="LuminaSupplemental.Excel" Version="4.1.1" />
+	</ItemGroup>
 </Project>

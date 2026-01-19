@@ -8,6 +8,8 @@ using Lumina.Data.Parsing.Layer;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Lumina.Extensions;
+using LuminaSupplemental.Excel.Model;
+using LuminaSupplemental.Excel.Services;
 
 namespace clib.Extensions;
 
@@ -55,6 +57,9 @@ public static class IDataManagerExtensions {
     public static List<Item> GetMoochableFish(this IDataManager data)
         // 33 for tackle, 47 for fish
         => FindRows<FishingBaitParameter>(data, x => x is { Item.RowId: not 0, Item.Value.ItemUICategory.RowId: 47 }).Select(f => f.Item.Value).ToList() ?? [];
+
+    public static List<T> GetSupplemental<T>(this IDataManager data, string resourceName) where T : ICsv, new() => CsvLoader.LoadResource<T>(
+        resourceName: resourceName, includesHeaders: false, out _, out _, data.GameData, data.GameData.Options.DefaultExcelLanguage);
 
     // Regular sheets
 
