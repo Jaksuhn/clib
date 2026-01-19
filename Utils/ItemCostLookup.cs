@@ -1,4 +1,4 @@
-﻿using Lumina.Excel;
+using Lumina.Excel;
 using Lumina.Excel.Sheets;
 
 namespace clib.Utils;
@@ -96,15 +96,23 @@ public class ItemCostLookup {
     public Dictionary<uint, List<(uint ItemId, uint Amount)>> GetAllItemCosts() => _itemCostsMap;
 
     private void BuildAllItems() {
-        foreach (var npcBase in _eNpcBases) {
-            BuildVendorInfo(npcBase);
-        }
+        var processedShops = new HashSet<uint>();
+
+        foreach (var npcBase in _eNpcBases)
+            BuildVendorInfo(npcBase, processedShops);
 
         AddAchievementItems();
+
+        // Process SpecialShops that weren't processed via NPCs
+        foreach (var shop in _specialShops) {
+            if (shop.RowId == 0 || processedShops.Contains(shop.RowId))
+                continue;
+            AddSpecialItem(shop);
+        }
     }
 
-    private void BuildVendorInfo(ENpcBase npcBase) {
-        if (FixNpcVendorInfo(npcBase)) {
+    private void BuildVendorInfo(ENpcBase npcBase, HashSet<uint> processedShops) {
+        if (FixNpcVendorInfo(npcBase, processedShops)) {
             return;
         }
 
@@ -116,6 +124,7 @@ public class ItemCostLookup {
                     continue;
                 }
 
+                processedShops.Add(specialShopCustom.Value.RowId);
                 AddSpecialItem(specialShopCustom.Value);
             }
 
@@ -135,7 +144,7 @@ public class ItemCostLookup {
 
             if (MatchEventHandlerType(npcData, EventHandlerType.InclusionShop)) {
                 var inclusionShop = _inclusionShops.GetRow(npcData);
-                AddInclusionShop(inclusionShop);
+                AddInclusionShop(inclusionShop, processedShops);
                 continue;
             }
 
@@ -147,13 +156,13 @@ public class ItemCostLookup {
 
             if (MatchEventHandlerType(npcData, EventHandlerType.PreHandler)) {
                 var preHandler = _preHandlers.GetRow(npcData);
-                AddItemsInPrehandler(preHandler);
+                AddItemsInPrehandler(preHandler, processedShops);
                 continue;
             }
 
             if (MatchEventHandlerType(npcData, EventHandlerType.TopicSelect)) {
                 var topicSelect = _topicSelects.GetRow(npcData);
-                AddItemsInTopicSelect(topicSelect);
+                AddItemsInTopicSelect(topicSelect, processedShops);
                 continue;
             }
 
@@ -165,6 +174,7 @@ public class ItemCostLookup {
 
             if (MatchEventHandlerType(npcData, EventHandlerType.SpecialShop)) {
                 var specialShop = _specialShops.GetRow(npcData);
+                processedShops.Add(specialShop.RowId);
                 AddSpecialItem(specialShop);
                 continue;
             }
@@ -182,7 +192,7 @@ public class ItemCostLookup {
             for (var i = 0; i < entry.ReceiveItems.Count; i++) {
                 var item = entry.ReceiveItems[i].Item.Value;
                 var costs = (from e in entry.ItemCosts
-                             where e.ItemCost.IsValid && e.ItemCost.Value.Name != string.Empty
+                             where e.ItemCost.IsValid && e.ItemCost.Value.RowId != 0 && e.ItemCost.Value.Name != string.Empty
                              select (ConvertCurrency(e.ItemCost.Value.RowId, specialShop).RowId, e.CurrencyCost)).ToList();
 
                 AddItemCost(item.RowId, costs);
@@ -230,7 +240,7 @@ public class ItemCostLookup {
         }
     }
 
-    private void AddInclusionShop(InclusionShop inclusionShop) {
+    private void AddInclusionShop(InclusionShop inclusionShop, HashSet<uint> processedShops) {
         foreach (var category in inclusionShop.Category) {
             if (category.Value.RowId == 0) {
                 continue;
@@ -244,6 +254,7 @@ public class ItemCostLookup {
                     }
 
                     var specialShop = series.Value.SpecialShop.Value;
+                    processedShops.Add(specialShop.RowId);
                     AddSpecialItem(specialShop);
                 }
                 catch (Exception) {
@@ -266,7 +277,7 @@ public class ItemCostLookup {
         }
     }
 
-    private void AddItemsInPrehandler(PreHandler preHandler) {
+    private void AddItemsInPrehandler(PreHandler preHandler, HashSet<uint> processedShops) {
         var target = preHandler.Target.RowId;
         if (target == 0) {
             return;
@@ -280,18 +291,19 @@ public class ItemCostLookup {
 
         if (MatchEventHandlerType(target, EventHandlerType.SpecialShop)) {
             var specialShop = _specialShops.GetRow(target);
+            processedShops.Add(specialShop.RowId);
             AddSpecialItem(specialShop);
             return;
         }
 
         if (MatchEventHandlerType(target, EventHandlerType.InclusionShop)) {
             var inclusionShop = _inclusionShops.GetRow(target);
-            AddInclusionShop(inclusionShop);
+            AddInclusionShop(inclusionShop, processedShops);
             return;
         }
     }
 
-    private void AddItemsInTopicSelect(TopicSelect topicSelect) {
+    private void AddItemsInTopicSelect(TopicSelect topicSelect, HashSet<uint> processedShops) {
         foreach (var data in topicSelect.Shop.Select(x => x.RowId)) {
             if (data == 0) {
                 continue;
@@ -299,6 +311,7 @@ public class ItemCostLookup {
 
             if (MatchEventHandlerType(data, EventHandlerType.SpecialShop)) {
                 var specialShop = _specialShops.GetRow(data);
+                processedShops.Add(specialShop.RowId);
                 AddSpecialItem(specialShop);
                 continue;
             }
@@ -311,7 +324,7 @@ public class ItemCostLookup {
 
             if (MatchEventHandlerType(data, EventHandlerType.PreHandler)) {
                 var preHandler = _preHandlers.GetRow(data);
-                AddItemsInPrehandler(preHandler);
+                AddItemsInPrehandler(preHandler, processedShops);
                 continue;
             }
         }
@@ -431,31 +444,43 @@ public class ItemCostLookup {
         }
     }
 
-    private bool FixNpcVendorInfo(ENpcBase npcBase) {
+    private bool FixNpcVendorInfo(ENpcBase npcBase, HashSet<uint> processedShops) {
         switch (npcBase.RowId) {
             case 1043463: // horrendous hoarder
                 AddSpecialItem(_specialShops.GetRow(1770601));
+                processedShops.Add(1770601);
                 AddSpecialItem(_specialShops.GetRow(1770659));
+                processedShops.Add(1770659);
                 AddSpecialItem(_specialShops.GetRow(1770660));
+                processedShops.Add(1770660);
                 AddSpecialItem(_specialShops.GetRow(1770602));
+                processedShops.Add(1770602);
                 AddSpecialItem(_specialShops.GetRow(1770603));
+                processedShops.Add(1770603);
                 AddSpecialItem(_specialShops.GetRow(1770723));
+                processedShops.Add(1770723);
                 AddSpecialItem(_specialShops.GetRow(1770734));
+                processedShops.Add(1770734);
                 return true;
 
             case 1018655: // disreputable priest
                 AddSpecialItem(_specialShops.GetRow(1769743));
+                processedShops.Add(1769743);
                 AddSpecialItem(_specialShops.GetRow(1769744));
+                processedShops.Add(1769744);
                 AddSpecialItem(_specialShops.GetRow(1770537));
+                processedShops.Add(1770537);
                 return true;
 
             case 1016289: // syndony
                 AddSpecialItem(_specialShops.GetRow(1769635));
+                processedShops.Add(1769635);
                 return true;
 
             case 1025047: // gerolt but in eureka
                 for (uint i = 1769820; i <= 1769834; i++) {
                     AddSpecialItem(_specialShops.GetRow(i));
+                    processedShops.Add(i);
                 }
 
                 return true;
@@ -466,15 +491,19 @@ public class ItemCostLookup {
 
             case 1027123: // eureka expedition artisan
                 AddSpecialItem(_specialShops.GetRow(1769934));
+                processedShops.Add(1769934);
                 AddSpecialItem(_specialShops.GetRow(1769935));
+                processedShops.Add(1769935);
                 return true;
 
             case 1027124: // eureka expedition scholar
                 AddSpecialItem(_specialShops.GetRow(1769937));
+                processedShops.Add(1769937);
                 return true;
 
             case 1033921: // faux
                 AddSpecialItem(_specialShops.GetRow(1770282));
+                processedShops.Add(1770282);
                 return true;
 
             case 1035012: // Emeny
@@ -605,6 +634,7 @@ public class ItemCostLookup {
                 }
 
                 AddSpecialItem(_specialShops.GetRow(value));
+                processedShops.Add(value);
                 return true;
         }
     }
