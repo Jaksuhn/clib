@@ -352,19 +352,14 @@ public class ItemCostLookup {
                     }
 
                     var costs = new List<(uint ItemId, uint Amount)>();
-                    // For collectables, the cost is the exchange item itself
-                    // Using the exchange item ID as the currency item ID
-                    if (rewardItem.RewardLow > 0) {
+                    if (rewardItem.RewardLow > 0)
                         costs.Add(new(exchangeItem.Item.RowId, rewardItem.RewardLow));
-                    }
 
-                    if (rewardItem.RewardMid > 0) {
+                    if (rewardItem.RewardMid > 0)
                         costs.Add(new(exchangeItem.Item.RowId, rewardItem.RewardMid));
-                    }
 
-                    if (rewardItem.RewardHigh > 0) {
+                    if (rewardItem.RewardHigh > 0)
                         costs.Add(new(exchangeItem.Item.RowId, rewardItem.RewardHigh));
-                    }
 
                     AddItemCost(rewardItem.Item.Value.RowId, costs);
                 }

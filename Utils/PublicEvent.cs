@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
@@ -42,9 +42,16 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
 
     public static PublicEvent? CurrentFate => Svc.Objects.LocalPlayer.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
         TerritoryIntendedUse.Overworld => GetCurrentFateOverworld(),
-        TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetCurrentDynamicEvent(),
-        TerritoryIntendedUse.CosmicExploration => GetCurrentMechaEvent(),
+        TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetCurrentForayEvent(),
+        TerritoryIntendedUse.CosmicExploration => GetCurrentCosmicEvent(),
         _ => throw new NotImplementedException(),
+    };
+
+    public static IEnumerable<PublicEvent> Fates => Svc.Objects.LocalPlayer.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
+        TerritoryIntendedUse.Overworld => FateManager.Instance()->Fates.Select(evt => (PublicEvent)evt),
+        TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetForayFates(),
+        TerritoryIntendedUse.CosmicExploration => GetCosmicFates(),
+        _ => [],
     };
 
     private static PublicEvent? GetCurrentFateOverworld() {
@@ -52,22 +59,39 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         return fate != null ? (PublicEvent)fate : null;
     }
 
-    private static PublicEvent? GetCurrentDynamicEvent() {
-        var dynamicEvent = DynamicEventContainer.GetInstance()->GetCurrentEvent();
-        return dynamicEvent != null ? (PublicEvent)dynamicEvent : null;
+    private static PublicEvent? GetCurrentForayEvent() {
+        var container = DynamicEventContainer.GetInstance();
+        if (container != null) {
+            var dynamicEvent = container->GetCurrentEvent();
+            if (dynamicEvent != null && dynamicEvent->State != DynamicEventState.Inactive)
+                return (PublicEvent)dynamicEvent;
+        }
+        return GetCurrentFateOverworld();
     }
 
-    private static PublicEvent? GetCurrentMechaEvent() {
+    private static PublicEvent? GetCurrentCosmicEvent() {
         var mechaEvent = WKSManager.Instance()->MechaEventModule->CurrentEvent;
-        return mechaEvent != null ? (PublicEvent)mechaEvent : null;
+        if (mechaEvent != null && mechaEvent->Flags.HasFlag(WKSMechaEventFlag.IsEventActive))
+            return (PublicEvent)mechaEvent;
+        return GetCurrentFateOverworld();
     }
 
-    public static IEnumerable<PublicEvent> Fates => Svc.Objects.LocalPlayer.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
-        TerritoryIntendedUse.Overworld => FateManager.Instance()->Fates.Select(evt => (PublicEvent)evt),
-        TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => DynamicEventContainer.GetInstance()->Events.ToArray().Select(evt => (PublicEvent)evt),
-        TerritoryIntendedUse.CosmicExploration => WKSManager.Instance()->MechaEventModule->Events.ToArray().Select(evt => (PublicEvent)evt),
-        _ => [],
-    };
+    private static IEnumerable<PublicEvent> GetForayFates() {
+        var overworldFates = FateManager.Instance()->Fates.Select(evt => (PublicEvent)evt);
+
+        var container = DynamicEventContainer.GetInstance();
+        if (container == null)
+            return overworldFates;
+
+        var dynamicEvents = container->Events.ToArray().Where(evt => evt.State != DynamicEventState.Inactive).Select(evt => (PublicEvent)evt);
+        return overworldFates.Concat(dynamicEvents);
+    }
+
+    private static IEnumerable<PublicEvent> GetCosmicFates() {
+        var overworldFates = FateManager.Instance()->Fates.Select(evt => (PublicEvent)evt);
+        var mechaEvents = WKSManager.Instance()->MechaEventModule->Events.ToArray().Where(evt => evt.Flags.HasFlag(WKSMechaEventFlag.IsEventActive)).Select(evt => (PublicEvent)evt);
+        return overworldFates.Concat(mechaEvents);
+    }
 
     private FateContext* GetFate() {
         var fate = (FateContext*)Address;
@@ -81,7 +105,11 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         if (dynamicEvent != null && dynamicEvent->DynamicEventId == Id)
             return *dynamicEvent;
 
-        foreach (var evt in DynamicEventContainer.GetInstance()->Events)
+        var container = DynamicEventContainer.GetInstance();
+        if (container == null)
+            throw new InvalidOperationException("DynamicEventContainer instance is null");
+
+        foreach (var evt in container->Events)
             if (evt.DynamicEventId == Id)
                 return evt;
         throw new InvalidOperationException($"DynamicEvent with ID {Id} not found");
@@ -192,7 +220,7 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     public FateState State => GetValue(
         fate => fate.As<FateContext>()->State,
         dynamicEvent => ToFateState(dynamicEvent.State),
-        _ => FateState.Running, // ???
+        mechaEvent => ToFateState(mechaEvent.Flags),
         (FateState)0
     );
 
@@ -200,7 +228,12 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         DynamicEventState.Register => FateState.Preparing,
         DynamicEventState.Warmup => FateState.Preparing,
         DynamicEventState.Battle => FateState.Running,
-        _ => FateState.Ending,
+        _ => FateState.Ended,
+    };
+
+    private FateState ToFateState(WKSMechaEventFlag flag) => flag switch {
+        WKSMechaEventFlag.IsEventActive => FateState.Running,
+        _ => FateState.Ended,
     };
 }
 
