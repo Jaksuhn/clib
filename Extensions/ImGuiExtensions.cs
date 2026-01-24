@@ -33,9 +33,10 @@ public static class ImGuiExtensions {
                     : [];
             }
 
-            var maxWidth = Math.Max(300f, itemSearchResults.Select(item => ImGui.CalcTextSize($"{item.Name} (ID: {item.RowId})").X).DefaultIfEmpty(200f).Max() + 30);
+            var maxWidth = Math.Max(300f, itemSearchResults.Select(item => ImGui.CalcTextSize($"[#{item.RowId}] {item.Name}").X).DefaultIfEmpty(200f).Max() + 30);
             ImGui.SetNextItemWidth(maxWidth);
-            ImGui.SetKeyboardFocusHere();
+            if (!ImGui.IsAnyItemActive()) // required for preventing stealing focus from selectables
+                ImGui.SetKeyboardFocusHere();
             ImGui.InputText("##itemSearch", ref searchResultsQuery, 100);
             if (!string.IsNullOrEmpty(searchResultsQuery)) {
                 using var child = ImRaii.Child("itemSearchResultsChild", new Vector2(maxWidth + 20, 220), true);
@@ -47,7 +48,7 @@ public static class ImGuiExtensions {
                         ImGui.SameLine();
                     }
 
-                    if (!ImGui.Selectable($" {item.Name} (ID: {item.RowId})")) continue;
+                    if (!ImGui.Selectable($" #[{item.RowId}] {item.Name}")) continue;
                     result = item;
                     ImGui.CloseCurrentPopup();
                     return true;
@@ -65,10 +66,7 @@ public static class ImGuiExtensions {
             using var popup = ImRaii.Popup("custom_item_search_add");
             if (!popup) return false;
 
-            var maxWidth = Math.Max(300f, customItems.Select(item =>
-                ImGui.CalcTextSize($"{item.DisplayName} (ID: {item.ItemId})").X
-            ).DefaultIfEmpty(200f).Max() + 30);
-
+            var maxWidth = Math.Max(300f, customItems.Select(item => ImGui.CalcTextSize($"[#{item.ItemId}] {item.DisplayName}").X).DefaultIfEmpty(200f).Max() + 30);
             using var child = ImRaii.Child("customItemSearchResultsChild", new Vector2(maxWidth + 20, 220), true);
             if (!child) return false;
 
@@ -86,6 +84,16 @@ public static class ImGuiExtensions {
                 }
             }
             return false;
+        }
+
+        public static void TooltipOnHover(string text) {
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip(text);
+        }
+
+        public static void TooltipOnHover(bool condition, string text) {
+            if (condition && ImGui.IsItemHovered())
+                ImGui.SetTooltip(text);
         }
     }
 }
