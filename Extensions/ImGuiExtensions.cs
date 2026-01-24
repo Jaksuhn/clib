@@ -48,7 +48,7 @@ public static class ImGuiExtensions {
                         ImGui.SameLine();
                     }
 
-                    if (!ImGui.Selectable($" #[{item.RowId}] {item.Name}")) continue;
+                    if (!ImGui.Selectable($" [#{item.RowId}] {item.Name}")) continue;
                     result = item;
                     ImGui.CloseCurrentPopup();
                     return true;
@@ -77,7 +77,7 @@ public static class ImGuiExtensions {
                         ImGui.SameLine();
                     }
 
-                    if (!ImGui.Selectable($" {displayName} (ID: {itemId})")) continue;
+                    if (!ImGui.Selectable($" [#{itemId}] {displayName}")) continue;
                     result = item;
                     ImGui.CloseCurrentPopup();
                     return true;
