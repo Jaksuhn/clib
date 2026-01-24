@@ -2,11 +2,22 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.System.String;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using Lumina.Excel.Sheets;
 
 namespace clib.Extensions;
 
-public static class ChatExtensions {
+public static class IChatGuiExtensions {
+    public static unsafe void ExecuteCommand(this IChatGui _, string command) {
+        if (!command.StartsWith('/'))
+            return;
+
+        using var cmd = new Utf8String(command);
+        RaptureShellModule.Instance()->ExecuteCommandInner(&cmd, UIModule.Instance());
+    }
+
     public static void PrintMessage(this IChatGui chat, string message)
         => chat.Print(new XivChatEntry {
             Type = XivChatType.Echo,

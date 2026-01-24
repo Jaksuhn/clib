@@ -19,6 +19,7 @@ internal class Svc {
     [PluginService] public static IPlayerState PlayerState { get; private set; } = null!;
     [PluginService] public static IPluginLog Log { get; private set; } = null!;
     [PluginService] public static ISigScanner SigScanner { get; private set; } = null!;
+    [PluginService] public static ITextureProvider Texture { get; private set; } = null!;
 
     public static NavmeshIPC Navmesh { get; private set; } = null!;
     public static void Init(IDalamudPluginInterface pi) {
