@@ -95,5 +95,9 @@ public static class ImGuiExtensions {
             if (condition && ImGui.IsItemHovered())
                 ImGui.SetTooltip(text);
         }
+
+        public static bool IsItemClickedWithModifier(ImGuiMouseButton button, ImGuiModFlags modifier) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods.HasFlag(modifier);
+
+        public static bool IsItemClickedNoModifiers(ImGuiMouseButton button) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods == ImGuiModFlags.None;
     }
 }
