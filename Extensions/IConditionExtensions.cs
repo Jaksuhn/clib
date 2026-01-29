@@ -5,6 +5,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 namespace clib.Extensions;
 
 public static class IConditionExtensions {
+    public static unsafe bool HasPermission(this ICondition condition, uint id) => Conditions.Instance()->HasPermission(id);
     public static unsafe bool HasPermission(this ICondition condition, IEnumerable<uint> ids) => ids.All(id => Conditions.Instance()->HasPermission(id));
 
     public static bool CanQueue(this ICondition condition)

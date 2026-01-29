@@ -238,6 +238,13 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         (FateState)0
     );
 
+    public FateRule Rule => GetValue(
+        fate => (FateRule)fate.As<FateContext>()->Rule,
+        _ => FateRule.Normal,
+        _ => FateRule.Normal,
+        FateRule.None
+    );
+
     private FateState ToFateState(DynamicEventState state) => state switch {
         DynamicEventState.Register => FateState.Preparing,
         DynamicEventState.Warmup => FateState.Preparing,
@@ -249,5 +256,17 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         WKSMechaEventFlag.IsEventActive => FateState.Running,
         _ => FateState.Ended,
     };
+
+    public enum FateRule : byte {
+        None = 0,
+        Normal = 1, // trash fates or boss fates
+        Collect = 2, // pick up EventObjects or get them from killing mobs
+        Escort = 3, // guide some npc to the finish line
+        Defend = 4, // defend objectives like crates from being destroyed
+        EventFate = 5, // used for seasonal event fates, like Little Ladies Day, Hatching Tide
+        Chase = 6, // that one special fate in The Peaks
+        ConcertedWorks = 7, // rebuilding the firmament fates
+        Fete = 8, // firmament fates
+    }
 }
 

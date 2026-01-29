@@ -1,4 +1,6 @@
-﻿namespace clib.Enums;
+﻿using FFXIVClientStructs.FFXIV.Client.Game;
+
+namespace clib.Enums;
 
 /// <summary>
 /// For <see cref="CommandFlag.RepairAllItems"/> and <seealso cref="CommandFlag.RepairAllItemsNPC"/>
@@ -10,4 +12,10 @@ public enum RepairCategory : int {
     EarsNeck = 3,
     WristRing = 4,
     Inventory = 5,
+}
+
+public static class RepairCategoryExtensions {
+    extension(RepairCategory category) {
+        public unsafe bool Repair(bool isNpc = false) => RepairManager.Instance()->RepairAllItems(isNpc, (int)category, 0);
+    }
 }
