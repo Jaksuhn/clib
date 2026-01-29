@@ -1,4 +1,3 @@
-﻿using clib.Extensions;
 using clib.Services;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -8,7 +7,6 @@ using FFXIVClientStructs.FFXIV.Client.Network;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace clib.TaskSystem;
@@ -138,7 +136,7 @@ public abstract class TaskBase : AutoTask {
         ErrorIf(teleportAetheryteId == 0, $"Failed to find aetheryte in [{territoryId}] {Svc.Data.GetRef<Sheets.TerritoryType>(territoryId).Value.PlaceName.Value.Name}");
         if (Svc.Data.GetRef<Sheets.Aetheryte>(teleportAetheryteId) is { Value.Territory.RowId: var destinationId, Value.PlaceName.Value.Name: var destinationName } && Svc.ClientState.TerritoryType != destinationId) {
             Status = $"Teleporting to {destinationName}";
-            ErrorIf(!Coords.ExecuteTeleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
+            await CastAction(() => ActionManager.Teleport(teleportAetheryteId), ActionType.GeneralAction, 5);
             await WaitUntilTerritory(destinationId);
         }
 
@@ -168,26 +166,116 @@ public abstract class TaskBase : AutoTask {
         WarningIf(Svc.ClientState.TerritoryType != territoryId, $"Failed to teleport to expected zone (exp: {territoryId}, act: {Svc.ClientState.TerritoryType})");
     }
 
+    protected async Task CastAction(ActionType actionType, uint actionId, int maxRetries = 5) {
+        using var scope = BeginScope(nameof(CastAction));
+        using var hooksScope = new OnDispose(Svc.CastHooks.Disable);
+        Svc.CastHooks.Enable();
+
+        var attempt = 0;
+        while (maxRetries == 0 || attempt < maxRetries) {
+            attempt++;
+            Status = $"{nameof(CastAction)} (attempt {attempt})";
+            // TODO: maybe if we're in combat, call vbm to deal with it?
+            await WaitWhile(() => Player.IsBusy || ActionManager.IsActionInUse(actionType, actionId), $"WaitForNotBusy");
+
+            Svc.CastHooks.StartWatching(actionType, actionId);
+
+            Verbose($"Starting cast of {actionType} {actionId}");
+            if (!ActionManager.UseAction(actionType, actionId)) {
+                Svc.CastHooks.ClearWatching();
+                continue;
+            }
+
+            while (true) {
+                if (Svc.CastHooks.LastCastCompleted) {
+                    Verbose($"{actionType}:#{actionId} completed");
+                    Svc.CastHooks.ClearWatching();
+                    return;
+                }
+
+                if (Svc.CastHooks.LastCastCancelled) {
+                    Verbose($"{actionType}:#{actionId} cancelled");
+                    break;
+                }
+
+                await NextFrame();
+            }
+            Svc.CastHooks.ClearWatching();
+        }
+
+        Error($"{nameof(CastAction)} failed after {maxRetries} attempts");
+    }
+
+    /// <remarks>Only for actions triggered outside of ActionManager.</remarks>
+    protected async Task CastAction(Func<bool> action, ActionType actionType, uint actionId, int maxRetries = 5) {
+        using var scope = BeginScope(nameof(CastAction));
+        using var hooksScope = new OnDispose(Svc.CastHooks.Disable);
+        Svc.CastHooks.Enable();
+
+        var attempt = 0;
+        while (maxRetries == 0 || attempt < maxRetries) {
+            attempt++;
+            Status = $"{nameof(CastAction)} (attempt {attempt})";
+            await WaitWhile(() => Player.IsBusy, $"WaitForNotBusy");
+
+            Svc.CastHooks.StartWatching(actionType, actionId);
+
+            Verbose($"Starting cast of {actionType} {actionId}");
+            if (!action()) {
+                Svc.CastHooks.ClearWatching();
+                continue;
+            }
+
+            while (true) {
+                if (Svc.CastHooks.LastCastCompleted) {
+                    Verbose($"{actionType}:#{actionId} completed");
+                    Svc.CastHooks.ClearWatching();
+                    return;
+                }
+
+                if (Svc.CastHooks.LastCastCancelled) {
+                    Verbose($"{actionType}:#{actionId} cancelled");
+                    break;
+                }
+
+                await NextFrame();
+            }
+            Svc.CastHooks.ClearWatching();
+        }
+
+        Error($"{nameof(CastAction)} failed after {maxRetries} attempts");
+    }
+
     protected async Task Mount() {
         using var scope = BeginScope("Mount");
         if (Player is null || Player.Mounted) return;
         Status = "Mounting";
-        await WaitUntil(() => ActionManager.UseAction(ActionType.GeneralAction, 24), "MountCast");
-        await WaitUntil(() => Player.Mounted, "Mounting");
-        ErrorIf(!Player.Mounted, "Failed to mount");
+        await CastAction(ActionType.GeneralAction, 24);
+        await WaitUntil(() => Player.Mounted, "WaitForMount");
+        ErrorIf(!Player.Mounted, "Failed to mount after retries");
     }
 
     protected async Task Dismount() {
         using var scope = BeginScope("Dismount");
         if (Player is null || !Player.Mounted) return;
 
-        if (Player.InFlight) {
-            ActionManager.UseAction(ActionType.GeneralAction, 23); // or GameMain.ExecuteLocationCommand((int)LocationCommandFlag.Dismount, Player.Position, (int)Player.PackedRotation);
-            await WaitWhile(() => Player.InFlight, "WaitingToLand");
+        if (Svc.Navmesh.NearestPointReachable(Player.Position) is { } nearestPoint)
+            await MoveTo(nearestPoint, MovementConfig.Everything);
+        else
+            Warning($"No nearest landable point found from {Player.Position}. Dismounting may fail");
+
+        // we are assuming from here on out that you cannot possibly be above ground that is unlandable
+        if (Player.InFlight && !Player.IsAirDismountable) {
+            ActionManager.UseAction(ActionType.GeneralAction, 23); // TODO: find a force ground function
+            await WaitWhile(() => Player.InFlight, "WaitForGround");
+        }
+        if (Player.InFlight && Player.IsAirDismountable) {
+            GameMain.ExecuteLocationCommand(LocationCommandFlag.Dismount, Player.Position, (int)Player.PackedRotation);
+            await WaitWhile(() => Player.Mounted, "WaitForDismount");
         }
         if (Player.Mounted && !Player.InFlight) {
-            ActionManager.UseAction(ActionType.GeneralAction, 23); // or GameMain.ExecuteCommand(CommandFlag.Dismount.Value, 1);
-            await WaitWhile(() => Player.Mounted, "WaitingToDismount");
+            GameMain.ExecuteCommand(CommandFlag.Dismount, 1);
+            await WaitWhile(() => Player.Mounted, "WaitForDismount");
         }
         ErrorIf(Player.Mounted, "Failed to dismount");
     }

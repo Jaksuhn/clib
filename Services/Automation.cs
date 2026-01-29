@@ -155,6 +155,7 @@ public abstract class AutoTask {
     }
 
     protected void Log(string message) => Svc.Log.Debug($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
+    protected void Verbose(string message) => Svc.Log.Verbose($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     protected void Warning(string message) => Svc.Log.Warning($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     protected void WarningIf(bool condition, string message) {
         if (condition)

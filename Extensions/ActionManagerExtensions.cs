@@ -1,5 +1,6 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace clib.Extensions;
 
@@ -20,5 +21,7 @@ public static unsafe class ActionManagerExtensions {
             var am = ActionManager.Instance();
             return am is not null && am->GetActionStatus(type, itemId) != 0;
         }
+
+        public static bool Teleport(uint aetheryteId, byte subIndex = 0) => UIState.Instance()->Telepo.Teleport(aetheryteId, subIndex);
     }
 }

@@ -9,6 +9,7 @@ internal class NavmeshIPC {
     private readonly ICallGateSubscriber<Vector3, Vector3, bool, Task<List<Vector3>>?> _pathfind;
 
     private readonly ICallGateSubscriber<Vector3, float, float, Vector3?> _nearestPoint;
+    private readonly ICallGateSubscriber<Vector3, float, float, Vector3?> _nearestPointReachable;
     private readonly ICallGateSubscriber<Vector3, bool, float, Vector3?> _pointOnFloor;
 
     private readonly ICallGateSubscriber<object> _pathStop;
@@ -24,6 +25,7 @@ internal class NavmeshIPC {
 
         _nearestPoint = Svc.Interface.GetIpcSubscriber<Vector3, float, float, Vector3?>("vnavmesh.Query.Mesh.NearestPoint");
         _pointOnFloor = Svc.Interface.GetIpcSubscriber<Vector3, bool, float, Vector3?>("vnavmesh.Query.Mesh.PointOnFloor");
+        _nearestPointReachable = Svc.Interface.GetIpcSubscriber<Vector3, float, float, Vector3?>("vnavmesh.Query.Mesh.NearestPointReachable");
 
         _pathStop = Svc.Interface.GetIpcSubscriber<object>("vnavmesh.Path.Stop");
         _pathGetTolerance = Svc.Interface.GetIpcSubscriber<float>("vnavmesh.Path.GetTolerance");
@@ -39,6 +41,7 @@ internal class NavmeshIPC {
     public Task<List<Vector3>>? Pathfind(Vector3 start, Vector3 end, bool allowPartial = false) => _pathGetTolerance.HasFunction ? _pathfind.InvokeFunc(start, end, allowPartial) : null;
 
     public Vector3? NearestPoint(Vector3 position, float halfExtentXZ = 5, float halfExtentY = 5) => _nearestPoint.HasFunction ? _nearestPoint.InvokeFunc(position, halfExtentXZ, halfExtentY) : null;
+    public Vector3? NearestPointReachable(Vector3 position, float halfExtentXZ = 5, float halfExtentY = 5) => _nearestPointReachable.HasFunction ? _nearestPointReachable.InvokeFunc(position, halfExtentXZ, halfExtentY) : null;
     // unlandable isn't (currently) used in any way so it doesn't matter
     public Vector3? PointOnFloor(Vector3 position, bool allowUnlandable = false, float halfExtentXZ = 5) => _pointOnFloor.HasFunction ? _pointOnFloor.InvokeFunc(position, allowUnlandable, halfExtentXZ) : null;
 

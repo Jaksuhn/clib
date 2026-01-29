@@ -64,8 +64,6 @@ public static class Coords {
         return primary?.RowId ?? 0;
     }
 
-    public static unsafe bool ExecuteTeleport(uint aetheryteId) => UIState.Instance()->Telepo.Teleport(aetheryteId, 0);
-
     public static unsafe (ulong id, Vector3 pos) FindAetheryte(uint id) {
         foreach (var obj in GameObjectManager.Instance()->Objects.IndexSorted)
             if (obj.Value != null && obj.Value->ObjectKind == ObjectKind.Aetheryte && obj.Value->BaseId == id)
