@@ -217,6 +217,20 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         null
     );
 
+    public IGameObject? ObjectiveNpc => GetValue(
+        fate => Svc.Objects.FirstOrDefault(o => o.EntityId == fate.As<FateContext>()->ObjectiveNpc),
+        _ => null,
+        _ => null,
+        null
+    );
+
+    public ItemHandle? EventItem => GetValue(
+        fate => (ItemHandle)fate.As<FateContext>()->TurnInEventItem,
+        _ => null,
+        _ => null,
+        null
+    );
+
     public FateState State => GetValue(
         fate => fate.As<FateContext>()->State,
         dynamicEvent => ToFateState(dynamicEvent.State),

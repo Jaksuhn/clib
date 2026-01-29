@@ -15,5 +15,8 @@ public static class IExcelRowExtensions {
 
         public static T GetRow(uint id, Dalamud.Game.ClientLanguage? language = null)
             => Svc.Data.GetExcelSheet<T>(language: language).GetRow(id);
+
+        public static bool Any(Func<T, bool> predicate)
+            => Svc.Data.GetExcelSheet<T>().Any(r => predicate(r));
     }
 }
