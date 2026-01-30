@@ -25,6 +25,18 @@ public enum PathingStrategy {
     Direct = 2,
 }
 
+public static class MovementOptionsExtensions {
+    extension(MovementOptions) {
+        public static MovementOptions GetCurrent() {
+            if (Svc.Objects.LocalPlayer.InFlight)
+                return MovementOptions.Mount | MovementOptions.Fly | MovementOptions.Dismount;
+            if (Svc.Objects.LocalPlayer.Mounted)
+                return MovementOptions.Mount | MovementOptions.Dismount;
+            return MovementOptions.None;
+        }
+    }
+}
+
 public readonly record struct MovementConfig(float? Tolerance, MovementOptions Movement, PathingStrategy Pathing) {
     public static MovementConfig Default => new(null, MovementOptions.None, PathingStrategy.Auto);
     public static MovementConfig Everything => new(null, MovementOptions.Mount | MovementOptions.Fly | MovementOptions.Dismount, PathingStrategy.Auto);
@@ -97,12 +109,14 @@ public abstract class TaskBase : AutoTask {
                 await WaitWhile(() => !Player.WithinRange(dest, tolerance), "Navigate");
             else {
                 await WaitWhile(() => !(Player.WithinRange(dest, tolerance) || stopCondition()), "Navigate");
-                if (stopCondition() && onStopReached is not null)
+                if (stopCondition() && onStopReached is not null) {
+                    Svc.Navmesh.Stop(); // must be stopped because onStopReached's MoveTo (if present) calls !PathfindingInProgress
                     await onStopReached();
+                }
             }
         }
 
-        if (config.Movement.HasFlag(MovementOptions.Dismount))
+        if (config.Movement.HasFlag(MovementOptions.Dismount) && Player.WithinRange(dest, tolerance)) // only dismount if we're close
             await Dismount();
     }
 
