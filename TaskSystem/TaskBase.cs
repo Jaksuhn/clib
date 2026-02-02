@@ -90,6 +90,7 @@ public abstract class TaskBase : AutoTask {
 
         if (Coords.IsTeleportingFaster(dest)) {
             await TeleportTo(Svc.ClientState.TerritoryType, dest, allowSameZoneTeleport: true);
+            await WaitWhile(() => Player.IsBusy, "WaitForAvailable");
         }
 
         if (config.Movement.HasFlag(MovementOptions.Mount) || config.Movement.HasFlag(MovementOptions.Fly))
@@ -99,7 +100,7 @@ public abstract class TaskBase : AutoTask {
             await MoveToDirectly(dest, tolerance);
         else {
             await NavmeshReady();
-            await WaitUntil(() => !Svc.Navmesh.PathfindingInProgress, "Waiting for in-progress calls to finish");
+            await WaitUntil(() => !Svc.Navmesh.PathfindingInProgress, "WaitingForInProgressCalls");
             ErrorIf(!Svc.Navmesh.PathfindAndMoveTo(dest, config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly), "Failed to start pathfinding to destination");
             Status = $"Moving to {dest}";
             using var stop = new OnDispose(Svc.Navmesh.Stop);
@@ -160,7 +161,7 @@ public abstract class TaskBase : AutoTask {
 
             var (aetheryteId, aetherytePos) = Coords.FindAetheryte(teleportAetheryteId);
             if (!Player.WithinRange(aetherytePos, 15))
-                await MoveTo(aetherytePos, MovementConfig.GroundMove.WithTolerance(10), skipTeleportCheck: true);
+                await MoveTo(aetherytePos, MovementConfig.GroundMove.WithTolerance(10));
             ErrorIf(!TargetSystem.InteractWith(aetheryteId), "Failed to interact with aetheryte");
             await WaitUntilSkipping(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectAethernet", UiSkipOptions.Talk);
             PacketDispatcher.TeleportToAethernet(teleportAetheryteId, closestAetheryteId);
