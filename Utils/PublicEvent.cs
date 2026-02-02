@@ -44,7 +44,7 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         TerritoryIntendedUse.Overworld => GetCurrentFateOverworld(),
         TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetCurrentForayEvent(),
         TerritoryIntendedUse.CosmicExploration => GetCurrentCosmicEvent(),
-        _ => throw new NotImplementedException(),
+        _ => null, // zone doesn't support FATEs (instance, city, etc.)
     };
 
     public static IEnumerable<PublicEvent> Fates => Svc.Objects.LocalPlayer.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {

@@ -23,8 +23,8 @@ public static class IExcelRowExtensions {
         public static bool All(Func<T, bool> predicate)
             => Svc.Data.GetExcelSheet<T>().All(r => predicate(r));
 
-        public static IEnumerable<T> Where(Func<T, bool> predicate)
-            => Svc.Data.GetExcelSheet<T>().Where(r => predicate(r));
+        public static T[] Where(Func<T, bool> predicate)
+            => [.. Svc.Data.GetExcelSheet<T>().Where(r => predicate(r))];
 
         public static T? FirstOrNull(Func<T, bool> predicate)
             => Svc.Data.GetExcelSheet<T>().Where(r => predicate(r)).FirstOrNull();
