@@ -152,6 +152,7 @@ public abstract class TaskBase : AutoTask {
             Status = $"Teleporting to {destinationName}";
             await CastAction(() => ActionManager.Teleport(teleportAetheryteId), ActionType.GeneralAction, 5);
             await WaitUntilTerritory(destinationId);
+            return; // arrived in zone; same-zone logic below is only for when we were already in zone
         }
 
         if (Svc.ClientState.TerritoryType == territoryId) {
