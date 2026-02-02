@@ -1,5 +1,4 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Extensions;
 
@@ -48,9 +47,9 @@ public static class Coords {
     }
 
     public static bool IsTeleportingFaster(Vector3 dest) {
-        if (FindClosestAetheryte(Svc.ClientState.TerritoryType, dest, false) is not { } aetheryteId) return false;
-        var aetherytePos = AetherytePosition(aetheryteId);
-        return (dest - aetherytePos).Length() + 300 < (dest - Svc.Objects.LocalPlayer?.Position ?? Vector3.Zero).Length(); // 300 is roughly the distance you can travel in the time it takes to teleport and remount
+        if (Svc.Objects.LocalPlayer is not { Position: var pos }) return false;
+        const int overhead = 300; // approximately the distance you can travel in the time it takes you to teleport
+        return FindClosestAetheryte(Svc.ClientState.TerritoryType, dest) is { } closest && overhead + (dest - AetherytePosition(closest)).Length() < (dest - pos).Length();
     }
 
     // if aetheryte is 'primary' (i.e. can be teleported to), return it; otherwise (i.e. aethernet shard) find and return primary aetheryte from same group

@@ -89,7 +89,6 @@ public abstract class TaskBase : AutoTask {
             return;
 
         if (Coords.IsTeleportingFaster(dest)) {
-            Log("Teleporting faster");
             await TeleportTo(Svc.ClientState.TerritoryType, dest, allowSameZoneTeleport: true);
         }
 
@@ -152,6 +151,22 @@ public abstract class TaskBase : AutoTask {
             Status = $"Teleporting to {destinationName}";
             await CastAction(() => ActionManager.Teleport(teleportAetheryteId), ActionType.GeneralAction, 5);
             await WaitUntilTerritory(destinationId);
+        }
+
+        if (Svc.ClientState.TerritoryType == territoryId) {
+            Status = "Teleporting to aetheryte";
+            await CastAction(() => ActionManager.Teleport(teleportAetheryteId), ActionType.GeneralAction, 5);
+            if (teleportAetheryteId == closestAetheryteId) return;
+
+            var (aetheryteId, aetherytePos) = Coords.FindAetheryte(teleportAetheryteId);
+            if (!Player.WithinRange(aetherytePos, 15))
+                await MoveTo(aetherytePos, MovementConfig.GroundMove.WithTolerance(10), skipTeleportCheck: true);
+            ErrorIf(!TargetSystem.InteractWith(aetheryteId), "Failed to interact with aetheryte");
+            await WaitUntilSkipping(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectAethernet", UiSkipOptions.Talk);
+            PacketDispatcher.TeleportToAethernet(teleportAetheryteId, closestAetheryteId);
+            await WaitUntil(() => Player.IsBusy, "TeleportStart");
+            await WaitUntil(() => Svc.ClientState.TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinish");
+            return;
         }
 
         if (teleportAetheryteId != closestAetheryteId) {
@@ -264,8 +279,10 @@ public abstract class TaskBase : AutoTask {
         using var scope = BeginScope("Mount");
         if (Player is null || Player.Mounted) return;
         Status = "Mounting";
-        await CastAction(ActionType.GeneralAction, 24);
-        await WaitUntil(() => Player.Mounted, "WaitForMount");
+        while (!Player.Mounted) { // TODO: this is terrible. Need a better CastAction
+            await CastAction(ActionType.GeneralAction, 24);
+            await WaitUntil(() => Player.Mounted, () => Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat], "WaitForMount");
+        }
         ErrorIf(!Player.Mounted, "Failed to mount after retries");
     }
 

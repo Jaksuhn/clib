@@ -95,10 +95,24 @@ public abstract class AutoTask {
         }
     }
 
+    protected async Task WaitWhile(Func<bool> condition, Func<bool> earlyStop, string scopeName, int checkFrequency = 1, bool logContinuously = false) {
+        using var scope = BeginScope(scopeName);
+        Log($"waiting...");
+        while (condition()) {
+            if (earlyStop())
+                return;
+            if (logContinuously)
+                Log("waiting...");
+            await NextFrame(checkFrequency);
+        }
+    }
+
     /// <summary>
     /// Wait until condition function returns true, checking once every N frames
     /// </summary>
     protected async Task WaitUntil(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false) => await WaitWhile(() => !condition(), scopeName, checkFrequency, logContinuously);
+
+    protected async Task WaitUntil(Func<bool> condition, Func<bool> earlyStop, string scopeName, int checkFrequency = 1, bool logContinuously = false) => await WaitWhile(() => !condition(), earlyStop, scopeName, checkFrequency, logContinuously);
 
     /// <summary>
     /// Wait until a condition function returns true, then wait until it returns false.
