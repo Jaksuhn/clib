@@ -23,7 +23,9 @@ public static class Coords {
         return (coord * factor - 1024f) / scale - offset * 0.001f;
     }
 
-    public static uint? FindClosestAetheryte(FlagMapMarker flag, bool includeAethernet = true) => FindClosestAetheryte(flag.TerritoryId, flag.ToVector3(), includeAethernet);
+    public static uint? FindClosestAetheryteToFlag(FlagMapMarker flag, bool includeAethernet = true)
+        => Svc.Navmesh.FlagToPoint() is { } flagPos ? FindClosestAetheryte(flag.TerritoryId, flagPos, includeAethernet) : null;
+
     public static uint? FindClosestAetheryte(uint territoryTypeId, Vector3 worldPos, bool includeAethernet = true) {
         if (territoryTypeId == 886) // Firmament
             return 70; // Ishgard

@@ -2,6 +2,19 @@
 
 namespace clib.Extensions;
 
-public static class FlagMapMarkerExtensions {
-    public static unsafe Vector3 ToVector3(this FlagMapMarker flag) => AgentMap.Instance()->FlagMarkerCount > 0 ? Svc.Navmesh.PointOnFloor(new(flag.XFloat, 1024, flag.YFloat)) ?? Vector3.NaN : Vector3.NaN;
+public static unsafe class FlagMapMarkerExtensions {
+    extension(FlagMapMarker) {
+        public static Vector2? GetPosition() {
+            if (AgentMap.Instance() == null || AgentMap.Instance()->FlagMarkerCount == 0)
+                return null;
+            var flag = AgentMap.Instance()->FlagMapMarkers[0];
+            return new(flag.XFloat, flag.YFloat);
+        }
+
+        public static uint? GetTerritoryId() {
+            if (AgentMap.Instance() == null || AgentMap.Instance()->FlagMarkerCount == 0)
+                return null;
+            return AgentMap.Instance()->FlagMapMarkers[0].TerritoryId;
+        }
+    }
 }

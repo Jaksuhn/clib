@@ -74,11 +74,19 @@ public abstract class TaskBase : AutoTask {
         ErrorIf(!Svc.Navmesh.IsReady, "Failed to build navmesh for the zone");
     }
 
-    protected async Task MoveTo(FlagMapMarker flag, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
+    protected async Task MoveToFlag(MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
         using var scope = BeginScope("MoveToFlag");
-        await TeleportTo(flag.TerritoryId, flag);
+        if (FlagMapMarker.GetPosition() is not { } pos || FlagMapMarker.GetTerritoryId() is not { } territory) {
+            Error($"No flag set!");
+            return;
+        }
+        await TeleportTo(territory, pos.AsVector3());
         await NavmeshReady();
-        await MoveTo(flag.ToVector3(), config, allowTeleportIfFaster, stopCondition, onStopReached);
+        if (Svc.Navmesh.FlagToPoint() is not { } pof) {
+            Error($"Unable to convert flag to point on floor");
+            return;
+        }
+        await MoveTo(pof, config, allowTeleportIfFaster, stopCondition, onStopReached);
     }
 
     protected async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
@@ -152,7 +160,7 @@ public abstract class TaskBase : AutoTask {
             Status = $"Teleporting to {destinationName}";
             await CastAction(() => ActionManager.Teleport(teleportAetheryteId), ActionType.GeneralAction, 5);
             await WaitUntilTerritory(destinationId);
-            return; // arrived in zone; same-zone logic below is only for when we were already in zone
+            if (destinationId == territoryId) return; // we're in target zone; otherwise fall through to aethernet to get from primary zone to target zone
         }
 
         if (Svc.ClientState.TerritoryType == territoryId) {

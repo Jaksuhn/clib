@@ -11,6 +11,7 @@ internal class NavmeshIPC {
     private readonly ICallGateSubscriber<Vector3, float, float, Vector3?> _nearestPoint;
     private readonly ICallGateSubscriber<Vector3, float, float, Vector3?> _nearestPointReachable;
     private readonly ICallGateSubscriber<Vector3, bool, float, Vector3?> _pointOnFloor;
+    private readonly ICallGateSubscriber<Vector3?> _flagToPoint;
 
     private readonly ICallGateSubscriber<object> _pathStop;
     private readonly ICallGateSubscriber<float> _pathGetTolerance;
@@ -24,8 +25,9 @@ internal class NavmeshIPC {
         _pathfind = Svc.Interface.GetIpcSubscriber<Vector3, Vector3, bool, Task<List<Vector3>>?>("vnavmesh.Nav.Pathfind");
 
         _nearestPoint = Svc.Interface.GetIpcSubscriber<Vector3, float, float, Vector3?>("vnavmesh.Query.Mesh.NearestPoint");
-        _pointOnFloor = Svc.Interface.GetIpcSubscriber<Vector3, bool, float, Vector3?>("vnavmesh.Query.Mesh.PointOnFloor");
         _nearestPointReachable = Svc.Interface.GetIpcSubscriber<Vector3, float, float, Vector3?>("vnavmesh.Query.Mesh.NearestPointReachable");
+        _pointOnFloor = Svc.Interface.GetIpcSubscriber<Vector3, bool, float, Vector3?>("vnavmesh.Query.Mesh.PointOnFloor");
+        _flagToPoint = Svc.Interface.GetIpcSubscriber<Vector3?>("vnavmesh.Query.Mesh.FlagToPoint");
 
         _pathStop = Svc.Interface.GetIpcSubscriber<object>("vnavmesh.Path.Stop");
         _pathGetTolerance = Svc.Interface.GetIpcSubscriber<float>("vnavmesh.Path.GetTolerance");
@@ -44,6 +46,7 @@ internal class NavmeshIPC {
     public Vector3? NearestPointReachable(Vector3 position, float halfExtentXZ = 5, float halfExtentY = 5) => _nearestPointReachable.HasFunction ? _nearestPointReachable.InvokeFunc(position, halfExtentXZ, halfExtentY) : null;
     // unlandable isn't (currently) used in any way so it doesn't matter
     public Vector3? PointOnFloor(Vector3 position, bool allowUnlandable = false, float halfExtentXZ = 5) => _pointOnFloor.HasFunction ? _pointOnFloor.InvokeFunc(position, allowUnlandable, halfExtentXZ) : null;
+    public Vector3? FlagToPoint() => _flagToPoint.HasFunction ? _flagToPoint.InvokeFunc() : null;
 
     public void Stop() {
         if (!_pathStop.HasAction)
