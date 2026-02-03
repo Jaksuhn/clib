@@ -74,21 +74,21 @@ public abstract class TaskBase : AutoTask {
         ErrorIf(!Svc.Navmesh.IsReady, "Failed to build navmesh for the zone");
     }
 
-    protected async Task MoveTo(FlagMapMarker flag, MovementConfig config, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
+    protected async Task MoveTo(FlagMapMarker flag, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
         using var scope = BeginScope("MoveToFlag");
         await TeleportTo(flag.TerritoryId, flag);
         await NavmeshReady();
-        await MoveTo(flag.ToVector3(), config, stopCondition, onStopReached);
+        await MoveTo(flag.ToVector3(), config, allowTeleportIfFaster, stopCondition, onStopReached);
     }
 
-    protected async Task MoveTo(Vector3 dest, MovementConfig config, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
+    protected async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
         using var scope = BeginScope("MoveTo");
         await WaitUntil(() => Player.Available, "WaitingForPlayer");
         var tolerance = config.Tolerance ?? Svc.Navmesh.GetTolerance();
         if (Player.WithinRange(dest, tolerance))
             return;
 
-        if (Coords.IsTeleportingFaster(dest)) {
+        if (allowTeleportIfFaster && Coords.IsTeleportingFaster(dest)) {
             await TeleportTo(Svc.ClientState.TerritoryType, dest, allowSameZoneTeleport: true);
             await WaitWhile(() => Player.IsBusy, "WaitForAvailable");
         }
