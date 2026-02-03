@@ -101,7 +101,7 @@ public abstract class TaskBase : AutoTask {
         else {
             await NavmeshReady();
             await WaitUntil(() => !Svc.Navmesh.PathfindingInProgress, "WaitingForInProgressCalls");
-            ErrorIf(!Svc.Navmesh.PathfindAndMoveTo(dest, config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly), "Failed to start pathfinding to destination");
+            ErrorIf(!Svc.Navmesh.PathfindAndMoveTo(dest, Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly), "Failed to start pathfinding to destination");
             Status = $"Moving to {dest}";
             using var stop = new OnDispose(Svc.Navmesh.Stop);
 
