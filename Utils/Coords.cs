@@ -23,8 +23,8 @@ public static class Coords {
         return (coord * factor - 1024f) / scale - offset * 0.001f;
     }
 
-    public static uint? FindClosestAetheryteToFlag(FlagMapMarker flag, bool includeAethernet = true)
-        => Svc.Navmesh.FlagToPoint() is { } flagPos ? FindClosestAetheryte(flag.TerritoryId, flagPos, includeAethernet) : null;
+    public static uint? FindClosestAetheryteToFlag(bool includeAethernet = true)
+        => Svc.Navmesh.FlagToPoint() is { } flagPos && FlagMapMarker.GetTerritoryId() is { } territory ? FindClosestAetheryte(territory, flagPos, includeAethernet) : null;
 
     public static uint? FindClosestAetheryte(uint territoryTypeId, Vector3 worldPos, bool includeAethernet = true) {
         if (territoryTypeId == 886) // Firmament
