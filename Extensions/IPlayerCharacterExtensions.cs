@@ -26,7 +26,7 @@ public static unsafe class IPlayerCharacterExtensions {
                 return Marshal.GetDelegateForFunctionPointer<IsAirDismountableDelegate>(Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 84 C0 75 24 4D 85 F6"))(UIState.Instance(), &pos) == 1;
             }
         }
-
+        // TODO: cs 7342
         //public bool IsAirDismountable => UIState.Instance()->IsAirDismountable;
         public bool IsBusy
             => Svc.Condition.IsUnavailable() ||

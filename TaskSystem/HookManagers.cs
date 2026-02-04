@@ -1,6 +1,7 @@
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Client.Network;
 
 namespace clib.TaskSystem;
 
@@ -29,21 +30,15 @@ internal sealed unsafe class CastHookManager : HookManagerBase {
     internal volatile bool LastCastCompleted;
     internal volatile bool LastCastCancelled;
 
-    private delegate void ProcessPacketActorControlDelegate(
-        uint actorID, uint category,
-        uint p1, uint p2, uint p3, uint p4, uint p5, uint p6, uint p7, uint p8,
-        ulong targetID, byte replaying);
-
-    private readonly Hook<ProcessPacketActorControlDelegate> _actorControlHook;
+    private readonly Hook<PacketDispatcher.Delegates.HandleActorControlPacket> _actorControlHook;
 
     private delegate void CharacterCompleteCastDelegate(GameObject* source, ActionType actionType, uint actionId, int a4, GameObjectId objectId, float* a6, float value, ushort a8, int a9, uint entityId);
     private readonly Hook<CharacterCompleteCastDelegate> _completeCastHook;
 
     private CastHookManager() {
-        var actorControlAddr = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 0F B7 0B 83 E9 64");
         var completeCastAddr = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 41 0F B6 56 ?? 44 0F 28 8C 24 ?? ?? ?? ??");
 
-        _actorControlHook = Svc.Hook.HookFromAddress<ProcessPacketActorControlDelegate>(actorControlAddr, ProcessPacketActorControlDetour);
+        _actorControlHook = Svc.Hook.HookFromAddress<PacketDispatcher.Delegates.HandleActorControlPacket>((nint)PacketDispatcher.MemberFunctionPointers.HandleActorControlPacket, ProcessPacketActorControlDetour);
         _completeCastHook = Svc.Hook.HookFromAddress<CharacterCompleteCastDelegate>(completeCastAddr, CharacterCompleteCastDetour);
     }
 
@@ -76,18 +71,18 @@ internal sealed unsafe class CastHookManager : HookManagerBase {
         LastCastCancelled = false;
     }
 
-    private void ProcessPacketActorControlDetour(uint actorID, uint category, uint p1, uint p2, uint p3, uint p4, uint p5, uint p6, uint p7, uint p8, ulong targetID, byte replaying) {
+    private void ProcessPacketActorControlDetour(uint entityId, uint category, uint a1, uint a2, uint a3, uint a4, uint a5, uint a6, uint a7, uint a8, GameObjectId targetId, bool isRecorded) {
         if (Svc.Objects.LocalPlayer is not { } player) {
-            _actorControlHook.Original(actorID, category, p1, p2, p3, p4, p5, p6, p7, p8, targetID, replaying);
+            _actorControlHook.Original(entityId, category, a1, a2, a3, a4, a5, a6, a7, a8, targetId, isRecorded);
             return;
         }
 
         // 15 = CancelCast
-        if (_watchedId != 0 && actorID == player.EntityId && category == 15) {
+        if (_watchedId != 0 && entityId == player.EntityId && category == 15) {
             LastCastCancelled = true;
         }
 
-        _actorControlHook.Original(actorID, category, p1, p2, p3, p4, p5, p6, p7, p8, targetID, replaying);
+        _actorControlHook.Original(entityId, category, a1, a2, a3, a4, a5, a6, a7, a8, targetId, isRecorded);
     }
 
     private void CharacterCompleteCastDetour(GameObject* source, ActionType actionType, uint actionId, int a4, GameObjectId objectId, float* a6, float value, ushort a8, int a9, uint entityId) {
