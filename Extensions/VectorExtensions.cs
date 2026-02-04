@@ -47,4 +47,5 @@ public static class VectorExtensions {
     public static Vector3 AddZ(this Vector3 v, float z) => v + new Vector3(0f, 0f, z);
 
     public static Vector2 ToVector2(this Vector3 v) => new(v.X, v.Z);
+    public static Vector3 ToVector3(this Vector2 v) => new(v.X, 0, v.Y);
 }

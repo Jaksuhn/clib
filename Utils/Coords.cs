@@ -24,7 +24,7 @@ public static class Coords {
     }
 
     public static uint? FindClosestAetheryteToFlag(bool includeAethernet = true)
-        => FlagMapMarker.GetPosition() is { } pos && FlagMapMarker.GetTerritoryId() is { } territory ? FindClosestAetheryte(territory, pos.AsVector3(), includeAethernet) : null;
+        => FlagMapMarker.Get() is { } flag ? FindClosestAetheryte(flag.TerritoryId, flag.Position.ToVector3(), includeAethernet) : null;
 
     public static uint? FindClosestAetheryte(uint territoryTypeId, Vector3 worldPos, bool includeAethernet = true) {
         if (territoryTypeId == 886) // Firmament

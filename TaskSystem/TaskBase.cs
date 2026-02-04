@@ -76,11 +76,11 @@ public abstract class TaskBase : AutoTask {
 
     protected async Task MoveToFlag(MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
         using var scope = BeginScope("MoveToFlag");
-        if (FlagMapMarker.GetPosition() is not { } pos || FlagMapMarker.GetTerritoryId() is not { } territory) {
+        if (FlagMapMarker.Get() is not { } flag) {
             Error($"No flag set!");
             return;
         }
-        await TeleportTo(territory, pos.AsVector3());
+        await TeleportTo(flag.TerritoryId, flag.Position.ToVector3());
         await NavmeshReady();
         if (Svc.Navmesh.FlagToPoint() is not { } pof) {
             Error($"Unable to convert flag to point on floor");

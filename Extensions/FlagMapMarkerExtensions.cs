@@ -3,7 +3,9 @@
 namespace clib.Extensions;
 
 public static unsafe class FlagMapMarkerExtensions {
-    extension(FlagMapMarker) {
+    extension(FlagMapMarker fmm) {
+        public Vector2 Position => new(fmm.XFloat, fmm.YFloat);
+
         public static Vector2? GetPosition() {
             if (AgentMap.Instance() == null || AgentMap.Instance()->FlagMarkerCount == 0)
                 return null;
@@ -15,6 +17,12 @@ public static unsafe class FlagMapMarkerExtensions {
             if (AgentMap.Instance() == null || AgentMap.Instance()->FlagMarkerCount == 0)
                 return null;
             return AgentMap.Instance()->FlagMapMarkers[0].TerritoryId;
+        }
+
+        public static FlagMapMarker? Get() {
+            if (AgentMap.Instance() == null || AgentMap.Instance()->FlagMarkerCount == 0)
+                return null;
+            return AgentMap.Instance()->FlagMapMarkers[0];
         }
     }
 }
