@@ -7,6 +7,9 @@ using System.Text.RegularExpressions;
 namespace clib.Extensions;
 
 public static partial class StringExtensions {
+    public static bool ContainsIgnoreCase(this string s, string needle)
+        => s.Contains(needle, StringComparison.OrdinalIgnoreCase);
+
     public static bool TryParseVector3(this string input, out Vector3 output) {
         output = Vector3.Zero;
         if (ParseVector3().Match(input) is { Success: true } match) {

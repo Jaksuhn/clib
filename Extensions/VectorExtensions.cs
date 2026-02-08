@@ -9,7 +9,7 @@ public static class VectorExtensions {
     }
 
     public static Vector3 OnMesh(this Vector3 position) {
-        var floor = Svc.Navmesh.NearestPointReachable(position, 20, 20);
+        var floor = Svc.Navmesh.NearestPointReachable(position, 5, 5);
         if (floor is null)
             Svc.Log.PrintWarning($"Failed to find point on mesh near {position}");
         return floor ?? position;

@@ -14,6 +14,7 @@ public static unsafe partial class AddonAreaMapExtensions {
         return mapCoords is null ? null : MapToWorld(mapCoords.Value, Svc.Data.GetRef<Map>(AgentMap.Instance()->SelectedMapId).Value);
     }
 
+    // TODO: see if this is in the agent
     public static Vector2? GetMouseMapCoords(ref this AddonAreaMap areaMap) {
         var node = areaMap.AtkUnitBase.GetNodeById<AtkTextNode>(46);
         if (node == null) return null;
