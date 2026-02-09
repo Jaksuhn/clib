@@ -286,14 +286,13 @@ public abstract class TaskBase : AutoTask {
     }
 
     protected async Task Mount() {
-        using var scope = BeginScope("Mount");
-        if (Player is null || Player.Mounted) return;
+        using var scope = BeginScope(nameof(Mount));
         Status = "Mounting";
-        while (!Player.Mounted) { // TODO: this is terrible. Need a better CastAction
-            await CastAction(ActionType.GeneralAction, 24);
-            await WaitUntil(() => Player.Mounted, () => Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat], "WaitForMount");
+        while (!Player.Mounted) {
+            if (!Player.IsBusy && !ActionManager.IsActionInUse(ActionType.GeneralAction, 24))
+                ActionManager.UseAction(ActionType.GeneralAction, 24);
+            await NextFrame();
         }
-        ErrorIf(!Player.Mounted, "Failed to mount after retries");
     }
 
     protected async Task Dismount() {
