@@ -96,6 +96,11 @@ public static class ImGuiExtensions {
                 ImGui.SetTooltip(text);
         }
 
+        public static void TextV(string s) {
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text(s);
+        }
+
         public static bool IsItemClickedWithModifier(ImGuiMouseButton button, ImGuiModFlags modifier) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods.HasFlag(modifier);
 
         public static bool IsItemClickedNoModifiers(ImGuiMouseButton button) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods == ImGuiModFlags.None;
