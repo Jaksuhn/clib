@@ -8,8 +8,8 @@ public enum CommandArgumentKind {
     Rest,
 }
 
-public readonly record struct CommandExecutionResult(bool Success, string? Error = null, string? Usage = null) {
-    public static CommandExecutionResult Ok() => new(true);
+public readonly record struct CommandExecutionResult(bool Success, string? Error = null, string? Usage = null, string? Help = null) {
+    public static CommandExecutionResult Ok(string? help = null) => new(true, null, null, help);
     public static CommandExecutionResult Fail(string error, string? usage = null) => new(false, error, usage);
 }
 
@@ -125,11 +125,17 @@ public sealed class CommandRouter<TContext>(CommandNode<TContext> root) {
             return CommandExecutionResult.Fail(tokenize.Error!, BuildUsage(root, rootLabel));
 
         var tokens = tokenize.Tokens!;
+        if (tokens.Count > 0 && IsHelpToken(tokens[0]))
+            return CommandExecutionResult.Ok(BuildHelpForPath(root, rootLabel, tokens.Skip(1)));
+
         var node = root;
         var path = new List<string>();
         var index = 0;
 
         while (index < tokens.Count) {
+            if (IsHelpToken(tokens[index]))
+                return CommandExecutionResult.Ok(BuildHelp(node, rootLabel, path));
+
             var child = node.Children.FirstOrDefault(c => c.Matches(tokens[index]));
             if (child is null)
                 break;
@@ -137,6 +143,9 @@ public sealed class CommandRouter<TContext>(CommandNode<TContext> root) {
             node = child;
             index++;
         }
+
+        if (index < tokens.Count && IsHelpToken(tokens[index]))
+            return CommandExecutionResult.Ok(BuildHelp(node, rootLabel, path));
 
         if (index == tokens.Count && node.Handler is null && node.DefaultHandler is not null) {
             node.DefaultHandler(context);
@@ -201,6 +210,45 @@ public sealed class CommandRouter<TContext>(CommandNode<TContext> root) {
     }
 
     public string Usage(string rootLabel = "") => BuildUsage(root, rootLabel);
+
+    private static bool IsHelpToken(string token)
+        => token.Equals("help", StringComparison.OrdinalIgnoreCase)
+        || token.Equals("?", StringComparison.OrdinalIgnoreCase)
+        || token.Equals("-h", StringComparison.OrdinalIgnoreCase)
+        || token.Equals("--help", StringComparison.OrdinalIgnoreCase);
+
+    private static string BuildHelpForPath(CommandNode<TContext> startNode, string rootLabel, IEnumerable<string> pathTokens) {
+        var node = startNode;
+        var path = new List<string>();
+
+        foreach (var token in pathTokens) {
+            var child = node.Children.FirstOrDefault(c => c.Matches(token));
+            if (child is null)
+                break;
+            node = child;
+            path.Add(child.Name);
+        }
+
+        return BuildHelp(node, rootLabel, path);
+    }
+
+    private static string BuildHelp(CommandNode<TContext> node, string rootLabel, IReadOnlyList<string>? path = null) {
+        var lines = new List<string>();
+        CollectHelpLines(node, rootLabel, path?.ToList() ?? [], lines);
+        return lines.Count == 0 ? BuildUsage(node, rootLabel, path) : string.Join('\n', lines);
+    }
+
+    private static void CollectHelpLines(CommandNode<TContext> node, string rootLabel, List<string> path, List<string> lines) {
+        if (!node.IsRoot) {
+            var usage = BuildUsage(node, rootLabel, path);
+            lines.Add(string.IsNullOrWhiteSpace(node.Description) ? usage : $"{usage} - {node.Description}");
+        }
+
+        foreach (var child in node.Children.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)) {
+            var childPath = new List<string>(path) { child.Name };
+            CollectHelpLines(child, rootLabel, childPath, lines);
+        }
+    }
 
     private static string BuildUsage(CommandNode<TContext> node, string rootLabel, IEnumerable<string>? path = null) {
         var sb = new StringBuilder("Usage: ");
