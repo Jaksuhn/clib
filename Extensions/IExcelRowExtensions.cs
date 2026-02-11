@@ -1,4 +1,4 @@
-﻿using Lumina.Excel;
+using Lumina.Excel;
 using Lumina.Extensions;
 
 namespace clib.Extensions;
@@ -25,6 +25,9 @@ public static class IExcelRowExtensions {
 
         public static T[] Where(Func<T, bool> predicate)
             => [.. Svc.Data.GetExcelSheet<T>().Where(r => predicate(r))];
+
+        public static TResult[] Select<TResult>(Func<T, TResult> selector)
+            => [.. Svc.Data.GetExcelSheet<T>().Select(selector)];
 
         public static T? FirstOrNull(Func<T, bool> predicate)
             => Svc.Data.GetExcelSheet<T>().Where(r => predicate(r)).FirstOrNull();
