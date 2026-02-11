@@ -54,6 +54,8 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         _ => [],
     };
 
+    public static PublicEvent? GetFateById(uint id) => Fates.FirstOrDefault(f => f.Id == id);
+
     private static PublicEvent? GetCurrentFateOverworld() {
         var fate = FateManager.Instance()->CurrentFate;
         return fate != null ? (PublicEvent)fate : null;
