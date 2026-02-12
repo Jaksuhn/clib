@@ -1,3 +1,4 @@
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
@@ -217,7 +218,8 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     );
 
     public IGameObject? MotivationNpc => GetValue(
-        fate => Svc.Objects.FirstOrDefault(o => o.EntityId == fate.As<FateContext>()->MotivationNpc),
+        // sometimes when they're initially loaded, the gameobject is garbage with an entity id of 200000001 and object kind MountType
+        fate => Svc.Objects.FirstOrDefault(o => o.EntityId == fate.As<FateContext>()->MotivationNpc && o.ObjectKind == ObjectKind.BattleNpc),
         _ => null,
         _ => null,
         null
