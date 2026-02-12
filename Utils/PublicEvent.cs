@@ -48,7 +48,7 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     };
 
     public static IEnumerable<PublicEvent> Fates => Svc.Objects.LocalPlayer.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
-        TerritoryIntendedUse.Overworld => FateManager.Instance()->Fates.Select(evt => (PublicEvent)evt),
+        TerritoryIntendedUse.Overworld => GetOverworldFates(),
         TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetForayFates(),
         TerritoryIntendedUse.CosmicExploration => GetCosmicFates(),
         _ => [],
@@ -78,8 +78,12 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         return GetCurrentFateOverworld();
     }
 
+    // on the frame a fate spawns, some of its values are default (at least position), so don't add them until that's loaded
+    private static IEnumerable<PublicEvent> GetOverworldFates()
+        => FateManager.Instance()->Fates.Select(evt => (PublicEvent)evt).Where(evt => evt.Position != Vector3.Zero);
+
     private static IEnumerable<PublicEvent> GetForayFates() {
-        var overworldFates = FateManager.Instance()->Fates.Select(evt => (PublicEvent)evt);
+        var overworldFates = GetOverworldFates();
 
         var container = DynamicEventContainer.GetInstance();
         if (container == null)
@@ -90,7 +94,7 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     }
 
     private static IEnumerable<PublicEvent> GetCosmicFates() {
-        var overworldFates = FateManager.Instance()->Fates.Select(evt => (PublicEvent)evt);
+        var overworldFates = GetOverworldFates();
         var mechaEvents = WKSManager.Instance()->MechaEventModule->Events.ToArray().Where(evt => evt.Flags.HasFlag(WKSMechaEventFlag.IsEventActive)).Select(evt => (PublicEvent)evt);
         return overworldFates.Concat(mechaEvents);
     }
