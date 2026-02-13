@@ -304,20 +304,26 @@ public abstract class TaskBase : AutoTask {
         else
             Warning($"No nearest landable point found from {Player.Position}. Dismounting may fail");
 
-        // we are assuming from here on out that you cannot possibly be above ground that is unlandable
-        if (Player.InFlight && !Player.IsAirDismountable) {
-            ActionManager.UseAction(ActionType.GeneralAction, 23); // TODO: find a force ground function
-            await WaitWhile(() => Player.InFlight, "WaitForGround");
+        Status = "Dismounting";
+        while (Player.Mounted) {
+            // we are assuming from here on out that you cannot possibly be above ground that is unlandable
+            if (Player.InFlight && !Player.IsAirDismountable) {
+                Log($"Descending");
+                ActionManager.UseAction(ActionType.GeneralAction, 23); // TODO: find a force ground function
+                // await WaitWhile(() => Player.InFlight || !Player.IsAirDismountable, "WaitForGround");
+            }
+            else if (Player.InFlight && Player.IsAirDismountable) {
+                Log($"Air Dismount");
+                GameMain.ExecuteLocationCommand(LocationCommandFlag.Dismount, Player.Position, (int)Player.PackedRotation);
+                //await WaitWhile(() => Player.Mounted, "WaitForDismount");
+            }
+            else if (Player.Mounted && !Player.InFlight) {
+                Log($"Ground Dismount");
+                GameMain.ExecuteCommand(CommandFlag.Dismount, 1);
+                //await WaitWhile(() => Player.Mounted, "WaitForDismount");
+            }
+            await NextFrame();
         }
-        if (Player.InFlight && Player.IsAirDismountable) {
-            GameMain.ExecuteLocationCommand(LocationCommandFlag.Dismount, Player.Position, (int)Player.PackedRotation);
-            await WaitWhile(() => Player.Mounted, "WaitForDismount");
-        }
-        if (Player.Mounted && !Player.InFlight) {
-            GameMain.ExecuteCommand(CommandFlag.Dismount, 1);
-            await WaitWhile(() => Player.Mounted, "WaitForDismount");
-        }
-        ErrorIf(Player.Mounted, "Failed to dismount");
     }
 
     protected async Task WaitUntilSkipping(Func<bool> condition, string scopeName, UiSkipOptions skip) {
