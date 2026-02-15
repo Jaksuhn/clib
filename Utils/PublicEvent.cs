@@ -246,6 +246,9 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
         (FateState)0
     );
 
+    /// <summary>When a fate hasn't appeared on the map yet</summary>
+    public bool IsPending => State == FateState.Preparing && TimeRemaining <= 0;
+
     public FateRule Rule => GetValue(
         fate => (FateRule)fate.As<FateContext>()->Rule,
         _ => FateRule.Normal,
