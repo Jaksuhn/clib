@@ -9,6 +9,6 @@ public static unsafe class MirageStoreSetItemExtensions {
         public Collection<RowRef<Item>> Items => new(row.ExcelPage, parentOffset: row.RowOffset, offset: row.RowOffset, &ItemCtor, size: 11);
     }
 
-    private static RowRef<Item> ItemCtor(ExcelPage page, uint parentOffset, uint offset, uint i)
+    internal static RowRef<Item> ItemCtor(ExcelPage page, uint parentOffset, uint offset, uint i)
         => new(page.Module, page.ReadUInt32(offset + i * 4), page.Language);
 }
