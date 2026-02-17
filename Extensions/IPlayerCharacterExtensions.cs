@@ -34,6 +34,7 @@ public static unsafe class IPlayerCharacterExtensions {
 
         public RowRef<TerritoryType> Territory => Svc.Data.GetRef<TerritoryType>(Svc.ClientState.TerritoryType);
 
+        public bool CanMount => pc.Territory.Value.Mount && PlayerState.Instance()->NumOwnedMounts > 0;
         public bool Mounted => Svc.Condition[ConditionFlag.Mounted];
         public bool InFlight => Svc.Condition[ConditionFlag.InFlight];
         /// <summary>

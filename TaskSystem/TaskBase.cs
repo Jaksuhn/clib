@@ -287,6 +287,8 @@ public abstract class TaskBase : AutoTask {
 
     protected async Task Mount() {
         using var scope = BeginScope(nameof(Mount));
+        if (!Player.CanMount) return; // early return if not in mounting territories
+
         Status = "Mounting";
         while (!Player.Mounted) {
             if (!Player.IsBusy && !ActionManager.IsActionInUse(ActionType.GeneralAction, 24))
