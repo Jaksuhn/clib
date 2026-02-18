@@ -7,9 +7,9 @@ using System.Diagnostics.CodeAnalysis;
 namespace clib.Extensions;
 
 public static class ImGuiExtensions {
-    private static string searchResultsQuery = string.Empty;
-    private static double lastSearchTime;
-    private static Item[] itemSearchResults = [];
+    internal static string searchResultsQuery = string.Empty;
+    internal static double lastSearchTime;
+    internal static Item[] itemSearchResults = [];
 
     extension(ImGui) {
         public static bool AddItemPopupButton([NotNullWhen(true)] out Item? result, string? buttonLabel = null, Vector2? size = null, Func<Item, bool>? itemSheetFilter = null) {

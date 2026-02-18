@@ -1,8 +1,6 @@
-using Dalamud.Game;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs;
 using clib.TaskSystem;
 
 namespace clib.Internal;
