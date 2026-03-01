@@ -4,6 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.Game.WKS;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.Interop;
 
 namespace clib.Utils;
@@ -247,7 +248,10 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     );
 
     /// <summary>When a fate hasn't appeared on the map yet</summary>
-    public bool IsPending => State == FateState.Running && TimeRemaining <= 0;
+    public bool IsPending => State == FateState.Running && TimeRemaining <= 0 || State == FateState.Preparing && !IsOnMap;
+
+    // TODO: verify
+    public bool IsOnMap => AgentMap.Instance()->EventMarkers.Any(m => m is { IconId: not 0, DataId: not 0 and var id } && id == Id);
 
     public FateRule Rule => GetValue(
         fate => (FateRule)fate.As<FateContext>()->Rule,
