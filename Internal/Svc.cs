@@ -1,7 +1,6 @@
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using clib.TaskSystem;
 
 namespace clib.Internal;
 
@@ -21,12 +20,10 @@ internal class Svc {
     [PluginService] public static ITextureProvider Texture { get; private set; } = null!;
 
     public static NavmeshIPC Navmesh { get; private set; } = null!;
-    public static CastHookManager CastHooks { get; private set; } = null!;
 
     public static void Init(IDalamudPluginInterface pi) {
         pi.Create<Svc>();
         Navmesh = new NavmeshIPC();
-        CastHooks = CastHookManager.Instance;
     }
 }
 

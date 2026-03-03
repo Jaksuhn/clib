@@ -8,8 +8,4 @@ public static class CLibMain {
         Svc.Init(pi);
         Name = instance.GetType().Name;
     }
-
-    public static void Dispose() {
-        Svc.CastHooks.Dispose();
-    }
 }

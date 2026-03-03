@@ -158,14 +158,14 @@ public abstract class TaskBase : AutoTask {
         ErrorIf(teleportAetheryteId == 0, $"Failed to find aetheryte in [{territoryId}] {Svc.Data.GetRef<Sheets.TerritoryType>(territoryId).Value.PlaceName.Value.Name}");
         if (Svc.Data.GetRef<Sheets.Aetheryte>(teleportAetheryteId) is { Value.Territory.RowId: var destinationId, Value.PlaceName.Value.Name: var destinationName } && Svc.ClientState.TerritoryType != destinationId) {
             Status = $"Teleporting to {destinationName}";
-            await CastAction(() => ActionManager.Teleport(teleportAetheryteId), ActionType.GeneralAction, 5);
+            ErrorIf(!ActionManager.Teleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
             await WaitUntilTerritory(destinationId);
             if (destinationId == territoryId) return; // we're in target zone; otherwise fall through to aethernet to get from primary zone to target zone
         }
 
         if (Svc.ClientState.TerritoryType == territoryId) {
             Status = "Teleporting to aetheryte";
-            await CastAction(() => ActionManager.Teleport(teleportAetheryteId), ActionType.GeneralAction, 5);
+            ErrorIf(!ActionManager.Teleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
             if (teleportAetheryteId == closestAetheryteId) return;
 
             var (aetheryteId, aetherytePos) = Coords.FindAetheryte(teleportAetheryteId);
@@ -203,86 +203,6 @@ public abstract class TaskBase : AutoTask {
 
         // I think this check gives more problems than it solves
         WarningIf(Svc.ClientState.TerritoryType != territoryId, $"Failed to teleport to expected zone (exp: {territoryId}, act: {Svc.ClientState.TerritoryType})");
-    }
-
-    protected async Task CastAction(ActionType actionType, uint actionId, int maxRetries = 5) {
-        using var scope = BeginScope(nameof(CastAction));
-        using var hooksScope = new OnDispose(Svc.CastHooks.Disable);
-        Svc.CastHooks.Enable();
-
-        var attempt = 0;
-        while (maxRetries == 0 || attempt < maxRetries) {
-            attempt++;
-            Status = $"{nameof(CastAction)} (attempt {attempt})";
-            // TODO: maybe if we're in combat, call vbm to deal with it?
-            await WaitWhile(() => Player.IsBusy || ActionManager.IsActionInUse(actionType, actionId), $"WaitForNotBusy");
-
-            Svc.CastHooks.StartWatching(actionType, actionId);
-
-            Verbose($"Starting cast of {actionType} {actionId}");
-            if (!ActionManager.UseAction(actionType, actionId)) {
-                Svc.CastHooks.ClearWatching();
-                continue;
-            }
-
-            while (true) {
-                if (Svc.CastHooks.LastCastCompleted) {
-                    Verbose($"{actionType}:#{actionId} completed");
-                    Svc.CastHooks.ClearWatching();
-                    return;
-                }
-
-                if (Svc.CastHooks.LastCastCancelled) {
-                    Verbose($"{actionType}:#{actionId} cancelled");
-                    break;
-                }
-
-                await NextFrame();
-            }
-            Svc.CastHooks.ClearWatching();
-        }
-
-        Error($"{nameof(CastAction)} failed after {maxRetries} attempts");
-    }
-
-    /// <remarks>Only for actions triggered outside of ActionManager.</remarks>
-    protected async Task CastAction(Func<bool> action, ActionType actionType, uint actionId, int maxRetries = 5) {
-        using var scope = BeginScope(nameof(CastAction));
-        using var hooksScope = new OnDispose(Svc.CastHooks.Disable);
-        Svc.CastHooks.Enable();
-
-        var attempt = 0;
-        while (maxRetries == 0 || attempt < maxRetries) {
-            attempt++;
-            Status = $"{nameof(CastAction)} (attempt {attempt})";
-            await WaitWhile(() => Player.IsBusy, $"WaitForNotBusy");
-
-            Svc.CastHooks.StartWatching(actionType, actionId);
-
-            Verbose($"Starting cast of {actionType} {actionId}");
-            if (!action()) {
-                Svc.CastHooks.ClearWatching();
-                continue;
-            }
-
-            while (true) {
-                if (Svc.CastHooks.LastCastCompleted) {
-                    Verbose($"{actionType}:#{actionId} completed");
-                    Svc.CastHooks.ClearWatching();
-                    return;
-                }
-
-                if (Svc.CastHooks.LastCastCancelled) {
-                    Verbose($"{actionType}:#{actionId} cancelled");
-                    break;
-                }
-
-                await NextFrame();
-            }
-            Svc.CastHooks.ClearWatching();
-        }
-
-        Error($"{nameof(CastAction)} failed after {maxRetries} attempts");
     }
 
     protected async Task Mount() {
