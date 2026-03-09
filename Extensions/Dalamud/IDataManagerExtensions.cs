@@ -10,6 +10,7 @@ using Lumina.Excel.Sheets;
 using Lumina.Extensions;
 using LuminaSupplemental.Excel.Model;
 using LuminaSupplemental.Excel.Services;
+using Action = Lumina.Excel.Sheets.Action;
 
 namespace clib.Extensions;
 
@@ -51,12 +52,15 @@ public static class IDataManagerExtensions {
     public static List<Recipe> GetCraftableRecipes(this IDataManager data)
         => [.. GetSheet<Recipe>(data).Where(r => r.ItemResult.RowId != 0).Where(r => r.IngredientsWithAmounts.All(x => x.item.GetCount() >= x.amount))];
 
-    public static unsafe List<Recipe> GetUncompletedRecipes(this IDataManager data)
+    public static List<Recipe> GetUncompletedRecipes(this IDataManager data)
         => [.. GetSheet<Recipe>(data).Where(r => r.ItemResult.RowId != 0 && r.SecretRecipeBook.RowId == 0 && r.RecipeNotebookList.RowId == 0 && !QuestManager.IsRecipeComplete(r.RowId))];
 
     public static List<Item> GetMoochableFish(this IDataManager data)
         // 33 for tackle, 47 for fish
         => FindRows<FishingBaitParameter>(data, x => x is { Item.RowId: not 0, Item.Value.ItemUICategory.RowId: 47 }).Select(f => f.Item.Value).ToList() ?? [];
+
+    public static IReadOnlyList<Action> GetActionsForJob(this IDataManager data, ClassJob cj)
+        => FindRows<Action>(data, a => a.ClassJobCategory.ValueNullable?.ContainsJob(cj) ?? false);
 
     public static List<T> GetSupplemental<T>(this IDataManager data, string resourceName) where T : ICsv, new() => CsvLoader.LoadResource<T>(
         resourceName: resourceName, includesHeaders: false, out _, out _, data.GameData, data.GameData.Options.DefaultExcelLanguage);
