@@ -250,8 +250,14 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     /// <summary>When a fate hasn't appeared on the map yet</summary>
     public bool IsPending => State == FateState.Running && TimeRemaining <= 0 || State == FateState.Preparing && !IsOnMap;
 
-    // TODO: verify
-    public bool IsOnMap => AgentMap.Instance()->EventMarkers.Any(m => m is { IconId: not 0, DataId: not 0 and var id } && id == Id);
+    public bool IsOnMap {
+        get {
+            // markers go stale when the map isn't open, so force an update
+            var agent = AgentMap.Instance();
+            agent->UpdateEventMapMarkers(&agent->EventMarkersPtrs);
+            return agent->EventMarkers.Any(m => m is { IconId: not 0, DataId: not 0 and var id } && id == Id);
+        }
+    }
 
     public FateRule Rule => GetValue(
         fate => (FateRule)fate.As<FateContext>()->Rule,
