@@ -3,6 +3,8 @@
 		<RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
         <Use_DalamudPackager>false</Use_DalamudPackager>
 		<LangVersion>preview</LangVersion>
+		<PackageId>croizat.$(AssemblyName)</PackageId>
+		<Title>clib</Title>
     </PropertyGroup>
 
 	<Target Name="CheckDalamudSdkVersion" BeforeTargets="Build">
