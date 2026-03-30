@@ -33,7 +33,7 @@ public static class Coords {
             return 75; // Idyllshire
         List<Sheets.Aetheryte> aetherytes = [.. Svc.Data.GetExcelSheet<Sheets.Aetheryte>().Where(a => a.Territory.RowId == territoryTypeId && (includeAethernet || a.IsAetheryte)) ?? []];
         // aetherytes tend to not have a Y whereas gates do. Maps are mostly flat so just equalise and ignore Y
-        var validAetherytes = aetherytes.Select(a => (a.RowId, Pos: AetherytePosition(a))).Where(x => x.Pos != Vector3.NaN).ToList();
+        var validAetherytes = aetherytes.Select(a => (a.RowId, Pos: AetherytePosition(a))).Where(x => x.Pos.IsFinite()).ToList();
         return validAetherytes.Count > 0 ? validAetherytes.MinBy(x => (worldPos.ToVector2() - x.Pos.ToVector2()).LengthSquared()).RowId : null;
     }
 
@@ -43,7 +43,8 @@ public static class Coords {
         if (a.Level[0].ValueNullable is { } l)
             return new(l.X, l.Y, l.Z);
         var marker = Svc.Data.GetSubrowExcelSheet<Sheets.MapMarker>().SelectMany(x => x)
-            .Where(m => m.DataType == 3 && m.DataKey.RowId == a.RowId || m.DataType == 4 && m.DataKey.RowId == a.AethernetName.RowId).FirstOrNull();
+            .Where(m => m.DataType == 3 && m.DataKey.RowId == a.RowId || m.DataType == 4 && m.DataKey.RowId == a.AethernetName.RowId)
+            .FirstOrNull();
         return marker != null ? PixelCoordsToWorldCoords(marker.Value.X, marker.Value.Y, a.Territory.Value.Map.RowId) : Vector3.NaN;
     }
 
