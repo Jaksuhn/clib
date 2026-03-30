@@ -10,4 +10,14 @@ public static class ReadOnlySeStringExtensions {
         var bytes = new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(needle));
         return SeStringExtensions.ContainsText(seString, bytes);
     }
+
+    public static bool ContainsAny(this ReadOnlySeString seString, IEnumerable<string> needles) {
+        if (seString.IsEmpty) return false;
+        foreach (var n in needles) {
+            var bytes = new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(n));
+            if (SeStringExtensions.ContainsText(seString, bytes))
+                return true;
+        }
+        return false;
+    }
 }
