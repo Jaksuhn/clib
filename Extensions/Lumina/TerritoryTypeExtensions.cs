@@ -1,4 +1,5 @@
 using Lumina.Excel.Sheets;
+using Lumina.Extensions;
 
 namespace clib.Extensions;
 
@@ -12,6 +13,20 @@ public static class TerritoryTypeExtensions {
         public bool AllowsFlight => row.AetherCurrentCompFlgSet.RowId != 0;
         public bool IsWorkshop => row.BGM.RowId is 328;
         public bool IsDuty => ContentFinderCondition.Any(r => row.RowId is not 0 && r.TerritoryType.RowId == row.RowId);
+        public Aetheryte? PrimaryAetheryte {
+            get {
+                if (row.RowId == 886) // Firmament → Ishgard
+                    return Aetheryte.GetRow(70); ;
+                if (row.RowId == 478) // Dravanian Hinterlands → Idyllshire
+                    return Aetheryte.GetRow(75);
+                if (Aetheryte.Where(a => a.Territory.RowId == row.RowId && a.IsAetheryte).OrderBy(a => a.RowId).FirstOrNull() is { } primary)
+                    return primary;
+                if (Aetheryte.Where(a => a.Territory.RowId == row.RowId).OrderBy(a => a.RowId).FirstOrNull() is not { } shard)
+                    return null;
+                return Coords.FindPrimaryAetheryte(shard.RowId) is not 0 and var prime ? Aetheryte.GetRow(prime) : null;
+            }
+        }
+        public bool IsPrimaryAetheryteUnlocked => get_PrimaryAetheryte(row)?.IsUnlocked ?? false;
 
         public Weather GetPreviousWeather() => GetWeatherAt(row, GetCurrentWeatherRootTime().AddSeconds(-WeatherPeriod));
         public Weather GetCurrentWeather() => GetWeatherAt(row, GetCurrentWeatherRootTime());
