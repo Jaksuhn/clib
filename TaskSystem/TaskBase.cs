@@ -210,7 +210,9 @@ public abstract class TaskBase : AutoTask {
 
         Status = $"Interacting with aethernet to get to [{territoryId}]";
         if (!Player.WithinRange(aetherytePos, InteractRange.Aetheryte.MaxDistance))
-            await MoveTo(aetherytePos, MovementConfig.GroundMove.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false);
+            await MoveTo(aetherytePos, MovementConfig.Default.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false);
+        if (Player.Mounted)
+            await Dismount();
         ErrorIf(!TargetSystem.InteractWith(aetheryteId), "Failed to interact with aetheryte");
 
         if (Sheets.Aetheryte.GetRow(sourceAetheryteId).IsAetheryte)
@@ -242,10 +244,12 @@ public abstract class TaskBase : AutoTask {
         using var scope = BeginScope("Dismount");
         if (Player is null || !Player.Mounted) return;
 
-        if (Svc.Navmesh.NearestPointReachable(Player.Position) is { } nearestPoint)
-            await MoveTo(nearestPoint, MovementConfig.Everything);
-        else
-            Warning($"No nearest landable point found from {Player.Position}. Dismounting may fail");
+        if (Player.InFlight) {
+            if (Svc.Navmesh.NearestPointReachable(Player.Position) is { } nearestPoint)
+                await MoveTo(nearestPoint, MovementConfig.Everything);
+            else
+                Warning($"No nearest landable point found from {Player.Position}. Dismounting may fail");
+        }
 
         Status = "Dismounting";
         while (Player.Mounted) {
