@@ -112,7 +112,7 @@ public abstract class TaskBase : AutoTask {
         }
 
         await UseAethernet(Svc.ClientState.TerritoryType, dest);
-        await WaitWhile(() => Player.IsBusy, "WaitForAvailable");
+        //await WaitWhile(() => Player.IsBusy, "WaitForAvailable"); // will cause issues if you get into combat during move call. Prob not needed
 
         if (config.Movement.HasFlag(MovementOptions.Mount) || config.Movement.HasFlag(MovementOptions.Fly))
             await Mount();
