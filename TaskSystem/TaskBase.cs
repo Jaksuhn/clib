@@ -44,8 +44,15 @@ public readonly record struct MovementConfig(float? Tolerance, MovementOptions M
     public static MovementConfig InteractRange => new(3, MovementOptions.None, PathingStrategy.Auto);
 
     public MovementConfig WithTolerance(float? tolerance) => this with { Tolerance = tolerance };
+    public MovementConfig WithTolerance(InteractRange range) => this with { Tolerance = range.MaxDistance };
     public MovementConfig WithOptions(MovementOptions movement) => this with { Movement = movement };
     public MovementConfig WithStrategy(PathingStrategy pathing) => this with { Pathing = pathing };
+}
+
+public readonly record struct InteractRange(float MaxDistance, float MaxUpDistance) {
+    public static InteractRange Aetheryte => new(8.5f, float.MaxValue);
+    public static InteractRange GatheringPoint => new(3, 3);
+    public static InteractRange EventObj => new(2.1f, float.MaxValue);
 }
 
 [Flags]
@@ -80,7 +87,10 @@ public abstract class TaskBase : AutoTask {
             Error($"No flag set!");
             return;
         }
-        await TeleportTo(flag.TerritoryId, flag.Position.ToVector3());
+        var destination = flag.Position.ToVector3();
+        await TeleportTo(flag.TerritoryId, destination);
+        await UseAethernet(flag.TerritoryId, destination);
+        ErrorIf(Svc.ClientState.TerritoryType != flag.TerritoryId, $"Failed to reach flag territory (exp: {flag.TerritoryId}, act: {Svc.ClientState.TerritoryType})");
         await NavmeshReady();
         if (Svc.Navmesh.FlagToPoint() is not { } pof) {
             Error($"Unable to convert flag to point on floor");
@@ -100,6 +110,9 @@ public abstract class TaskBase : AutoTask {
             await TeleportTo(Svc.ClientState.TerritoryType, dest, allowSameZoneTeleport: true);
             await WaitWhile(() => Player.IsBusy, "WaitForAvailable");
         }
+
+        await UseAethernet(Svc.ClientState.TerritoryType, dest);
+        await WaitWhile(() => Player.IsBusy, "WaitForAvailable");
 
         if (config.Movement.HasFlag(MovementOptions.Mount) || config.Movement.HasFlag(MovementOptions.Fly))
             await Mount();
@@ -153,56 +166,64 @@ public abstract class TaskBase : AutoTask {
         if (!allowSameZoneTeleport && Svc.ClientState.TerritoryType == territoryId)
             return; // already in correct zone
 
-        var closestAetheryteId = Coords.FindClosestAetheryte(territoryId, destination) ?? 0;
+        var closestAetheryteId = Coords.FindClosestAetheryte(territoryId, destination, includeAethernet: true) ?? 0;
         var teleportAetheryteId = Coords.FindPrimaryAetheryte(closestAetheryteId);
         ErrorIf(teleportAetheryteId == 0, $"Failed to find aetheryte in [{territoryId}] {Svc.Data.GetRef<Sheets.TerritoryType>(territoryId).Value.PlaceName.Value.Name}");
-        if (Svc.Data.GetRef<Sheets.Aetheryte>(teleportAetheryteId) is { Value.Territory.RowId: var destinationId, Value.PlaceName.Value.Name: var destinationName } && Svc.ClientState.TerritoryType != destinationId) {
+        if (Svc.Data.GetRef<Sheets.Aetheryte>(teleportAetheryteId) is { Value.Territory.RowId: var destinationId, Value.PlaceName.Value.Name: var destinationName } &&
+            (Svc.ClientState.TerritoryType != destinationId || allowSameZoneTeleport)) {
             Status = $"Teleporting to {destinationName}";
             ErrorIf(!ActionManager.Teleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
             await WaitUntilTerritory(destinationId);
-            if (destinationId == territoryId) return; // we're in target zone; otherwise fall through to aethernet to get from primary zone to target zone
         }
+    }
 
-        if (Svc.ClientState.TerritoryType == territoryId) {
-            Status = "Teleporting to aetheryte";
-            ErrorIf(!ActionManager.Teleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
-            if (teleportAetheryteId == closestAetheryteId) return;
-
-            var (aetheryteId, aetherytePos) = Coords.FindAetheryte(teleportAetheryteId);
-            if (!Player.WithinRange(aetherytePos, 15))
-                await MoveTo(aetherytePos, MovementConfig.GroundMove.WithTolerance(10));
-            ErrorIf(!TargetSystem.InteractWith(aetheryteId), "Failed to interact with aetheryte");
-            await WaitUntilSkipping(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectAethernet", UiSkipOptions.Talk);
-            PacketDispatcher.TeleportToAethernet(teleportAetheryteId, closestAetheryteId);
-            await WaitUntil(() => Player.IsBusy, "TeleportStart");
-            await WaitUntil(() => Svc.ClientState.TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinish");
+    protected async Task UseAethernet(uint territoryId, Vector3 destination) {
+        using var scope = BeginScope("UseAethernet");
+        var sourceAetheryteId = Coords.FindClosestAetheryte(Svc.ClientState.TerritoryType, Player!.Position, includeAethernet: true) ?? 0;
+        var destinationAetheryteId = Coords.FindClosestAetheryte(territoryId, destination, includeAethernet: true) ?? 0;
+        if (sourceAetheryteId == 0 || destinationAetheryteId == 0 || sourceAetheryteId == destinationAetheryteId)
             return;
-        }
-
-        if (teleportAetheryteId != closestAetheryteId) {
-            Status = $"Interacting with aethernet to get to [{territoryId}]";
-            var (aetheryteId, aetherytePos) = Coords.FindAetheryte(teleportAetheryteId);
-            await MoveTo(aetherytePos, MovementConfig.Default.WithTolerance(10));
-            ErrorIf(!TargetSystem.InteractWith(aetheryteId), "Failed to interact with aetheryte");
-            await WaitUntilSkipping(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectAethernet", UiSkipOptions.Talk);
-            PacketDispatcher.TeleportToAethernet(teleportAetheryteId, closestAetheryteId);
-            await WaitUntil(() => Player.IsBusy, "TeleportStart"); // TODO: something better
-            await WaitUntil(() => Svc.ClientState.TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinish");
-        }
 
         if (territoryId == 886) {
             // firmament special case
             Status = $"Interacting with aetheryte to get to the Firmament";
-            var (aetheryteId, aetherytePos) = Coords.FindAetheryte(teleportAetheryteId);
-            await MoveTo(aetherytePos, MovementConfig.Default.WithTolerance(10));
-            ErrorIf(!TargetSystem.InteractWith(aetheryteId), "Failed to interact with aetheryte");
+            var (firmamentObjId, firmamentObjPos) = Coords.FindAetheryte(70);
+            if (firmamentObjId is 0)
+                return;
+            if (!Player.WithinRange(firmamentObjPos, InteractRange.Aetheryte.MaxDistance))
+                await MoveTo(firmamentObjPos, MovementConfig.Default.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false);
+            ErrorIf(!TargetSystem.InteractWith(firmamentObjId), "Failed to interact with aetheryte");
             await WaitUntilSkipping(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectFirmament", UiSkipOptions.Talk);
-            PacketDispatcher.TeleportToFirmament(teleportAetheryteId);
+            PacketDispatcher.TeleportToFirmament(70);
             await WaitUntilTerritory(territoryId);
+            return;
         }
 
-        // I think this check gives more problems than it solves
-        WarningIf(Svc.ClientState.TerritoryType != territoryId, $"Failed to teleport to expected zone (exp: {territoryId}, act: {Svc.ClientState.TerritoryType})");
+        var sourcePrimary = Coords.FindPrimaryAetheryte(sourceAetheryteId);
+        var destinationPrimary = Coords.FindPrimaryAetheryte(destinationAetheryteId);
+        if (sourcePrimary == 0 || sourcePrimary != destinationPrimary)
+            return;
+
+        var (aetheryteId, aetherytePos) = Coords.FindAetheryte(sourceAetheryteId) is var sourceObj && sourceObj.id != 0 ? sourceObj : Coords.FindAetheryte(sourcePrimary);
+        if (aetheryteId == 0)
+            return;
+
+        Status = $"Interacting with aethernet to get to [{territoryId}]";
+        if (!Player.WithinRange(aetherytePos, InteractRange.Aetheryte.MaxDistance))
+            await MoveTo(aetherytePos, MovementConfig.GroundMove.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false);
+        ErrorIf(!TargetSystem.InteractWith(aetheryteId), "Failed to interact with aetheryte");
+
+        if (Sheets.Aetheryte.GetRow(sourceAetheryteId).IsAetheryte)
+            await WaitUntilSkipping(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectAethernet", UiSkipOptions.Talk);
+        else
+            await WaitUntil(() => AtkUnitBase.IsAddonReady("TelepotTown"), "WaitForAddon");
+        PacketDispatcher.TeleportToAethernet(sourceAetheryteId, destinationAetheryteId);
+        await WaitUntil(() => Player.IsBusy, "TeleportStart");
+
+        if (Svc.ClientState.TerritoryType != territoryId)
+            await WaitUntil(() => Svc.ClientState.TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinish");
+        else
+            await WaitUntil(() => GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinishSameTerritory");
     }
 
     protected async Task Mount() {

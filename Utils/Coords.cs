@@ -27,9 +27,9 @@ public static class Coords {
         => FlagMapMarker.Get() is { } flag ? FindClosestAetheryte(flag.TerritoryId, flag.Position.ToVector3(), includeAethernet) : null;
 
     public static uint? FindClosestAetheryte(uint territoryTypeId, Vector3 worldPos, bool includeAethernet = true) {
-        if (territoryTypeId == 886) // Firmament
+        if (!includeAethernet && territoryTypeId == 886) // Firmament
             return 70; // Ishgard
-        if (territoryTypeId == 478) // Hinterlands
+        if (!includeAethernet && territoryTypeId == 478) // Hinterlands
             return 75; // Idyllshire
         List<Sheets.Aetheryte> aetherytes = [.. Svc.Data.GetExcelSheet<Sheets.Aetheryte>().Where(a => a.Territory.RowId == territoryTypeId && (includeAethernet || a.IsAetheryte)) ?? []];
         // aetherytes tend to not have a Y whereas gates do. Maps are mostly flat so just equalise and ignore Y
