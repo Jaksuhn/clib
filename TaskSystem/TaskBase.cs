@@ -92,7 +92,7 @@ public abstract class TaskBase : AutoTask {
     protected async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
         using var scope = BeginScope("MoveTo");
         await WaitUntil(() => Player.Available, "WaitingForPlayer");
-        var tolerance = config.Tolerance ?? Svc.Navmesh.GetTolerance();
+        var tolerance = Math.Max(config.Tolerance ?? 0, Svc.Navmesh.GetTolerance());
         if (Player.WithinRange(dest, tolerance))
             return;
 
@@ -114,9 +114,9 @@ public abstract class TaskBase : AutoTask {
             using var stop = new OnDispose(Svc.Navmesh.Stop);
 
             if (stopCondition is null)
-                await WaitWhile(() => !Player.WithinRange(dest, tolerance), "Navigate");
+                await WaitWhile(() => !Player.WithinRange(dest, tolerance) || !Svc.Navmesh.IsRunning(), "Navigate");
             else {
-                await WaitWhile(() => !(Player.WithinRange(dest, tolerance) || stopCondition()), "Navigate");
+                await WaitWhile(() => !(Player.WithinRange(dest, tolerance) || stopCondition() || !Svc.Navmesh.IsRunning()), "Navigate");
                 if (stopCondition() && onStopReached is not null) {
                     Svc.Navmesh.Stop(); // must be stopped because onStopReached's MoveTo (if present) calls !PathfindingInProgress
                     await onStopReached();
