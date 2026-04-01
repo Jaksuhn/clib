@@ -125,11 +125,12 @@ public abstract class TaskBase : AutoTask {
             ErrorIf(!Svc.Navmesh.PathfindAndMoveTo(dest, Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly), "Failed to start pathfinding to destination");
             Status = $"Moving to {dest}";
             using var stop = new OnDispose(Svc.Navmesh.Stop);
+            await NextFrame(); // tick so that vnav has a chance to flip to IsRunning
 
             if (stopCondition is null)
-                await WaitWhile(() => !Player.WithinRange(dest, tolerance) || !Svc.Navmesh.IsRunning(), "Navigate");
+                await WaitWhile(() => !Player.WithinRange(dest, tolerance) && (Svc.Navmesh.PathfindingInProgress || Svc.Navmesh.IsRunning()), "Navigate");
             else {
-                await WaitWhile(() => !(Player.WithinRange(dest, tolerance) || stopCondition() || !Svc.Navmesh.IsRunning()), "Navigate");
+                await WaitWhile(() => !Player.WithinRange(dest, tolerance) && !stopCondition() && (Svc.Navmesh.PathfindingInProgress || Svc.Navmesh.IsRunning()), "Navigate");
                 if (stopCondition() && onStopReached is not null) {
                     Svc.Navmesh.Stop(); // must be stopped because onStopReached's MoveTo (if present) calls !PathfindingInProgress
                     await onStopReached();
