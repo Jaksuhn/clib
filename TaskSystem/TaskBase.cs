@@ -173,8 +173,34 @@ public abstract class TaskBase : AutoTask {
         if (Svc.Data.GetRef<Sheets.Aetheryte>(teleportAetheryteId) is { Value.Territory.RowId: var destinationId, Value.PlaceName.Value.Name: var destinationName } &&
             (Svc.ClientState.TerritoryType != destinationId || allowSameZoneTeleport)) {
             Status = $"Teleporting to {destinationName}";
-            ErrorIf(!ActionManager.Teleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
-            await WaitUntilTerritory(destinationId);
+
+            while (true) { // infinite loops are my passion
+                var sawCast = false;
+                var sawUiFade = false;
+                ErrorIf(!ActionManager.Teleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
+
+                while (true) {
+                    var isUiFading = Player.IsUiFading;
+                    var isCasting = Player?.IsCasting ?? false;
+
+                    if (isCasting)
+                        sawCast = true;
+                    if (isUiFading)
+                        sawUiFade = true;
+
+                    if (sawUiFade && !isUiFading) {
+                        await WaitUntil(() => GameMain.IsTerritoryLoaded && Player.Interactable, "WaitTransportFinish");
+                        return;
+                    }
+
+                    // cast ended, ui didn't fade, and cast didn't complete
+                    // id resets after cast but elapsed doesn't until a new cast occurs. I'm assuming that it cannot be 5 and the teleport still gets cancelled
+                    if (sawCast && !isCasting && !sawUiFade && ActionManager.GetCastAction() is not { Elapsed: 5 })
+                        break;
+
+                    await NextFrame();
+                }
+            }
         }
     }
 

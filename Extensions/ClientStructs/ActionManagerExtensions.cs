@@ -6,6 +6,8 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 namespace clib.Extensions;
 
 public static unsafe class ActionManagerExtensions {
+    public record struct CastAction(ActionType Type, uint Id, float Elapsed, float Total);
+
     extension(ActionManager) {
         public static bool IsCasting(ActionType actionType, uint actionId) {
             if (Control.GetLocalPlayer() is not null and var player) {
@@ -24,6 +26,9 @@ public static unsafe class ActionManagerExtensions {
             var am = ActionManager.Instance();
             return am is not null && am->GetActionStatus(type, itemId) != 0;
         }
+
+        public static CastAction GetCastAction()
+            => ActionManager.Instance() is not null and var am ? new CastAction(am->CastActionType, am->CastActionId, am->CastTimeElapsed, am->CastTimeTotal) : default;
 
         public static bool Teleport(uint aetheryteId, byte subIndex = 0) => UIState.Instance()->Telepo.Teleport(aetheryteId, subIndex);
 
