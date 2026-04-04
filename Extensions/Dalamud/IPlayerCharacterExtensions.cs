@@ -44,5 +44,7 @@ public static unsafe class IPlayerCharacterExtensions {
         /// Rotation packed into a ushort. Used in some <see cref="GameMain.ExecuteCommand"/> functions.
         /// </summary>
         public float PackedRotation => (ushort)(((Svc.Objects.LocalPlayer?.Rotation + Math.PI) / (2 * Math.PI) * 65536) ?? 0);
+
+        public bool HasChocoboStabled => PlayerState.Instance()->IsPlayerStateFlagSet(PlayerStateFlag.IsBuddyInStable);
     }
 }
