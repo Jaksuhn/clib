@@ -99,7 +99,7 @@ public abstract class TaskBase : AutoTask {
         await MoveTo(pof, config, allowTeleportIfFaster, stopCondition, onStopReached);
     }
 
-    protected async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
+    protected async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernet = true) {
         using var scope = BeginScope("MoveTo");
         await WaitUntil(() => Player.Available, "WaitingForPlayer");
         var tolerance = Math.Max(config.Tolerance ?? 0, Svc.Navmesh.GetTolerance());
@@ -111,7 +111,8 @@ public abstract class TaskBase : AutoTask {
             await WaitWhile(() => Player.IsBusy, "WaitForAvailable");
         }
 
-        await UseAethernet(Svc.ClientState.TerritoryType, dest);
+        if (allowAethernet)
+            await UseAethernet(Svc.ClientState.TerritoryType, dest);
         //await WaitWhile(() => Player.IsBusy, "WaitForAvailable"); // will cause issues if you get into combat during move call. Prob not needed
 
         if (config.Movement.HasFlag(MovementOptions.Mount) || config.Movement.HasFlag(MovementOptions.Fly))
@@ -237,7 +238,7 @@ public abstract class TaskBase : AutoTask {
 
         Status = $"Interacting with aethernet to get to [{territoryId}]";
         if (!Player.WithinRange(aetherytePos, InteractRange.Aetheryte.MaxDistance))
-            await MoveTo(aetherytePos, MovementConfig.Default.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false);
+            await MoveTo(aetherytePos, MovementConfig.Default.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false, allowAethernet: false);
         if (Player.Mounted)
             await Dismount();
         ErrorIf(!TargetSystem.InteractWith(aetheryteId), "Failed to interact with aetheryte");
