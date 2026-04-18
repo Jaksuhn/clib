@@ -27,12 +27,14 @@ public enum PathingStrategy {
 
 public static class MovementOptionsExtensions {
     extension(MovementOptions) {
-        public static MovementOptions GetCurrent() {
-            if (Svc.Objects.LocalPlayer.InFlight)
-                return MovementOptions.Mount | MovementOptions.Fly | MovementOptions.Dismount;
-            if (Svc.Objects.LocalPlayer.Mounted)
-                return MovementOptions.Mount | MovementOptions.Dismount;
-            return MovementOptions.None;
+        public static MovementOptions Current {
+            get {
+                if (Svc.Objects.LocalPlayer.InFlight)
+                    return MovementOptions.Mount | MovementOptions.Fly | MovementOptions.Dismount;
+                if (Svc.Objects.LocalPlayer.Mounted)
+                    return MovementOptions.Mount | MovementOptions.Dismount;
+                return MovementOptions.None;
+            }
         }
     }
 }
