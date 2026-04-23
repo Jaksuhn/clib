@@ -72,6 +72,7 @@ public class ItemHandle {
     public bool IsCollectible => ItemUtil.IsCollectible(ItemId);
     public bool IsHighQuality => ItemUtil.IsHighQuality(ItemId);
     public bool IsEventItem => ItemUtil.IsEventItem(ItemId);
+    public bool IsTreasureMap => IsEventItem ? EventItem.GetRow(ItemId).Category.RowId == 2 : GameData.ValueNullable?.FilterGroup == 18;
 
     public bool HasItem => GetCount() > 0;
     public unsafe bool IsEquipped => InventoryManager.Instance()->GetInventoryItems(InventoryType.EquippedItems).Any(i => i.Value != null && i.Value->ItemId == ItemId);
@@ -135,6 +136,14 @@ public class ItemHandle {
         //    Svc.Log.Debug($"Equipping item [{this}] from {ItemLocation}/{ItemLocation.GetODR()} to {(InventoryType.EquippedItems, GameData.Value.EquipSlot)}");
         //    RaptureAtkModule.Instance()->HandleItemMove(dropOut, eis, 4);
         //}
+    }
+
+    public unsafe bool OpenContext() {
+        var agent = AgentInventoryContext.Instance();
+        if (agent == null || ItemLocation == null) return false;
+
+        agent->OpenForItemSlot(ItemLocation.Container, ItemLocation.Slot, 0, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
+        return true;
     }
 
     public unsafe void MoveTo(InventoryType[] containers) {
