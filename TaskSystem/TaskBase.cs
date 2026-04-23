@@ -170,6 +170,9 @@ public abstract class TaskBase : AutoTask {
         if (!allowSameZoneTeleport && Svc.ClientState.TerritoryType == territoryId)
             return; // already in correct zone
 
+        // must wait for ui or else a world travel (that fades ui) will conflict because teleport is called before it fades back in
+        await WaitWhile(() => Player.IsUiFading, "WaitForUiUnfade");
+
         var closestAetheryteId = Coords.FindClosestAetheryte(territoryId, destination, includeAethernet: true) ?? 0;
         var teleportAetheryteId = Coords.FindPrimaryAetheryte(closestAetheryteId);
         ErrorIf(teleportAetheryteId == 0, $"Failed to find aetheryte in [{territoryId}] {Svc.Data.GetRef<Sheets.TerritoryType>(territoryId).Value.PlaceName.Value.Name}");
