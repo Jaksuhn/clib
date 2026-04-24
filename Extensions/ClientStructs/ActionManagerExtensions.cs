@@ -1,6 +1,5 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace clib.Extensions;
@@ -32,28 +31,22 @@ public static unsafe class ActionManagerExtensions {
 
         public static bool Teleport(uint aetheryteId, byte subIndex = 0) => UIState.Instance()->Telepo.Teleport(aetheryteId, subIndex);
 
-        public static bool Sprint() {
-            const uint SprintId = 4;
-            const ushort SprintStatus = 50;
-            const uint StellarSprintId = 43357;
-            const ushort StellarSprintStatus = 4398;
-            const uint IslandSprintId = 31314;
+        public static uint GetAdjustedSprintId() => GameMain.Instance()->CurrentTerritoryIntendedUseId switch {
+            FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse.CosmicExploration => 43357,
+            FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse.IslandSanctuary => 31314,
+            _ => 4
+        };
 
-            foreach (var s in Control.GetLocalPlayer()->StatusManager.Status) {
-                if (s.StatusId is StellarSprintStatus && s.RemainingTime < 5)
-                    return ActionManager.Instance()->UseAction(ActionType.Action, StellarSprintId);
-                if (s.StatusId is SprintStatus) {
-                    if (MJIManager.Instance()->IsPlayerInSanctuary && s.RemainingTime < 5)
-                        return ActionManager.Instance()->UseAction(ActionType.Action, IslandSprintId);
-                }
-            }
+        public static uint GetAdjustedSprintStatusId() => GameMain.Instance()->CurrentTerritoryIntendedUseId switch {
+            FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse.CosmicExploration => 4398,
+            FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse.IslandSanctuary => 50,
+            _ => 50
+        };
 
-            if (GameMain.Instance()->CurrentTerritoryIntendedUseId is FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse.CosmicExploration)
-                return ActionManager.Instance()->UseAction(ActionType.Action, StellarSprintId);
-            else if (MJIManager.Instance()->IsPlayerInSanctuary)
-                return ActionManager.Instance()->UseAction(ActionType.Action, IslandSprintId);
-            else
-                return ActionManager.Instance()->UseAction(ActionType.GeneralAction, SprintId);
-        }
+        public static bool Sprint() => Control.GetLocalPlayer()->StatusManager.GetSprintTimeRemaining() switch {
+            < 5 when ActionManager.GetAdjustedSprintId() is var id and not 4 => ActionManager.Instance()->UseAction(ActionType.Action, id),
+            0 when ActionManager.GetAdjustedSprintId() is var id and 4 => ActionManager.Instance()->UseAction(ActionType.Action, id),
+            _ => false
+        };
     }
 }
