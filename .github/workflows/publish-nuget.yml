@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      DALAMUD_HOME: /tmp/dalamud
 
     steps:
       - uses: actions/checkout@v4
@@ -28,13 +30,11 @@ jobs:
       - name: Download Dalamud
         run: |
           set -euo pipefail
-          DALAMUD_HOME=/tmp/dalamud
           rm -rf "$DALAMUD_HOME"
           mkdir -p "$DALAMUD_HOME"
           ZIP=/tmp/dalamud-latest.zip
           curl -fsSL "https://goatcorp.github.io/dalamud-distrib/latest.zip" -o "$ZIP"
           unzip -q "$ZIP" -d "$DALAMUD_HOME"
-          echo "DALAMUD_HOME=$DALAMUD_HOME" >> "$GITHUB_ENV"
 
       - name: Resolve version
         id: version
@@ -88,6 +88,7 @@ jobs:
         run: >
           dotnet pack clib.csproj
           --configuration Release
+          -p:DALAMUD_HOME=/tmp/dalamud
           -p:PackageVersion=${{ steps.version.outputs.version }}
           -p:Version=${{ steps.version.outputs.version }}
           --output ./artifacts
