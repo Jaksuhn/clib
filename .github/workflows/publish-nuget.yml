@@ -25,6 +25,17 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Download Dalamud
+        run: |
+          set -euo pipefail
+          DALAMUD_HOME=/tmp/dalamud
+          rm -rf "$DALAMUD_HOME"
+          mkdir -p "$DALAMUD_HOME"
+          ZIP=/tmp/dalamud-latest.zip
+          curl -fsSL "https://goatcorp.github.io/dalamud-distrib/latest.zip" -o "$ZIP"
+          unzip -q "$ZIP" -d "$DALAMUD_HOME"
+          echo "DALAMUD_HOME=$DALAMUD_HOME" >> "$GITHUB_ENV"
+
       - name: Resolve version
         id: version
         env:
