@@ -27,9 +27,6 @@ public class ItemCostLookup {
 
     private readonly Item _gil;
     private readonly List<Item> _gcSeal;
-
-    private readonly Dictionary<uint, List<(uint ItemId, uint Amount)>> _itemCostsMap = [];
-
     private static readonly Dictionary<uint, uint> Currencies = new()
     {
         { 1, 28 },
@@ -83,7 +80,7 @@ public class ItemCostLookup {
     }
 
     public ItemCost? GetItemCost(uint itemId) {
-        if (!_itemCostsMap.TryGetValue(itemId, out var costs) || costs.Count == 0) {
+        if (!AllItemCosts.TryGetValue(itemId, out var costs) || costs.Count == 0) {
             return null;
         }
 
@@ -92,8 +89,8 @@ public class ItemCostLookup {
         return new ItemCost(itemHandle, costList);
     }
 
-    public List<(uint ItemId, uint Amount)> GetItemCosts(uint itemId) => _itemCostsMap.TryGetValue(itemId, out var costs) ? costs : [];
-    public Dictionary<uint, List<(uint ItemId, uint Amount)>> GetAllItemCosts() => _itemCostsMap;
+    public List<(uint ItemId, uint Amount)> GetItemCosts(uint itemId) => AllItemCosts.TryGetValue(itemId, out var costs) ? costs : [];
+    public Dictionary<uint, List<(uint ItemId, uint Amount)>> AllItemCosts { get; } = [];
 
     private void BuildAllItems() {
         var processedShops = new HashSet<uint>();
@@ -427,14 +424,14 @@ public class ItemCostLookup {
             return;
         }
 
-        if (!_itemCostsMap.ContainsKey(itemId)) {
-            _itemCostsMap[itemId] = [];
+        if (!AllItemCosts.ContainsKey(itemId)) {
+            AllItemCosts[itemId] = [];
         }
 
         // Add all costs, avoiding duplicates
         foreach (var cost in costs) {
-            if (!_itemCostsMap[itemId].Any(c => c.ItemId == cost.ItemId && c.Amount == cost.Amount)) {
-                _itemCostsMap[itemId].Add(cost);
+            if (!AllItemCosts[itemId].Any(c => c.ItemId == cost.ItemId && c.Amount == cost.Amount)) {
+                AllItemCosts[itemId].Add(cost);
             }
         }
     }

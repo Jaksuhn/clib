@@ -27,25 +27,25 @@ public static class Coords {
         => FlagMapMarker.Get() is { } flag ? FindClosestAetheryte(flag.TerritoryId, flag.Position.ToVector3(), includeAethernet) : null;
 
     public static uint? FindClosestAetheryte(uint territoryTypeId, Vector3 worldPos, bool includeAethernet = true) {
-        if (territoryTypeId == 886) // Firmament
+        if (!includeAethernet && territoryTypeId == 886) // Firmament
             return 70; // Ishgard
-        if (territoryTypeId == 478) // Hinterlands
+        if (!includeAethernet && territoryTypeId == 478) // Hinterlands
             return 75; // Idyllshire
         List<Sheets.Aetheryte> aetherytes = [.. Svc.Data.GetExcelSheet<Sheets.Aetheryte>().Where(a => a.Territory.RowId == territoryTypeId && (includeAethernet || a.IsAetheryte)) ?? []];
         // aetherytes tend to not have a Y whereas gates do. Maps are mostly flat so just equalise and ignore Y
-        return aetherytes.Count > 0 ? aetherytes.MinBy(a => (worldPos.ToVector2() - AetherytePosition(a).ToVector2()).LengthSquared()).RowId : null;
+        var validAetherytes = aetherytes.Select(a => (a.RowId, Pos: AetherytePosition(a))).Where(x => x.Pos.IsFinite()).ToList();
+        return validAetherytes.Count > 0 ? validAetherytes.MinBy(x => (worldPos.ToVector2() - x.Pos.ToVector2()).LengthSquared()).RowId : null;
     }
 
     public static Vector3 AetherytePosition(uint aetheryteId) => AetherytePosition(Svc.Data.GetRef<Sheets.Aetheryte>(aetheryteId).Value);
     public static Vector3 AetherytePosition(Sheets.Aetheryte a) {
         // stolen from HTA, uses pixel coordinates
-        var level = a.Level[0].ValueNullable;
-        if (level != null)
-            return new(level.Value.X, level.Value.Y, level.Value.Z);
-        var marker = Svc.Data.GetSubrowExcelSheet<Sheets.MapMarker>().SelectMany(m => m).FirstOrDefault(m =>
-            m.DataType == 3 && m.DataKey.RowId == a.RowId ||
-            m.DataType == 4 && m.DataKey.RowId == a.AethernetName.RowId);
-        return PixelCoordsToWorldCoords(marker.X, marker.Y, a.Territory.Value.Map.RowId);
+        if (a.Level[0].ValueNullable is { } l)
+            return new(l.X, l.Y, l.Z);
+        var marker = Svc.Data.GetSubrowExcelSheet<Sheets.MapMarker>().SelectMany(x => x)
+            .Where(m => m.DataType == 3 && m.DataKey.RowId == a.RowId || m.DataType == 4 && m.DataKey.RowId == a.AethernetName.RowId)
+            .FirstOrNull();
+        return marker != null ? PixelCoordsToWorldCoords(marker.Value.X, marker.Value.Y, a.Territory.Value.Map.RowId) : Vector3.NaN;
     }
 
     public static bool IsTeleportingFaster(Vector3 dest) {

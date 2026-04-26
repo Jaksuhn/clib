@@ -3,6 +3,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
@@ -32,6 +33,8 @@ public static unsafe class IPlayerCharacterExtensions {
             Svc.Condition[ConditionFlag.InCombat] ||
             !GameMain.IsTerritoryLoaded;
 
+        public bool IsUiFading => RaptureAtkUnitManager.Instance() is not null and var mgr && mgr->IsUiFading;
+
         public RowRef<TerritoryType> Territory => Svc.Data.GetRef<TerritoryType>(Svc.ClientState.TerritoryType);
 
         public bool CanMount => pc.Territory.Value.Mount && PlayerState.Instance()->NumOwnedMounts > 0;
@@ -41,5 +44,7 @@ public static unsafe class IPlayerCharacterExtensions {
         /// Rotation packed into a ushort. Used in some <see cref="GameMain.ExecuteCommand"/> functions.
         /// </summary>
         public float PackedRotation => (ushort)(((Svc.Objects.LocalPlayer?.Rotation + Math.PI) / (2 * Math.PI) * 65536) ?? 0);
+
+        public bool HasChocoboStabled => PlayerState.Instance()->IsPlayerStateFlagSet(PlayerStateFlag.IsBuddyInStable);
     }
 }

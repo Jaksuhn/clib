@@ -1,4 +1,4 @@
-﻿namespace clib.Extensions;
+namespace clib.Extensions;
 
 public static class VectorExtensions {
     public static Vector3 RandomPoint(this Vector3 center, float radius) {
@@ -48,4 +48,6 @@ public static class VectorExtensions {
 
     public static Vector2 ToVector2(this Vector3 v) => new(v.X, v.Z);
     public static Vector3 ToVector3(this Vector2 v) => new(v.X, 0, v.Y);
+
+    public static bool IsFinite(this Vector3 v) => float.IsFinite(v.X) && float.IsFinite(v.Y) && float.IsFinite(v.Z);
 }

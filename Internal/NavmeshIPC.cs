@@ -14,6 +14,7 @@ internal class NavmeshIPC {
     private readonly ICallGateSubscriber<Vector3?> _flagToPoint;
 
     private readonly ICallGateSubscriber<object> _pathStop;
+    private readonly ICallGateSubscriber<bool> _pathIsRunning;
     private readonly ICallGateSubscriber<float> _pathGetTolerance;
 
     private readonly ICallGateSubscriber<Vector3, bool, bool> _pathfindAndMoveTo;
@@ -30,6 +31,7 @@ internal class NavmeshIPC {
         _flagToPoint = Svc.Interface.GetIpcSubscriber<Vector3?>("vnavmesh.Query.Mesh.FlagToPoint");
 
         _pathStop = Svc.Interface.GetIpcSubscriber<object>("vnavmesh.Path.Stop");
+        _pathIsRunning = Svc.Interface.GetIpcSubscriber<bool>("vnavmesh.Path.IsRunning");
         _pathGetTolerance = Svc.Interface.GetIpcSubscriber<float>("vnavmesh.Path.GetTolerance");
 
         _pathfindAndMoveTo = Svc.Interface.GetIpcSubscriber<Vector3, bool, bool>("vnavmesh.SimpleMove.PathfindAndMoveTo");
@@ -53,6 +55,7 @@ internal class NavmeshIPC {
             return;
         _pathStop.InvokeAction();
     }
+    public bool IsRunning() => _pathIsRunning.HasFunction && _pathIsRunning.InvokeFunc();
     public float GetTolerance() => _pathGetTolerance.HasFunction ? _pathGetTolerance.InvokeFunc() : 0f;
 
     public bool PathfindAndMoveTo(Vector3 destination, bool allowFlying = false) => _pathfindAndMoveTo.HasFunction && _pathfindAndMoveTo.InvokeFunc(destination, allowFlying);

@@ -5,6 +5,6 @@ namespace clib.Extensions;
 
 public static unsafe class AgentReceiveEventArgsExtensions {
     extension(AgentReceiveEventArgs args) {
-        public Span<AtkValue> GetAtkValues() => new((void*)args.AtkValues, (int)args.ValueCount);
+        public Span<AtkValue> AtkValues => new((void*)args.AtkValues, (int)args.ValueCount);
     }
 }
