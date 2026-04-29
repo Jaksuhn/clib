@@ -207,7 +207,7 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     public string Name => FateType switch {
         FateType.Normal => Svc.Data.GetRef<Sheets.Fate>(Id).Value.Name.ToString() ?? $"FATE {Id}",
         FateType.DynamicEvent => Svc.Data.GetRef<Sheets.DynamicEvent>(Id).Value.Name.ToString() ?? $"DynamicEvent {Id}",
-        FateType.MechaEvent => Svc.Data.GetRef<Sheets.WKSMechaEventData>(Id).Value.Unknown0.ToString() ?? $"MechaEvent {Id}",
+        FateType.MechaEvent => Svc.Data.GetRef<Sheets.WKSMechaEventData>(Id).Value.Name.ToString() ?? $"MechaEvent {Id}",
         _ => $"Unknown Type: {Id}",
     };
 

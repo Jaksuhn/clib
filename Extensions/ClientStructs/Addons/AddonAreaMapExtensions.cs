@@ -19,7 +19,7 @@ public static unsafe partial class AddonAreaMapExtensions {
         var node = areaMap.AtkUnitBase.GetNodeById<AtkTextNode>(46);
         if (node == null) return null;
         var text = node->GetText();
-        var match = ExtractCoords().Match(text);
+        var match = ExtractCoords().Match(text.ToString());
         if (match.Success && match.Groups.Count >= 3) {
             var xStr = ConvertSubscriptToNumber(match.Groups[1].Value);
             var yStr = ConvertSubscriptToNumber(match.Groups[2].Value);
