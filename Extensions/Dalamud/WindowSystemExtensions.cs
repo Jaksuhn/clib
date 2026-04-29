@@ -1,4 +1,4 @@
-﻿using Dalamud.Interface.Windowing;
+using Dalamud.Interface.Windowing;
 using System.Diagnostics.CodeAnalysis;
 
 namespace clib.Extensions;
