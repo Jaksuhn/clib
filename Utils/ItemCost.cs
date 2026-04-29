@@ -48,7 +48,7 @@ public static class ItemCost {
                         var costQuantity = itemCost.CurrencyCost;
                         string? costName = null;
 
-                        if (itemCost.HqCost == 3) { // hqcost is misnamed, this determines whether it's an item id or special bucket id
+                        if (itemCost.CostType == 3) {
                             unsafe {
                                 var specialId = CurrencyManager.Instance()->GetItemIdBySpecialId((byte)costItemId);
                                 var item = Svc.Data.GetRow<Item>(specialId);

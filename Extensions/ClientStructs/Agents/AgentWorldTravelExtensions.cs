@@ -2,7 +2,6 @@
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.Interop;
 using Lumina.Excel.Sheets;
-using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace clib.Extensions;
 
@@ -20,7 +19,7 @@ public static unsafe class AgentWorldTravelExtensions {
         instance.DestinationWorldId = destinationWorldId;
         instance.SetupWorldTravelInfo((ushort)Svc.PlayerState.CurrentWorld.RowId, destinationWorldId);
         var retval = new AtkValue();
-        Span<AtkValue> values = [new AtkValue { Type = ValueType.Int, Int = 0 }];
+        Span<AtkValue> values = [new AtkValue { Type = AtkValueType.Int, Int = 0 }];
         instance.ReceiveEvent(&retval, values.GetPointer(0), (uint)values.Length, 1);
     }
 }
