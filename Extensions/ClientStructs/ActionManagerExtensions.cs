@@ -1,6 +1,7 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace clib.Extensions;
 
@@ -25,6 +26,8 @@ public static unsafe class ActionManagerExtensions {
             var am = ActionManager.Instance();
             return am is not null && am->GetActionStatus(type, itemId) != 0;
         }
+
+        public static void ExecuteMainCommand(uint commandId) => UIModule.Instance()->ExecuteMainCommand(commandId);
 
         public static CastAction GetCastAction()
             => ActionManager.Instance() is not null and var am ? new CastAction(am->CastActionType, am->CastActionId, am->CastTimeElapsed, am->CastTimeTotal) : default;

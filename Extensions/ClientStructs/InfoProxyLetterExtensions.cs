@@ -1,4 +1,5 @@
-﻿using FFXIVClientStructs.FFXIV.Client.UI.Info;
+﻿using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Lumina.Excel.Sheets;
 using Lumina.Extensions;
 using System.Runtime.CompilerServices;
@@ -8,9 +9,9 @@ namespace clib.Extensions.ClientStructs;
 
 public static unsafe class InfoProxyLetterExtensions {
     extension(InfoProxyLetter) {
-        public static bool CanTakeAttachement() => true; // AgentLetter.Instance() is not null and var agent && agent->TransferCountdown <= 0;
-        public static bool TakeAllAttachements(int index, long SenderContentId) => true; // InfoProxyLetter.Instance()->TakeAllAttachements(index, SenderContentId);
-        public static bool DeleteLetter(int index) => true; // InfoProxyLetter.Instance()->DeleteLetter(index);
+        public static bool CanTakeAttachement() => AgentLetter.Instance() is not null and var agent && agent->TransferCountdown <= 0;
+        public static bool TakeAllAttachements(int index, long SenderContentId) => InfoProxyLetter.TakeAllAttachements(index, SenderContentId);
+        public static bool DeleteLetter(int index) => InfoProxyLetter.Instance()->DeleteLetter((uint)index);
         public static InfoProxyLetter.Letter? MapLetter => InfoProxyLetter.Instance()->Letters.ToArray().FirstOrNull(l => l.Attachments.ToArray().Any(a => Item.GetRow(a.ItemId).FilterGroup == 18));
     }
 

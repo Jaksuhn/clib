@@ -1,4 +1,6 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game;
+using System.Numerics;
+using clib.Utils;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 
@@ -50,5 +52,14 @@ public static class ItemExtensions {
 
         public RowRef<MirageStoreSetItem> Mirage => MirageStoreSetItem.GetRowRef(item.RowId);
         public ItemHandle Handle => (ItemHandle)item;
+
+        public uint AtkUiRarityColorId => item.Rarity switch {
+            7 => 561,
+            4 => 555,
+            3 => 553,
+            2 => 551,
+            1 => 549,
+            _ => 0,
+        };
     }
 }

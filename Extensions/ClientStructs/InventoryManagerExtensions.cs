@@ -1,10 +1,12 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.Interop;
 
 namespace clib.Extensions;
 
 public static unsafe class InventoryManagerExtensions {
     extension(InventoryManager) {
+        public static bool IsUpdating => RaptureAtkModule.Instance()->AgentUpdateFlag.HasFlag(RaptureAtkModule.AgentUpdateFlags.InventoryUpdate);
         public static int GetEmptySlots(params InventoryType[] inventories)
         => inventories.Length == 0 ? (int)InventoryManager.Instance()->GetEmptySlotsInBag()
             : inventories.ToList().Sum(i => InventoryManager.Instance()->GetInventoryItems(i).Count(item => item.Value->ItemId == 0));

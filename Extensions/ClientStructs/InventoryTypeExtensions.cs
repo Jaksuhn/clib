@@ -72,6 +72,7 @@ public static class InventoryTypeExtensions {
         public bool IsMainInventory => inventoryType is InventoryType.Inventory1 or InventoryType.Inventory2 or InventoryType.Inventory3 or InventoryType.Inventory4;
         public bool IsSaddleBag => get_SaddleBag().Contains(inventoryType);
         public bool IsRetainer => get_Retainer().Contains(inventoryType);
+        public bool IsFull => get_Items(inventoryType).All(i => i.IsValid);
 
         public unsafe ItemHandle[] Items => InventoryManager.Instance()->GetItems(inventoryType);
     }
