@@ -10,6 +10,8 @@ public static class IDalamudPluginInterfaceExtensions {
         /// </summary>
         public uint ClientStructsVersion => get_CsVersion(pi).Value;
         internal Lazy<uint> CsVersion => new(() => (uint?)typeof(FFXIVClientStructs.ThisAssembly).Assembly.GetName().Version?.Build ?? 0U);
+
+        public bool IsPluginLoaded(string internalName) => pi.InstalledPlugins.Any(p => p.InternalName == internalName && p.IsLoaded);
     }
 
     public static object? GetService(this IDalamudPluginInterface pi, string serviceName)
