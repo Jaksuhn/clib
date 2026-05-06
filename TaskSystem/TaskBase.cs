@@ -90,7 +90,13 @@ public abstract class TaskBase : AutoTask {
             return;
         }
         var destination = flag.Position.ToVector3();
-        await TeleportTo(flag.TerritoryId, destination);
+        var teleportTerritoryId = flag.TerritoryId;
+        var teleportDestination = destination;
+        if (flag.TerritoryId == 886) {
+            teleportTerritoryId = 418;
+            teleportDestination = Coords.AetherytePosition(70);
+        }
+        await TeleportTo(teleportTerritoryId, teleportDestination);
         await UseAethernet(flag.TerritoryId, destination);
         ErrorIf(Svc.ClientState.TerritoryType != flag.TerritoryId, $"Failed to reach flag territory (exp: {flag.TerritoryId}, act: {Svc.ClientState.TerritoryType})");
         await NavmeshReady();
@@ -99,6 +105,21 @@ public abstract class TaskBase : AutoTask {
             return;
         }
         await MoveTo(pof, config, allowTeleportIfFaster, stopCondition, onStopReached);
+    }
+
+    protected async Task MoveTo(uint territoryId, Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernetWithinTerritory = true) {
+        using var scope = BeginScope("MoveToCmb");
+        var teleportTerritoryId = territoryId;
+        var teleportDestination = dest;
+        if (territoryId == 886) {
+            teleportTerritoryId = 418;
+            teleportDestination = Coords.AetherytePosition(70);
+        }
+        await TeleportTo(teleportTerritoryId, teleportDestination);
+        await UseAethernet(territoryId, dest);
+        ErrorIf(Svc.ClientState.TerritoryType != territoryId, $"Failed to reach territory (exp: {territoryId}, act: {Svc.ClientState.TerritoryType})");
+        await MoveTo(dest, config, allowTeleportIfFaster, stopCondition, onStopReached, allowAethernet: allowAethernetWithinTerritory);
+        await NavmeshReady();
     }
 
     protected async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernet = true) {
@@ -115,7 +136,6 @@ public abstract class TaskBase : AutoTask {
 
         if (allowAethernet)
             await UseAethernet(Svc.ClientState.TerritoryType, dest);
-        //await WaitWhile(() => Player.IsBusy, "WaitForAvailable"); // will cause issues if you get into combat during move call. Prob not needed
 
         if (config.Movement.HasFlag(MovementOptions.Mount) || config.Movement.HasFlag(MovementOptions.Fly))
             await Mount();
@@ -212,11 +232,6 @@ public abstract class TaskBase : AutoTask {
 
     protected async Task UseAethernet(uint territoryId, Vector3 destination) {
         using var scope = BeginScope("UseAethernet");
-        var sourceAetheryteId = Coords.FindClosestAetheryte(Svc.ClientState.TerritoryType, Player!.Position, includeAethernet: true) ?? 0;
-        var destinationAetheryteId = Coords.FindClosestAetheryte(territoryId, destination, includeAethernet: true) ?? 0;
-        if (sourceAetheryteId == 0 || destinationAetheryteId == 0 || sourceAetheryteId == destinationAetheryteId)
-            return;
-
         if (territoryId == 886) {
             // firmament special case
             Status = $"Interacting with aetheryte to get to the Firmament";
@@ -224,13 +239,20 @@ public abstract class TaskBase : AutoTask {
             if (firmamentObjId is 0)
                 return;
             if (!Player.WithinRange(firmamentObjPos, InteractRange.Aetheryte.MaxDistance))
-                await MoveTo(firmamentObjPos, MovementConfig.Default.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false);
+                await MoveTo(firmamentObjPos, MovementConfig.Default.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false, allowAethernet: false);
+            if (Player.Mounted)
+                await Dismount();
             ErrorIf(!TargetSystem.InteractWith(firmamentObjId), "Failed to interact with aetheryte");
             await WaitUntilSkipping(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectFirmament", UiSkipOptions.Talk);
             PacketDispatcher.TeleportToFirmament(70);
             await WaitUntilTerritory(territoryId);
             return;
         }
+
+        var sourceAetheryteId = Coords.FindClosestAetheryte(Svc.ClientState.TerritoryType, Player!.Position, includeAethernet: true) ?? 0;
+        var destinationAetheryteId = Coords.FindClosestAetheryte(territoryId, destination, includeAethernet: true) ?? 0;
+        if (sourceAetheryteId == 0 || destinationAetheryteId == 0 || sourceAetheryteId == destinationAetheryteId)
+            return;
 
         var sourcePrimary = Coords.FindPrimaryAetheryte(sourceAetheryteId);
         var destinationPrimary = Coords.FindPrimaryAetheryte(destinationAetheryteId);

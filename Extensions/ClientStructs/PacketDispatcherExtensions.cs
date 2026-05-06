@@ -17,7 +17,7 @@ public static unsafe class PacketDispatcherExtensions {
         }
 
         public static void TeleportToFirmament(uint currentAetheryte) {
-            Span<uint> payload = [9];
+            Span<uint> payload = [10];
             PacketDispatcher.SendEventCompletePacket(0x50000 | currentAetheryte, 0, 0, payload.GetPointer(0), (byte)payload.Length, null);
         }
     }

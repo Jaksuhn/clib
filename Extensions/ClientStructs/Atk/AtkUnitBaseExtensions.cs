@@ -7,7 +7,7 @@ public static unsafe class AtkUnitBaseExtensions {
     extension(AtkUnitBase) {
         public static bool IsAddonReady(string name) {
             var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(name);
-            return addon != null && addon->IsVisible && addon->IsReady;
+            return addon != null && addon->IsVisible && addon->IsReady && addon->IsFullyLoaded();
         }
 
         public static bool CloseAddon(string name) {
