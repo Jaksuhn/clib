@@ -52,7 +52,7 @@ public sealed unsafe class ArmoireService : IDisposable {
     private void OnCabinetRefresh(AddonEvent _, AddonArgs __) => BuildCache();
 
     private void BuildCache() {
-        if (!_enabled || !Svc.ClientState.IsLoggedIn) {
+        if (!Svc.ClientState.IsLoggedIn) {
             ClearCache();
             return;
         }
