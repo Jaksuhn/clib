@@ -1,84 +1,59 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-
 namespace clib.Services;
 
-public sealed unsafe class ArmoireService(IReadOnlyDictionary<uint, uint> cabinetRowIdByItemId) : IDisposable {
-    private readonly Dictionary<uint, uint> _cabinetRowIdByItemId = cabinetRowIdByItemId.ToDictionary(kv => kv.Key, kv => kv.Value);
+public sealed unsafe class ArmoireService : IDisposable {
+    public event Action? ArmoireChanged;
+
+    private Dictionary<uint, Sheets.Cabinet> _cabinetByItemId = [];
     private readonly HashSet<uint> _ownedItemIds = [];
-    private bool _enabled;
-    private bool _refreshRequested;
-    private bool _cabinetLoadRequested;
 
-    public event Action? OwnershipChanged;
-
-    public void Enable() {
-        if (_enabled)
-            return;
-        _enabled = true;
+    public ArmoireService() {
+        LoadReverseCabinetMap();
 
         Svc.ClientState.Login += OnLogin;
+        Svc.ClientState.Logout += OnLogout;
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "Cabinet", OnCabinetRefresh);
-        Svc.Framework.Update += OnFrameworkUpdate;
 
         if (Svc.ClientState.IsLoggedIn)
-            RequestRefresh();
-    }
-
-    public void Disable() {
-        if (!_enabled)
-            return;
-        _enabled = false;
-
-        Svc.Framework.Update -= OnFrameworkUpdate;
-        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRefresh, "Cabinet", OnCabinetRefresh);
-        Svc.ClientState.Login -= OnLogin;
+            RefreshCache();
     }
 
     public void Dispose() {
-        Disable();
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRefresh, "Cabinet", OnCabinetRefresh);
+        Svc.ClientState.Logout -= OnLogout;
+        Svc.ClientState.Login -= OnLogin;
+
         _ownedItemIds.Clear();
     }
 
-    public void RequestRefresh() {
-        _refreshRequested = true;
-        _cabinetLoadRequested = false;
+    public void RefreshCache() {
+        LoadReverseCabinetMap();
+        BuildCache();
     }
 
-    public HashSet<uint> GetOwnedItemIds() => [.. _ownedItemIds];
+    public HashSet<uint> GetArmoireItems() => [.. _ownedItemIds];
+    public Sheets.Cabinet? GetCabinetRow(uint itemId) {
+        LoadReverseCabinetMap();
+        return _cabinetByItemId.TryGetValue(itemId, out var row) ? row : null;
+    }
 
-    private void OnLogin() => RequestRefresh();
+    private void OnLogin() => RefreshCache();
+    private void OnLogout(int _, int __) => ClearCache();
 
-    private void ClearOwnedSnapshot() {
+    private void ClearCache() {
         var hadAny = _ownedItemIds.Count > 0;
         _ownedItemIds.Clear();
-        _refreshRequested = false;
-        _cabinetLoadRequested = false;
         if (hadAny)
-            OwnershipChanged?.Invoke();
+            ArmoireChanged?.Invoke();
     }
 
-    private void OnCabinetRefresh(AddonEvent _, AddonArgs __) => RequestRefresh();
+    private void OnCabinetRefresh(AddonEvent _, AddonArgs __) => BuildCache();
 
-    private void OnFrameworkUpdate(IFramework _) {
-        if (!_enabled)
-            return;
-
-        if (!Svc.ClientState.IsLoggedIn) {
-            ClearOwnedSnapshot();
-            return;
-        }
-
-        if (!_refreshRequested)
-            return;
-
-        if (!_cabinetLoadRequested) {
-            // User-confirmed command id for requesting cabinet data load.
-            GameMain.ExecuteCommand(423);
-            _cabinetLoadRequested = true;
+    private void BuildCache() {
+        if (!_enabled || !Svc.ClientState.IsLoggedIn) {
+            ClearCache();
             return;
         }
 
@@ -87,17 +62,26 @@ public sealed unsafe class ArmoireService(IReadOnlyDictionary<uint, uint> cabine
             return;
 
         var nextOwned = new HashSet<uint>();
-        foreach (var (itemId, cabinetRowId) in _cabinetRowIdByItemId) {
-            if (uiState->Cabinet.IsItemInCabinet(cabinetRowId))
+        foreach (var (itemId, cabinetRow) in _cabinetByItemId) {
+            if (uiState->Cabinet.IsItemInCabinet(cabinetRow.RowId))
                 nextOwned.Add(itemId);
         }
 
         var changed = !_ownedItemIds.SetEquals(nextOwned);
         _ownedItemIds.Clear();
         _ownedItemIds.UnionWith(nextOwned);
-        _refreshRequested = false;
 
         if (changed)
-            OwnershipChanged?.Invoke();
+            ArmoireChanged?.Invoke();
+    }
+
+    private void LoadReverseCabinetMap() {
+        if (_cabinetByItemId.Count > 0)
+            return;
+
+        _cabinetByItemId = Sheets.Cabinet
+            .Where(x => x.RowId > 0 && x.Item.RowId > 0)
+            .GroupBy(x => x.Item.RowId)
+            .ToDictionary(g => g.Key, g => g.First());
     }
 }
