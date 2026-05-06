@@ -1,5 +1,6 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 namespace clib.Services;
 
@@ -30,16 +31,23 @@ public sealed unsafe class ArmoireService : IDisposable {
 
     public void RefreshCache() {
         LoadReverseCabinetMap();
-        BuildCache();
+        BuildCache(notify: true);
     }
 
-    public HashSet<uint> GetArmoireItems() => [.. _ownedItemIds];
+    public HashSet<uint> GetArmoireItems() {
+        BuildCache(notify: false);
+        return [.. _ownedItemIds];
+    }
     public Sheets.Cabinet? GetCabinetRow(uint itemId) {
         LoadReverseCabinetMap();
         return _cabinetByItemId.TryGetValue(itemId, out var row) ? row : null;
     }
 
-    private void OnLogin() => RefreshCache();
+    private void OnLogin() {
+        GameMain.ExecuteCommand(423);
+        RefreshCache();
+    }
+
     private void OnLogout(int _, int __) => ClearCache();
 
     private void ClearCache() {
@@ -49,9 +57,9 @@ public sealed unsafe class ArmoireService : IDisposable {
             ArmoireChanged?.Invoke();
     }
 
-    private void OnCabinetRefresh(AddonEvent _, AddonArgs __) => BuildCache();
+    private void OnCabinetRefresh(AddonEvent _, AddonArgs __) => BuildCache(notify: true);
 
-    private void BuildCache() {
+    private void BuildCache(bool notify) {
         if (!Svc.ClientState.IsLoggedIn) {
             ClearCache();
             return;
@@ -71,7 +79,7 @@ public sealed unsafe class ArmoireService : IDisposable {
         _ownedItemIds.Clear();
         _ownedItemIds.UnionWith(nextOwned);
 
-        if (changed)
+        if (notify && changed)
             ArmoireChanged?.Invoke();
     }
 
