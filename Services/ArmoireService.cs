@@ -44,6 +44,7 @@ public sealed unsafe class ArmoireService : IDisposable {
     }
 
     private void OnLogin() {
+        Svc.Log.Debug($"[{nameof(ArmoireService)}] Refreshing cabinet.");
         GameMain.ExecuteCommand(423);
         RefreshCache();
     }
@@ -79,8 +80,10 @@ public sealed unsafe class ArmoireService : IDisposable {
         _ownedItemIds.Clear();
         _ownedItemIds.UnionWith(nextOwned);
 
-        if (notify && changed)
+        if (notify && changed) {
+            Svc.Log.Debug($"[{nameof(ArmoireService)}] Cabinet changed.");
             ArmoireChanged?.Invoke();
+        }
     }
 
     private void LoadReverseCabinetMap() {
