@@ -30,7 +30,10 @@ public sealed unsafe class ArmoireService : IDisposable {
     }
 
     public void RefreshCache() {
-        LoadReverseCabinetMap();
+        if (!LoadReverseCabinetMap()) {
+            Svc.Log.Debug($"[{nameof(ArmoireService)}] Refreshing cabinet.");
+            GameMain.ExecuteCommand(423);
+        }
         BuildCache(notify: true);
     }
 
@@ -86,13 +89,14 @@ public sealed unsafe class ArmoireService : IDisposable {
         }
     }
 
-    private void LoadReverseCabinetMap() {
+    private bool LoadReverseCabinetMap() {
         if (_cabinetByItemId.Count > 0)
-            return;
+            return false;
 
         _cabinetByItemId = Sheets.Cabinet
             .Where(x => x.RowId > 0 && x.Item.RowId > 0)
             .GroupBy(x => x.Item.RowId)
             .ToDictionary(g => g.Key, g => g.First());
+        return true;
     }
 }
