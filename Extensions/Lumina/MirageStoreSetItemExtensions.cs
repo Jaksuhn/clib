@@ -14,28 +14,39 @@ public static unsafe class MirageStoreSetItemExtensions {
         public RowRef<Item> Set => new(row.ExcelPage.Module, row.RowId, row.ExcelPage.Language);
         public Collection<RowRef<Item>> Items => new(row.ExcelPage, parentOffset: row.RowOffset, offset: row.RowOffset, &ItemCtor, size: 11);
 
-        // https://github.com/Haselnussbomber/HaselCommon/blob/main/HaselCommon/Extensions/Sheets/MirageStoreSetItemExtensions.cs
-        public bool TryGetSetItemBitArray(out BitArray bitArray, bool useCache = true) {
+        // https://github.com/Haselnussbomber/HaselCommon/blob/f9ced026bb11cc36c973e6991c2c1680878277d7/HaselCommon/Services/MirageService.cs
+        public bool IsSetSlotCollected(int slotIndex, bool useCache = true) {
             var mirageManager = MirageManager.Instance();
             if (mirageManager->PrismBoxLoaded) {
-                var prismBoxItemIndex = mirageManager->PrismBoxItemIds.IndexOf(row.RowId);
-                if (prismBoxItemIndex != -1) {
-                    bitArray = new BitArray(mirageManager->PrismBoxStain0Ids.GetPointer(prismBoxItemIndex), ItemCount);
-                    return true;
+                var itemIndex = mirageManager->PrismBoxItemIds.IndexOf(row.RowId);
+                if (itemIndex != -1) {
+                    return mirageManager->IsSetSlotUnlocked((uint)itemIndex, slotIndex);
                 }
             }
 
             if (useCache) {
                 var itemFinderModule = ItemFinderModule.Instance();
-                var glamourDresserIndex = itemFinderModule->GlamourDresserItemIds.IndexOf(row.RowId);
-                if (glamourDresserIndex != -1) {
-                    bitArray = new BitArray((byte*)itemFinderModule->GlamourDresserItemSetUnlockBits.GetPointer(glamourDresserIndex), ItemCount);
-                    return true;
+                var itemIndex = itemFinderModule->GlamourDresserItemIds.IndexOf(row.RowId);
+                if (itemIndex != -1) {
+                    var bitArray = new BitArray((byte*)itemFinderModule->GlamourDresserItemSetUnlockBits.GetPointer(itemIndex), ItemCount);
+                    return !bitArray.Get(slotIndex);
                 }
             }
 
-            bitArray = default;
             return false;
+        }
+
+        public bool IsFullSetCollected(bool useCache = true) {
+            var collected = true;
+
+            foreach (var (slotIndex, slot) in row.Items.Index()) {
+                if (slot.RowId == 0 || !slot.IsValid)
+                    continue;
+
+                collected &= IsSetSlotCollected(row, slotIndex, useCache);
+            }
+
+            return collected;
         }
     }
 
