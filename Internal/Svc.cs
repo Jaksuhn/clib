@@ -1,5 +1,5 @@
+using AllaganLib.GameSheets.Service;
 using Dalamud.IoC;
-using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
@@ -23,10 +23,16 @@ internal class Svc {
     [PluginService] public static ITextureProvider Texture { get; private set; } = null!;
 
     public static NavmeshIPC Navmesh { get; private set; } = null!;
+    public static SheetManager SheetManager { get; private set; } = null!;
 
     public static void Init(IDalamudPluginInterface pi) {
         pi.Create<Svc>();
         Navmesh = new NavmeshIPC();
+        SheetManager = new(pi, Data.GameData, new());
+    }
+
+    public static void Dispose() {
+        SheetManager.Dispose();
     }
 }
 
