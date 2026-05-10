@@ -1,3 +1,5 @@
+using clib.Services;
+
 namespace clib.Extensions;
 
 public static class VectorExtensions {
