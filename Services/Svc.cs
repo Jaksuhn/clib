@@ -60,6 +60,9 @@ public class Svc {
 
     private static readonly ConcurrentDictionary<Type, Lazy<object>> Singletons = new();
 
+    public static void Register<T>() where T : class, new()
+        => Register(() => new T());
+
     public static void Register<T>(Func<T> singleton) where T : class {
         ArgumentNullException.ThrowIfNull(singleton);
         var key = typeof(T);
@@ -68,16 +71,13 @@ public class Svc {
             throw new InvalidOperationException($"[{nameof(Svc)}] {key.FullName} is already registered.");
     }
 
-    public static void Register<T>() where T : class, new()
-        => Register(() => new T());
-
     public static T Get<T>() where T : class {
         if (!Singletons.TryGetValue(typeof(T), out var lazy))
             throw new InvalidOperationException($"[{nameof(Svc)}] {typeof(T).FullName} has not been registered.");
         return (T)lazy.Value;
     }
 
-    public static void Init(IDalamudPluginInterface pi) {
+    internal static void Init(IDalamudPluginInterface pi) {
         pi.Create<Svc>();
         Armoire = new();
         Automation = new();
@@ -85,7 +85,7 @@ public class Svc {
         SheetManager = new(pi, Data.GameData, new());
     }
 
-    public static void Dispose() {
+    internal static void Dispose() {
         Armoire.Dispose();
         Automation.Dispose();
         SheetManager.Dispose();
