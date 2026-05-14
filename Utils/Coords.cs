@@ -62,7 +62,7 @@ public static class Coords {
         var row = Svc.Data.GetRef<Sheets.Aetheryte>(aetheryteId).Value;
         if (row.IsAetheryte)
             return aetheryteId;
-        var primary = Svc.Data.GetExcelSheet<Sheets.Aetheryte>().FirstOrNull(a => a.AethernetGroup == row.AethernetGroup);
+        var primary = Svc.Data.GetExcelSheet<Sheets.Aetheryte>().FirstOrNull(a => a.AethernetGroup == row.AethernetGroup && a.IsAetheryte);
         return primary?.RowId ?? 0;
     }
 
