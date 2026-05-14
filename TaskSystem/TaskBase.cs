@@ -146,23 +146,26 @@ public abstract class TaskBase : AutoTask {
             await NavmeshReady();
             await WaitWhile(() => Svc.Navmesh.PathfindInProgress, "WaitingForInProgressCalls");
 
-            var fly = Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly;
-            var pathTask = Svc.Navmesh.PathfindWithTolerance(Player!.Position, dest, fly, config.Tolerance ?? 3f);
-            ErrorIf(pathTask is null, "Failed to pathfind");
+            // TODO: revist this
+            //var fly = Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly;
+            //var pathTask = Svc.Navmesh.PathfindWithTolerance(Player!.Position, dest, fly, config.Tolerance ?? 3f);
+            //ErrorIf(pathTask is null, "Failed to pathfind");
 
-            var waypoints = await pathTask!;
-            ErrorIf(waypoints is not { Count: > 0 }, "Failed to produce a path"); // TODO: teleport to nearest aetheryte on failure or something
-            ErrorIf(!Svc.Navmesh.MoveTo(waypoints!, fly), "Failed to MoveTo");
+            //var waypoints = await pathTask!;
+            //ErrorIf(waypoints is not { Count: > 0 }, "Failed to produce a path"); // TODO: teleport to nearest aetheryte on failure or something
+            //ErrorIf(!Svc.Navmesh.MoveTo(waypoints!, fly), "Failed to MoveTo");
+
+            ErrorIf(!Svc.Navmesh.PathfindAndMoveCloseTo(dest, Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly, config.Tolerance ?? 3f), "Failed to start pathfinding to destination");
 
             Status = $"Moving to {dest}";
             using var stop = new OnDispose(Svc.Navmesh.Stop);
             await NextFrame(); // tick so that vnav has a chance to flip to IsRunning
 
             if (stopCondition is null) {
-                await WaitWhile(Svc.Navmesh.IsRunning, "Navigate");
+                await WaitWhile(() => Svc.Navmesh.IsRunning() && !Player.WithinRange(dest, tolerance), "Navigate");
             }
             else {
-                await WaitWhile(() => !stopCondition() && Svc.Navmesh.IsRunning(), "Navigate");
+                await WaitWhile(() => !stopCondition() && Svc.Navmesh.IsRunning() && !Player.WithinRange(dest, tolerance), "Navigate");
                 if (stopCondition() && onStopReached is not null) {
                     Svc.Navmesh.Stop(); // must be stopped because onStopReached's MoveTo (if present) calls !PathfindingInProgress
                     await onStopReached();
