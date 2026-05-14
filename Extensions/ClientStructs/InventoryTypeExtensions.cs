@@ -47,12 +47,16 @@ public static class InventoryTypeExtensions {
             InventoryType.RetainerPage4,
             InventoryType.RetainerPage5,
             InventoryType.RetainerPage6,
-            InventoryType.RetainerPage7
+            InventoryType.RetainerPage7,
+            InventoryType.RetainerEquippedItems,
+            InventoryType.RetainerCrystals,
+            InventoryType.RetainerGil,
+            InventoryType.RetainerMarket,
         ];
 
         public static InventoryType[] Armoury => [.. get_Weapons(), .. get_LeftSideArmory(), .. get_RightSideArmory(), InventoryType.ArmorySoulCrystal, InventoryType.EquippedItems];
-        public static InventoryType[] FullInventory => [.. get_Bags(), .. get_Armoury()];
-        public static InventoryType[] AllPlayer => [.. get_Bags(), .. get_Armoury(), .. get_SaddleBag()];
+        public static InventoryType[] FullInventory => [.. get_Bags(), .. get_Armoury(), InventoryType.Currency, InventoryType.Crystals];
+        public static InventoryType[] AllPlayer => [.. get_FullInventory(), .. get_SaddleBag()];
 
         public unsafe int InventoryStartIndex => inventoryType switch {
             InventoryType.Inventory2 => inventoryType.GetSorter()->ItemsPerPage,
