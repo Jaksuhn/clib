@@ -54,6 +54,16 @@ public static class InventoryTypeExtensions {
             InventoryType.RetainerMarket,
         ];
 
+        public static InventoryType[] FreeCompany => [
+            InventoryType.FreeCompanyPage1,
+            InventoryType.FreeCompanyPage2,
+            InventoryType.FreeCompanyPage3,
+            InventoryType.FreeCompanyPage4,
+            InventoryType.FreeCompanyPage5,
+            InventoryType.FreeCompanyGil,
+            InventoryType.FreeCompanyCrystals,
+        ];
+
         public static InventoryType[] Armoury => [.. get_Weapons(), .. get_LeftSideArmory(), .. get_RightSideArmory(), InventoryType.ArmorySoulCrystal, InventoryType.EquippedItems];
         public static InventoryType[] FullInventory => [.. get_Bags(), .. get_Armoury(), InventoryType.Currency, InventoryType.Crystals];
         public static InventoryType[] AllPlayer => [.. get_FullInventory(), .. get_SaddleBag()];
