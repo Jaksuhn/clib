@@ -162,10 +162,10 @@ public abstract class TaskBase : AutoTask {
             await NextFrame(); // tick so that vnav has a chance to flip to IsRunning
 
             if (stopCondition is null) {
-                await WaitWhile(() => Svc.Navmesh.IsRunning() && !Player.WithinRange(dest, tolerance), "Navigate");
+                await WaitWhile(() => !Player.WithinRange(dest, tolerance) && (Svc.Navmesh.PathfindingInProgress || Svc.Navmesh.IsRunning()), "Navigate");
             }
             else {
-                await WaitWhile(() => !stopCondition() && Svc.Navmesh.IsRunning() && !Player.WithinRange(dest, tolerance), "Navigate");
+                await WaitWhile(() => !Player.WithinRange(dest, tolerance) && !stopCondition() && (Svc.Navmesh.PathfindingInProgress || Svc.Navmesh.IsRunning()), "Navigate");
                 if (stopCondition() && onStopReached is not null) {
                     Svc.Navmesh.Stop(); // must be stopped because onStopReached's MoveTo (if present) calls !PathfindingInProgress
                     await onStopReached();
