@@ -287,7 +287,7 @@ public abstract class TaskBase : AutoTask {
         else
             await WaitUntil(() => AtkUnitBase.IsAddonReady("TelepotTown"), "WaitForAddon");
         PacketDispatcher.TeleportToAethernet(sourceAetheryteId, destinationAetheryteId);
-        await WaitUntilThenFalse(() => Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.OccupiedInQuestEvent], "TeleportStart");
+        await WaitUntilThenFalse(() => Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas], "TeleportStart");
 
         if (Svc.ClientState.TerritoryType != territoryId)
             await WaitUntil(() => Svc.ClientState.TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinish");
