@@ -77,18 +77,22 @@ public class Svc {
         return (T)lazy.Value;
     }
 
-    internal static void Init(IDalamudPluginInterface pi) {
+    internal static void Init(IDalamudPluginInterface pi, CLibModule modules) {
         pi.Create<Svc>();
-        Armoire = new();
-        Automation = new();
         Navmesh = new NavmeshIPC();
-        SheetManager = new(pi, Data.GameData, new());
+
+        if (modules.HasFlag(CLibModule.Armoire))
+            Armoire = new();
+        if (modules.HasFlag(CLibModule.Automation))
+            Automation = new();
+        if (modules.HasFlag(CLibModule.SheetManager))
+            SheetManager = new(pi, Data.GameData, new());
     }
 
     internal static void Dispose() {
-        Armoire.Dispose();
-        Automation.Dispose();
-        SheetManager.Dispose();
+        Armoire?.Dispose();
+        Automation?.Dispose();
+        SheetManager?.Dispose();
 
         foreach (var s in Singletons.Values) {
             if (!s.IsValueCreated) continue;
