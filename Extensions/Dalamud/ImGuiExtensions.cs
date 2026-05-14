@@ -14,6 +14,91 @@ public static class ImGuiExtensions {
     internal static Item[] itemSearchResults = [];
 
     extension(ImGui) {
+        public static void TooltipOnHover(string text) {
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip(text);
+        }
+
+        public static void TooltipOnHover(bool condition, string text) {
+            if (condition && ImGui.IsItemHovered())
+                ImGui.SetTooltip(text);
+        }
+
+        public static void TextV(string s) {
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text(s);
+        }
+
+        public static void TextV(Vector4 c, string s) {
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextColored(c, s);
+        }
+
+        public static void PushCursorY(float y) => ImGui.SetCursorPosY(ImGui.GetCursorPosY() + y);
+        public static bool IsItemClickedWithModifier(ImGuiMouseButton button, ImGuiModFlags modifier) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods.HasFlag(modifier);
+        public static bool IsItemClickedNoModifiers(ImGuiMouseButton button) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods == ImGuiModFlags.None;
+
+        public static void CopyableText(string s) {
+            ImGui.Text(s);
+            if (ImGui.IsItemHovered()) {
+                ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+            }
+            if (ImGui.IsItemClicked()) {
+                ImGui.SetClipboardText(s);
+            }
+        }
+
+        public static bool SmallIconButton(FontAwesomeIcon icon, string? id = null) {
+            var label = icon.ToIconString();
+            if (id != null) {
+                label += $"##{id}";
+            }
+
+            using var _ = ImRaii.PushFont(UiBuilder.IconFont);
+            var ret = ImGui.SmallButton(label);
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Sets up drag and drop source for reordering list items.
+        /// Call this after drawing the draggable item (e.g., after a Button or Selectable).
+        /// </summary>
+        public static void DragDropSource(int index, ReadOnlySpan<byte> payloadType, string? dragPreviewText = null) {
+            using var source = ImRaii.DragDropSource();
+            if (source) {
+                if (!string.IsNullOrEmpty(dragPreviewText))
+                    ImGui.Text(dragPreviewText);
+                ImGui.SetDragDropPayload(payloadType, BitConverter.GetBytes(index), ImGuiCond.None);
+            }
+        }
+
+        /// <summary>
+        /// Sets up drag and drop target for reordering list items.
+        /// Call this after drawing the drop target item.
+        /// </summary>
+        /// <param name="onReorder">Callback that performs the reorder: (sourceIndex, targetIndex) => { /* reorder logic */ }</param>
+        public static void DragDropTarget(int targetIndex, ReadOnlySpan<byte> payloadType, int listCount, Action<int, int> onReorder) {
+            using var target = ImRaii.DragDropTarget();
+            if (target) {
+                var payload = ImGui.AcceptDragDropPayload(payloadType);
+                unsafe {
+                    if (!payload.IsNull && payload.IsDelivery() && payload.Data != null && payload.DataSize == sizeof(int)) {
+                        var sourceIndex = *(int*)payload.Data;
+                        if (sourceIndex != targetIndex && sourceIndex >= 0 && sourceIndex < listCount) {
+                            // Calculate insert index before removal
+                            // When dragging down (sourceIndex < targetIndex), insert after target (at targetIndex+1)
+                            // When dragging up (sourceIndex > targetIndex), insert before target (at targetIndex)
+                            var insertIndex = sourceIndex < targetIndex ? targetIndex + 1 : targetIndex;
+
+                            // Call the reorder callback with source and calculated insert index
+                            onReorder(sourceIndex, insertIndex);
+                        }
+                    }
+                }
+            }
+        }
+
         public static bool AddItemPopupButton([NotNullWhen(true)] out Item? result, string? buttonLabel = null, Vector2? size = null, Func<Item, bool>? itemSheetFilter = null) {
             result = null;
             if (ImGui.Button(buttonLabel ?? "Add Item", size ?? new Vector2(-1, 0))) {
@@ -86,80 +171,6 @@ public static class ImGuiExtensions {
                 }
             }
             return false;
-        }
-
-        public static void TooltipOnHover(string text) {
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip(text);
-        }
-
-        public static void TooltipOnHover(bool condition, string text) {
-            if (condition && ImGui.IsItemHovered())
-                ImGui.SetTooltip(text);
-        }
-
-        public static void TextV(string s) {
-            ImGui.AlignTextToFramePadding();
-            ImGui.Text(s);
-        }
-
-        public static void TextV(Vector4 c, string s) {
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextColored(c, s);
-        }
-
-        public static bool SmallIconButton(FontAwesomeIcon icon, string? id = null) {
-            var label = icon.ToIconString();
-            if (id != null) {
-                label += $"##{id}";
-            }
-
-            using var _ = ImRaii.PushFont(UiBuilder.IconFont);
-            var ret = ImGui.SmallButton(label);
-
-            return ret;
-        }
-
-        public static bool IsItemClickedWithModifier(ImGuiMouseButton button, ImGuiModFlags modifier) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods.HasFlag(modifier);
-        public static bool IsItemClickedNoModifiers(ImGuiMouseButton button) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods == ImGuiModFlags.None;
-
-        /// <summary>
-        /// Sets up drag and drop source for reordering list items.
-        /// Call this after drawing the draggable item (e.g., after a Button or Selectable).
-        /// </summary>
-        public static void DragDropSource(int index, ReadOnlySpan<byte> payloadType, string? dragPreviewText = null) {
-            using var source = ImRaii.DragDropSource();
-            if (source) {
-                if (!string.IsNullOrEmpty(dragPreviewText))
-                    ImGui.Text(dragPreviewText);
-                ImGui.SetDragDropPayload(payloadType, BitConverter.GetBytes(index), ImGuiCond.None);
-            }
-        }
-
-        /// <summary>
-        /// Sets up drag and drop target for reordering list items.
-        /// Call this after drawing the drop target item.
-        /// </summary>
-        /// <param name="onReorder">Callback that performs the reorder: (sourceIndex, targetIndex) => { /* reorder logic */ }</param>
-        public static void DragDropTarget(int targetIndex, ReadOnlySpan<byte> payloadType, int listCount, Action<int, int> onReorder) {
-            using var target = ImRaii.DragDropTarget();
-            if (target) {
-                var payload = ImGui.AcceptDragDropPayload(payloadType);
-                unsafe {
-                    if (!payload.IsNull && payload.IsDelivery() && payload.Data != null && payload.DataSize == sizeof(int)) {
-                        var sourceIndex = *(int*)payload.Data;
-                        if (sourceIndex != targetIndex && sourceIndex >= 0 && sourceIndex < listCount) {
-                            // Calculate insert index before removal
-                            // When dragging down (sourceIndex < targetIndex), insert after target (at targetIndex+1)
-                            // When dragging up (sourceIndex > targetIndex), insert before target (at targetIndex)
-                            var insertIndex = sourceIndex < targetIndex ? targetIndex + 1 : targetIndex;
-
-                            // Call the reorder callback with source and calculated insert index
-                            onReorder(sourceIndex, insertIndex);
-                        }
-                    }
-                }
-            }
         }
     }
 }

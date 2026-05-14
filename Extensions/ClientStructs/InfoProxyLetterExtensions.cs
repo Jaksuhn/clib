@@ -5,7 +5,7 @@ using Lumina.Extensions;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace clib.Extensions.ClientStructs;
+namespace clib.Extensions;
 
 public static unsafe class InfoProxyLetterExtensions {
     extension(InfoProxyLetter) {
