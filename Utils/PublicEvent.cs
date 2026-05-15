@@ -253,6 +253,8 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
 
     public bool IsOnMap {
         get {
+            // some other plugins like mappy fuck with detecting on map presence, so early return in cases where it has to be on the map
+            if (State is FateState.Running && TimeRemaining > 0 || Progress > 0) return true;
             // markers go stale when the map isn't open, so force an update
             var agent = AgentMap.Instance();
             agent->UpdateEventMapMarkers(&agent->EventMarkersPtrs);
