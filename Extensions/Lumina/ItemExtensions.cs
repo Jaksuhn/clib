@@ -1,6 +1,4 @@
-using System.Numerics;
 using clib.Services;
-using clib.Utils;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
@@ -47,6 +45,23 @@ public static class ItemExtensions {
             _ => throw new ArgumentOutOfRangeException(nameof(item), item, null)
         };
 
+        // https://github.com/pupwife/DispellerPlugin/blob/3f3eb599ac71f81666a735bb3988a1fbc54d97ae/Services/ModelDetectionService.cs#L12-L26
+        public (ushort, ushort, ushort, ushort) ModelInfo {
+            get {
+                var raw = item.ModelMain;
+                var primaryKey = (ushort)(raw & 0xFFFF);
+                var secondaryKey = (ushort)((raw >> 16) & 0xFFFF);
+                var variant = (ushort)((raw >> 32) & 0xFFFF);
+                var dye = (ushort)((raw >> 48) & 0xFFFF);
+
+                if (variant != 0) {
+                    return (primaryKey, secondaryKey, variant, dye); // weapon
+                }
+
+                return (primaryKey, 0, 0, 0);
+            }
+        }
+
         public bool IsMoochable => item.ItemUICategory.RowId is 47 && Svc.Data.FindRow<FishingBaitParameter>(r => r.Item.RowId == item.RowId) is { };
         public bool IsGearCoffer => item.Icon is 26509 or 26557 or 26558 or 26559 or 26560 or 26561 or 26562 or 26564 or 26565 or 26566 or 26567;
         public bool IsAttire => item.ItemUICategory.RowId is 112;
@@ -62,5 +77,8 @@ public static class ItemExtensions {
             1 => 549,
             _ => 0,
         };
+
+        public List<Item> GetSharedModels() => [.. Item.Where(x => x.ModelInfo == item.ModelInfo)];
+        public bool SharesModelWith(Item other) => item.ModelInfo == other.ModelInfo;
     }
 }
