@@ -46,6 +46,7 @@ public class ItemHandle {
     public static implicit operator ItemHandle(ItemLocation itemLocation) => new(itemLocation);
     public static implicit operator ItemHandle(uint itemId) => new(itemId);
     public static implicit operator uint(ItemHandle itemInfo) => itemInfo.ItemId;
+    public static unsafe implicit operator Pointer<InventoryItem>(ItemHandle handle) => handle.ItemLocation != null ? InventoryManager.Instance()->GetInventorySlot(handle.ItemLocation.Container, handle.ItemLocation.Slot) : null;
 
     public uint ItemId { get; }
     public ItemLocation? ItemLocation { get; set; }

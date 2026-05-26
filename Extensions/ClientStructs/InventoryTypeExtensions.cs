@@ -87,6 +87,7 @@ public static class InventoryTypeExtensions {
         public bool IsSaddleBag => get_SaddleBag().Contains(inventoryType);
         public bool IsRetainer => get_Retainer().Contains(inventoryType);
         public bool IsFull => get_Items(inventoryType).All(i => i.IsValid);
+        public int EmptySlots => get_Items(inventoryType).Count(i => !i.IsValid);
 
         public unsafe ItemHandle[] Items => InventoryManager.Instance()->GetItems(inventoryType);
     }
