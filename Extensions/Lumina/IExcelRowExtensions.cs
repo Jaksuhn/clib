@@ -5,18 +5,30 @@ using Lumina.Extensions;
 namespace clib.Extensions;
 
 public static class IExcelRowExtensions {
-    extension<T>(IExcelRow<T> row) where T : struct, IExcelRow<T> {
+    extension<T>(IExcelRow<T> excelRow) where T : struct, IExcelRow<T> {
         public T WithLanguage(Dalamud.Game.ClientLanguage language)
-            => Svc.Data.GetExcelSheet<T>(language: language).GetRow(row.RowId);
+            => Svc.Data.GetExcelSheet<T>(language: language).GetRow(excelRow.RowId);
 
         public T WithLanguage(Lumina.Data.Language language)
-            => Svc.Data.GetExcelSheet<T>(language: (Dalamud.Game.ClientLanguage)language).GetRow(row.RowId);
+            => Svc.Data.GetExcelSheet<T>(language: (Dalamud.Game.ClientLanguage)language).GetRow(excelRow.RowId);
 
         public static RowRef<T> GetRowRef(uint id, Lumina.Data.Language? language = null)
             => new(Svc.Data.Excel, id, language);
 
         public static T GetRow(uint id, Dalamud.Game.ClientLanguage? language = null)
             => Svc.Data.GetExcelSheet<T>(language: language).GetRow(id);
+
+        public static bool TryGetRow(uint id, out T row, Dalamud.Game.ClientLanguage? language = null) {
+            if (Svc.Data.GetExcelSheet<T>(language: language).TryGetRow(id, out var r)) {
+                row = r;
+                return true;
+
+            }
+            else {
+                row = default;
+                return false;
+            }
+        }
 
         public static bool Any(Func<T, bool> predicate)
             => Svc.Data.GetExcelSheet<T>().Any(r => predicate(r));
