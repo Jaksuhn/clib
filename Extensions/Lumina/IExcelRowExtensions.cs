@@ -12,6 +12,8 @@ public static class IExcelRowExtensions {
         public T WithLanguage(Lumina.Data.Language language)
             => Svc.Data.GetExcelSheet<T>(language: (Dalamud.Game.ClientLanguage)language).GetRow(excelRow.RowId);
 
+        public static IEnumerable<T> Rows => Svc.Data.GetExcelSheet<T>();
+
         public static RowRef<T> GetRowRef(uint id, Lumina.Data.Language? language = null)
             => new(Svc.Data.Excel, id, language);
 
@@ -60,6 +62,8 @@ public static class IExcelSubrowExtensions {
 
         public T? WithLanguage(ushort subRowId, Lumina.Data.Language language)
             => Svc.Data.GetSubrowSheet<T>(language: (Dalamud.Game.ClientLanguage)language).GetSubrowOrDefault(row.RowId, subRowId);
+
+        public static IEnumerable<T> Rows => Svc.Data.GetSubrowSheet<T>().SelectMany(r => r);
 
         public static SubrowRef<T> GetSubrowRef(uint rowId, Lumina.Data.Language? language = null)
             => new(Svc.Data.Excel, rowId, language);
