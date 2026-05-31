@@ -1,5 +1,4 @@
-﻿using clib.Services;
-using Dalamud.Game.Inventory;
+﻿using Dalamud.Game.Inventory;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
@@ -8,7 +7,7 @@ namespace clib.Extensions;
 
 public static class GameInventoryItemExtensions {
     extension(GameInventoryItem item) {
-        public RowRef<Item> GameData => Svc.Data.GetRef<Item>(item.BaseItemId);
+        public RowRef<Item> GameData => Item.GetRowRef(item.BaseItemId);
         public ItemHandle Handle => (ItemHandle)item;
     }
 

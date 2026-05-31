@@ -34,6 +34,6 @@ public static class ClassJobExtensions {
         public bool IsShieldHealer => job.JobType is 6;
 
         public short GetLevel() => Svc.PlayerState.GetClassJobLevel(job);
-        public IReadOnlyList<Action> GetActions() => Svc.Data.FindRows<Action>(a => a.ClassJobCategory.ValueNullable?.ContainsJob(job) ?? false);
+        public IReadOnlyList<Action> GetActions() => Action.Where(a => a.ClassJobCategory.ValueNullable?.ContainsJob(job) ?? false);
     }
 }

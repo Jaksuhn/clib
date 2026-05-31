@@ -207,8 +207,8 @@ public abstract class TaskBase : AutoTask {
 
         var closestAetheryteId = Coords.FindClosestAetheryte(territoryId, destination, includeAethernet: true) ?? 0;
         var teleportAetheryteId = Coords.FindPrimaryAetheryte(closestAetheryteId);
-        ErrorIf(teleportAetheryteId == 0, $"Failed to find aetheryte in [{territoryId}] {Svc.Data.GetRef<Sheets.TerritoryType>(territoryId).Value.PlaceName.Value.Name}");
-        if (Svc.Data.GetRef<Sheets.Aetheryte>(teleportAetheryteId) is { Value.Territory.RowId: var destinationId, Value.PlaceName.Value.Name: var destinationName } &&
+        ErrorIf(teleportAetheryteId == 0, $"Failed to find aetheryte in [{territoryId}] {Sheets.TerritoryType.GetRowRef(territoryId).Value.PlaceName.Value.Name}");
+        if (Sheets.Aetheryte.GetRowRef(teleportAetheryteId) is { Value.Territory.RowId: var destinationId, Value.PlaceName.Value.Name: var destinationName } &&
             (Svc.ClientState.TerritoryType != destinationId || allowSameZoneTeleport)) {
             Status = $"Teleporting to {destinationName}";
 

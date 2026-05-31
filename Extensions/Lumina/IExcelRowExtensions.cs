@@ -71,6 +71,28 @@ public static class IExcelSubrowExtensions {
         public static T? GetSubrow(uint rowId, ushort subRowId, Dalamud.Game.ClientLanguage? language = null)
             => Svc.Data.GetSubrowSheet<T>(language: language).GetSubrowOrDefault(rowId, subRowId);
 
+        public static bool TryGetSubrow(uint rowId, ushort subRowId, out T subrow, Dalamud.Game.ClientLanguage? language = null) {
+            if (Svc.Data.GetSubrowSheet<T>(language: language).TryGetSubrow(rowId, subRowId, out var r)) {
+                subrow = r;
+                return true;
+            }
+            else {
+                subrow = default;
+                return false;
+            }
+        }
+
+        public static bool TryGetSubrows(uint rowId, out SubrowCollection<T> subrows) {
+            if (Svc.Data.TryGetSubrows<T>(rowId, out var r)) {
+                subrows = r;
+                return true;
+            }
+            else {
+                subrows = [];
+                return false;
+            }
+        }
+
         public static bool Any(Func<T, bool> predicate)
             => EnumerateSubrows<T>().Any(predicate);
 

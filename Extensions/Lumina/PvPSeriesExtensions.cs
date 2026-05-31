@@ -11,8 +11,8 @@ public static unsafe class PvPSeriesExtensions {
     private static Dictionary<uint, Collection<RowRef<Item>>> BuildAttireItemsCache() {
         var cache = new Dictionary<uint, Collection<RowRef<Item>>>();
         foreach (var line in Svc.Data.GetSupplemental<ItemSupplement>(CsvLoader.ItemSupplementResourceName).Where(r => r.ItemSupplementSource is ItemSupplementSource.Loot)) {
-            if (!Svc.Data.TryGetRow<MirageStoreSetItemLookup>(line.ItemId, out var lookup)) continue;
-            if (!Svc.Data.TryGetRow<MirageStoreSetItem>(lookup.Item[0].RowId, out var mirage)) continue;
+            if (!MirageStoreSetItemLookup.TryGetRow(line.ItemId, out var lookup)) continue;
+            if (!MirageStoreSetItem.TryGetRow(lookup.Item[0].RowId, out var mirage)) continue;
 
             if (!cache.ContainsKey(line.SourceItemId))
                 cache[line.SourceItemId] = mirage.Items;

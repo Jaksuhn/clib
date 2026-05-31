@@ -1,5 +1,4 @@
-﻿using clib.Services;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
+﻿using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -12,7 +11,7 @@ namespace clib.Extensions;
 public static unsafe partial class AddonAreaMapExtensions {
     public static Vector2? GetMouseWorldCoords(ref this AddonAreaMap areaMap) {
         var mapCoords = areaMap.GetMouseMapCoords();
-        return mapCoords is null ? null : MapToWorld(mapCoords.Value, Svc.Data.GetRef<Map>(AgentMap.Instance()->SelectedMapId).Value);
+        return mapCoords is null ? null : MapToWorld(mapCoords.Value, Map.GetRowRef(AgentMap.Instance()->SelectedMapId).Value);
     }
 
     // TODO: see if this is in the agent

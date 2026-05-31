@@ -115,8 +115,8 @@ public static class ImGuiExtensions {
                 lastSearchTime = currentTime;
                 itemSearchResults = !string.IsNullOrEmpty(searchResultsQuery)
                     ? uint.TryParse(searchResultsQuery, out var searchId)
-                        ? [.. Svc.Data.GetExcelSheet<Item>().Where(x => itemSheetFilter?.Invoke(x) ?? true).Where(x => x.RowId == searchId).Take(20)]
-                        : [.. Svc.Data.GetExcelSheet<Item>().Where(x => itemSheetFilter?.Invoke(x) ?? true).Where(x => x.Name.ToString().Contains(searchResultsQuery, StringComparison.OrdinalIgnoreCase)).Take(20)]
+                        ? [.. Item.Where(x => itemSheetFilter?.Invoke(x) ?? true).Where(x => x.RowId == searchId).Take(20)]
+                        : [.. Item.Where(x => itemSheetFilter?.Invoke(x) ?? true).Where(x => x.Name.ToString().Contains(searchResultsQuery, StringComparison.OrdinalIgnoreCase)).Take(20)]
                     : [];
             }
 
@@ -158,7 +158,7 @@ public static class ImGuiExtensions {
             if (!child) return false;
 
             foreach (var (itemId, displayName) in customItems) {
-                if (Svc.Data.TryGetRow<Item>(itemId, out var item)) {
+                if (Item.TryGetRow(itemId, out var item)) {
                     if (Svc.Texture.GetFromGameIcon(new GameIconLookup { IconId = item.Icon }).GetWrapOrDefault() is { Handle: var handle }) {
                         ImGui.Image(handle, new Vector2(16, 16));
                         ImGui.SameLine();

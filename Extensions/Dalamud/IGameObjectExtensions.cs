@@ -9,8 +9,10 @@ using Lumina.Excel.Sheets;
 namespace clib.Extensions;
 
 public static class IGameObjectExtensions {
-    public static unsafe BattleChara* BattleChara(this IGameObject obj) => (BattleChara*)obj.Address;
-    public static unsafe Character* Character(this IGameObject obj) => (Character*)obj.Address;
+    extension(IGameObject obj) {
+        public unsafe BattleChara* BattleChara => (BattleChara*)obj.Address;
+        public unsafe Character* Character => (Character*)obj.Address;
+    }
 
     public static float DistanceTo(this IGameObject? obj, Vector3 position) => obj is not null ? Vector3.Distance(obj.Position, position) : 0f;
     public static float FlatDistanceTo(this IGameObject? obj, Vector3 position) {
@@ -36,7 +38,7 @@ public static class IGameObjectExtensions {
 
     public static unsafe bool CanRidePillion(this IGameObject? obj) {
         if (obj == null) return false;
-        var cont = obj.Character()->Mount;
-        return cont.MountedEntityIds[1..].ToArray().Count(x => x != 0) < (Svc.Data.GetRef<Mount>(cont.MountId).ValueNullable?.ExtraSeats ?? 0);
+        var cont = obj.Character->Mount;
+        return cont.MountedEntityIds[1..].ToArray().Count(x => x != 0) < (Mount.GetRowRef(cont.MountId).ValueNullable?.ExtraSeats ?? 0);
     }
 }
