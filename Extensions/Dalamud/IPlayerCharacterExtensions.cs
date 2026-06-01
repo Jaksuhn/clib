@@ -15,7 +15,7 @@ public static unsafe class IPlayerCharacterExtensions {
         public bool Available => pc != null;
         public bool Interactable => pc?.IsTargetable ?? false;
         public bool IsMoving => get_Available(pc) && (AgentMap.Instance()->IsPlayerMoving || get_IsJumping(pc));
-        public bool IsJumping => get_Available(pc) && (Svc.Condition[ConditionFlag.Jumping] || Svc.Condition[ConditionFlag.Jumping61] || get_Character(pc)->IsJumping());
+        public bool IsJumping => get_Available(pc) && (Svc.Condition[ConditionFlag.Jumping] || Svc.Condition[ConditionFlag.Jumping61] || pc?.Character->IsJumping());
         public bool IsAirDismountable {
             get {
                 var ground = new FFXIVClientStructs.FFXIV.Common.Math.Vector3();
