@@ -3,7 +3,6 @@ using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using System.Collections.Concurrent;
-using System.Threading;
 
 namespace clib.Services;
 
@@ -58,7 +57,7 @@ public class Svc {
 
     internal static NavmeshIPC Navmesh { get; private set; } = null!;
 
-    private static readonly ConcurrentDictionary<Type, Lazy<object>> Singletons = new();
+    private static readonly ConcurrentDictionary<Type, object> Singletons = new();
 
     public static void Register<T>() where T : class, new()
         => Register(() => new T());
@@ -66,15 +65,15 @@ public class Svc {
     public static void Register<T>(Func<T> singleton) where T : class {
         ArgumentNullException.ThrowIfNull(singleton);
         var key = typeof(T);
-        var lazy = new Lazy<object>(() => singleton()!, LazyThreadSafetyMode.ExecutionAndPublication);
-        if (!Singletons.TryAdd(key, lazy))
+        var instance = singleton();
+        if (!Singletons.TryAdd(key, instance))
             throw new InvalidOperationException($"[{nameof(Svc)}] {key.FullName} is already registered.");
     }
 
     public static T Get<T>() where T : class {
-        if (!Singletons.TryGetValue(typeof(T), out var lazy))
+        if (!Singletons.TryGetValue(typeof(T), out var instance))
             throw new InvalidOperationException($"[{nameof(Svc)}] {typeof(T).FullName} has not been registered.");
-        return (T)lazy.Value;
+        return (T)instance;
     }
 
     internal static void Init(IDalamudPluginInterface pi, CLibModule modules) {
@@ -95,8 +94,7 @@ public class Svc {
         SheetManager?.Dispose();
 
         foreach (var s in Singletons.Values) {
-            if (!s.IsValueCreated) continue;
-            if (s.Value is not IDisposable d) continue;
+            if (s is not IDisposable d) continue;
             try {
                 d.Dispose();
             }
