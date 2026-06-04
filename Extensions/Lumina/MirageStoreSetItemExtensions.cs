@@ -1,4 +1,5 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.Interop;
 using InteropGenerator.Runtime;
@@ -48,6 +49,8 @@ public static unsafe class MirageStoreSetItemExtensions {
 
             return collected;
         }
+
+        public void TryOnSet() => AgentTryon.Instance()->TryOnSilent(row.Items);
     }
 
     internal static RowRef<Item> ItemCtor(ExcelPage page, uint parentOffset, uint offset, uint i)

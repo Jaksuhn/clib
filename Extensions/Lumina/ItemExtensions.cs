@@ -63,6 +63,7 @@ public static class ItemExtensions {
         }
 
         public bool IsMoochable => item.ItemUICategory.RowId is 47 && Svc.Data.FindRow<FishingBaitParameter>(r => r.Item.RowId == item.RowId) is { };
+        public bool IsCosmicBait => WKSItemInfo.Any(r => r.Item.RowId == item.RowId && r.WKSItemSubCategory.RowId is 5);
         public bool IsGearCoffer => item.Icon is 26509 or 26557 or 26558 or 26559 or 26560 or 26561 or 26562 or 26564 or 26565 or 26566 or 26567;
         public bool IsAttire => item.ItemUICategory.RowId is 112;
 
