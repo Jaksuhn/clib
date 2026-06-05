@@ -235,7 +235,7 @@ public sealed class Automation : IDisposable {
         }
 
         if (CurrentTask != null) {
-            Svc.Log.Debug($"[{nameof(Automation)}] Canceling current task: {CurrentTask.GetType().Name}");
+            Svc.Log.Debug($"[{nameof(Automation)}] {task.GetType().Name} is starting and cancelling current task: {CurrentTask.GetType().Name}");
         }
         Stop();
         CurrentTask = task;

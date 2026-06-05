@@ -1,6 +1,6 @@
 ﻿using Lumina.Excel.Sheets;
 
-namespace clib.Extensions.Lumina;
+namespace clib.Extensions;
 
 public static class QuestExtensions {
     extension(Quest row) {
