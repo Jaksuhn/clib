@@ -340,9 +340,13 @@ public abstract class TaskBase : AutoTask {
         }
     }
 
-    protected async Task WaitUntilSkipping(Func<bool> condition, string scopeName, UiSkipOptions skip) {
+    protected async Task WaitUntilSkipping(Func<bool> condition, string scopeName, UiSkipOptions skip, int? selectStringIndex = null) {
         using var scope = BeginScope(scopeName);
         while (!condition()) {
+            if (selectStringIndex is { } index && AtkUnitBase.IsAddonReady("SelectString")) {
+                Log("selecting string...");
+                AddonSelectString.Select(index);
+            }
             if (skip.HasFlag(UiSkipOptions.Talk) && AtkUnitBase.IsAddonReady("Talk")) {
                 Log("progressing talk...");
                 AddonTalk.Progress();
@@ -368,6 +372,8 @@ public abstract class TaskBase : AutoTask {
     protected async Task InteractWith(IGameObject obj, Func<bool>? waitUntil = null, int? selectStringIndex = null, UiSkipOptions skip = UiSkipOptions.None) {
         using var scope = BeginScope("InteractWith");
 
+        ErrorIf(waitUntil is null && (selectStringIndex != null || skip != UiSkipOptions.None), "Skip arguments provided but no wait condition");
+
         if (!obj.IsInInteractRange()) {
             Log("Not in interact range, moving closer");
             await MoveToDirectly(obj.Position, obj.IsInInteractRange);
@@ -378,14 +384,11 @@ public abstract class TaskBase : AutoTask {
         const int maxAttempts = 5;
         for (var attempt = 0; attempt < maxAttempts; attempt++) {
             if (TargetSystem.InteractWith(obj.GameObjectId)) {
-                if (selectStringIndex is { } index && AtkUnitBase.IsAddonReady("SelectString")) {
-                    AddonSelectString.Select(index);
-                }
                 if (waitUntil is { } condition) {
-                    await WaitUntilSkipping(condition, "WaitingForNpcInteractionToFinish", skip);
+                    await WaitUntilSkipping(condition, "WaitingForNpcInteractionToFinish", skip, selectStringIndex);
                     return;
                 }
-                else return;
+                return;
             }
             await NextFrame();
         }
