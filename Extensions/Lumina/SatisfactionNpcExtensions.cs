@@ -5,7 +5,8 @@ namespace clib.Extensions;
 
 public static class SatisfactionNpcExtensions {
     extension(SatisfactionNpc row) {
+        // I don't like the name matching here but couldn't find another connection. Maybe the key prop is relevant but nothing obvious
         public RowRef<Achievement> Achievement
-            => new(row.ExcelPage.Module, Achievement.FirstOrNull(r => r is { AchievementCategory.RowId: 22, AchievementTarget.RowId: 35, Data: [{ RowId: 150 }, ..] } && r.Description.ContainsText(row.Npc.Value.Singular))?.RowId ?? new());
+            => new(row.ExcelPage.Module, Achievement.FirstOrNull(r => r is { AchievementCategory.RowId: 22, AchievementTarget.RowId: 46, Data: [{ RowId: 150 }, ..] } && r.Description.ContainsText(row.Npc.Value.Singular))?.RowId ?? new());
     }
 }
