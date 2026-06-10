@@ -378,8 +378,7 @@ public abstract class TaskBase : AutoTask {
         const int maxAttempts = 5;
         for (var attempt = 0; attempt < maxAttempts; attempt++) {
             if (TargetSystem.InteractWith(obj.GameObjectId)) {
-                if (selectStringIndex is { } index) {
-                    await WaitUntil(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitingForSelectString");
+                if (selectStringIndex is { } index && AtkUnitBase.IsAddonReady("SelectString")) {
                     AddonSelectString.Select(index);
                 }
                 if (waitUntil is { } condition) {
