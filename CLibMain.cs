@@ -1,5 +1,6 @@
 using clib.Services;
 using Dalamud.Plugin;
+using System.Threading.Tasks;
 
 namespace clib;
 
@@ -7,7 +8,7 @@ public static class CLibMain {
     public static string Name { get; private set; } = null!;
 
     /// <summary>
-    /// Function to initialise clib services. Must call <see cref="Dispose"/> when you dispose of your plugin.
+    /// Function to initialise clib services. Must call <see cref="Dispose"/> or <see cref="DisposeAsync"/> when you dispose of your plugin.
     /// </summary>
     public static void Init(IDalamudPluginInterface pi, object instance, CLibModule modules = CLibModule.None) {
         if (instance is not (IDalamudPlugin or IAsyncDalamudPlugin))
@@ -16,7 +17,6 @@ public static class CLibMain {
         Name = instance.GetType().Name;
     }
 
-    public static void Dispose() {
-        Svc.Dispose();
-    }
+    public static ValueTask DisposeAsync() => Svc.DisposeAsync();
+    public static void Dispose() => Svc.Dispose();
 }

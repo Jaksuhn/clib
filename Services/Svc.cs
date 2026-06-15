@@ -3,6 +3,7 @@ using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace clib.Services;
 
@@ -88,20 +89,33 @@ public class Svc {
             SheetManager = new(pi, Data.GameData, new());
     }
 
-    internal static void Dispose() {
-        Armoire?.Dispose();
-        Automation?.Dispose();
-        SheetManager?.Dispose();
+    internal static async ValueTask DisposeAsync() {
+        await DisposeObjectAsync(Armoire).ConfigureAwait(false);
+        await DisposeObjectAsync(Automation).ConfigureAwait(false);
+        await DisposeObjectAsync(SheetManager).ConfigureAwait(false);
 
         foreach (var s in Singletons.Values) {
-            if (s is not IDisposable d) continue;
             try {
-                d.Dispose();
+                await DisposeObjectAsync(s).ConfigureAwait(false);
             }
             catch {
-                Log.Error($"[{nameof(Svc)}] Failed disposal of {d.GetType().FullName}");
+                Log.Error($"[{nameof(Svc)}] Failed disposal of {s.GetType().FullName}");
             }
         }
+    }
+
+    internal static void Dispose()
+        => DisposeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+
+    private static ValueTask DisposeObjectAsync(object? obj) {
+        if (obj is null) return ValueTask.CompletedTask;
+        if (obj is IAsyncDisposable asyncDisposable)
+            return asyncDisposable.DisposeAsync();
+        if (obj is IDisposable disposable) {
+            disposable.Dispose();
+            return ValueTask.CompletedTask;
+        }
+        return ValueTask.CompletedTask;
     }
 }
 
