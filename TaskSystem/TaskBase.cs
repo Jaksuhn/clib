@@ -320,7 +320,7 @@ public abstract class TaskBase : AutoTask {
 
         Status = "Dismounting";
         while (Player.Mounted) {
-            // we are assuming from here on out that you cannot possibly be above ground that is unlandable
+            // assuming from here on out that you cannot possibly be above ground that is unlandable
             if (Player.InFlight && !Player.IsAirDismountable) {
                 Log($"Descending");
                 ActionManager.UseAction(ActionType.GeneralAction, 23); // TODO: find a force ground function
