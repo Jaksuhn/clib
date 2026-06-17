@@ -4,7 +4,12 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 namespace clib.Extensions;
 
 public static unsafe class AtkUnitBaseExtensions {
-    extension(AtkUnitBase) {
+    extension(ref AtkUnitBase atkUnitBase) {
+        public bool IsAddonReady() {
+            fixed (AtkUnitBase* ptr = &atkUnitBase)
+                return ptr != null && ptr->IsVisible && ptr->IsReady && ptr->IsFullyLoaded();
+        }
+
         public static bool IsAddonReady(string name) {
             var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(name);
             return addon != null && addon->IsVisible && addon->IsReady && addon->IsFullyLoaded();
