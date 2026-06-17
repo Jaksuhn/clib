@@ -21,4 +21,9 @@ public static unsafe class AtkUnitBaseExtensions {
 
     public static T* GetNodeById<T>(this ref AtkUnitBase addon, uint nodeId) where T : unmanaged
        => addon.UldManager.SearchNodeById<T>(nodeId);
+
+    public static bool TryGetNodeById<T>(this ref AtkUnitBase addon, uint nodeId, out T* node) where T : unmanaged {
+        node = addon.UldManager.SearchNodeById<T>(nodeId);
+        return node is not null && ((AtkResNode*)node)->IsActuallyVisible;
+    }
 }
