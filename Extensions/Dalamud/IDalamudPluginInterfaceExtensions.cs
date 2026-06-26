@@ -1,5 +1,6 @@
 ﻿using clib.Services;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using System.IO;
 using System.Reflection;
 
@@ -15,9 +16,11 @@ public static class IDalamudPluginInterfaceExtensions {
 
         public bool IsPluginLoaded(string internalName) => pi.InstalledPlugins.Any(p => p.InternalName == internalName && p.IsLoaded);
 
-        public void InitCustomClientStructs() {
+        public void InitCustomClientStructs() => InitCustomClientStructs(pi, Svc.SigScanner, Svc.Data);
+
+        public void InitCustomClientStructs(ISigScanner sigScanner, IDataManager dataManager) {
             FFXIVClientStructs.Interop.Generated.Addresses.Register();
-            InteropGenerator.Runtime.Resolver.GetInstance.Setup(Svc.SigScanner.SearchBase, Svc.Data.GameData.Repositories["ffxiv"].Version, new(Path.Join(pi.ConfigDirectory.FullName, "SigCache.json")));
+            InteropGenerator.Runtime.Resolver.GetInstance.Setup(sigScanner.SearchBase, dataManager.GameData.Repositories["ffxiv"].Version, new(Path.Join(pi.ConfigDirectory.FullName, "SigCache.json")));
             InteropGenerator.Runtime.Resolver.GetInstance.Resolve();
         }
 
