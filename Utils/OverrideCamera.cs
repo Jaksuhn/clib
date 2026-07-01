@@ -27,10 +27,7 @@ public unsafe class OverrideCamera : IDisposable {
     [Signature("40 53 48 83 EC 70 44 0F 29 44 24 ?? 48 8B D9")]
     private readonly Hook<RMICameraDelegate> _rmiCameraHook = null!;
 
-    public OverrideCamera() {
-        Svc.Hook.InitializeFromAttributes(this);
-        Svc.Log.Print($"RMICamera address: 0x{_rmiCameraHook.Address:X}");
-    }
+    public OverrideCamera() => Svc.Hook.InitializeFromAttributes(this);
 
     public void Dispose() {
         _rmiCameraHook.Dispose();
