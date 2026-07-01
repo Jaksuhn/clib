@@ -4,6 +4,7 @@ namespace clib.Extensions;
 
 public static unsafe class AtkComponentButtonExtensions {
     extension(scoped ref AtkComponentButton target) {
+        // https://github.com/AtmoOmen/OmenTools/blob/64f7cda301e0b59bc9a72fee13aadb03253ee645/Extensions/AtkComponentExtension.cs#L254
         public void Click() {
             fixed (AtkComponentButton* ptr = &target) {
                 if (ptr == null) return;

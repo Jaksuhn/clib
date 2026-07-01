@@ -1,7 +1,6 @@
 ﻿using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,30 +8,8 @@ using System.Text.RegularExpressions;
 namespace clib.Extensions;
 
 public static unsafe partial class AddonAreaMapExtensions {
-    public static Vector2? GetMouseWorldCoords(ref this AddonAreaMap areaMap) {
-        var mapCoords = areaMap.GetMouseMapCoords();
-        return mapCoords is null ? null : MapToWorld(mapCoords.Value, Map.GetRowRef(AgentMap.Instance()->SelectedMapId).Value);
-    }
-
-    // TODO: see if this is in the agent
-    public static Vector2? GetMouseMapCoords(ref this AddonAreaMap areaMap) {
-        var node = areaMap.AtkUnitBase.GetNodeById<AtkTextNode>(46);
-        if (node == null) return null;
-        var text = node->GetText();
-        var match = ExtractCoords().Match(text.ToString());
-        if (match.Success && match.Groups.Count >= 3) {
-            var xStr = ConvertSubscriptToNumber(match.Groups[1].Value);
-            var yStr = ConvertSubscriptToNumber(match.Groups[2].Value);
-
-            if (xStr.Length > 0 && yStr.Length > 0 &&
-                float.TryParse(xStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var x) &&
-                float.TryParse(yStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var y)) {
-                return new Vector2(x, y);
-            }
-        }
-
-        return null;
-    }
+    public static Vector2? GetMouseWorldCoords(ref this AddonAreaMap areaMap)
+        => MapToWorld(areaMap.MouseCoords, Map.GetRowRef(AgentMap.Instance()->SelectedMapId).Value);
 
     private static string ConvertSubscriptToNumber(string input) {
         var result = new StringBuilder();
