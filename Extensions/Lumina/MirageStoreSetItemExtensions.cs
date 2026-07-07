@@ -1,4 +1,5 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game;
+﻿using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.Interop;
@@ -19,15 +20,13 @@ public static unsafe class MirageStoreSetItemExtensions {
         public bool IsSetSlotCollected(int slotIndex, bool useCache = true) {
             var mirageManager = MirageManager.Instance();
             if (mirageManager->PrismBoxLoaded) {
-                var itemIndex = mirageManager->PrismBoxItemIds.IndexOf(row.RowId);
-                if (itemIndex != -1) {
+                var itemIndex = GetOutfitIndex(mirageManager->PrismBoxItemIds, row.RowId);
+                if (itemIndex != -1)
                     return mirageManager->IsSetSlotUnlocked((uint)itemIndex, slotIndex);
-                }
             }
-
             if (useCache) {
                 var itemFinderModule = ItemFinderModule.Instance();
-                var itemIndex = itemFinderModule->GlamourDresserItemIds.IndexOf(row.RowId);
+                var itemIndex = GetOutfitIndex(itemFinderModule->GlamourDresserItemIds, row.RowId);
                 if (itemIndex != -1) {
                     var bitArray = new BitArray((byte*)itemFinderModule->GlamourDresserItemSetUnlockBits.GetPointer(itemIndex), ItemCount);
                     return !bitArray.Get(slotIndex);
@@ -51,6 +50,15 @@ public static unsafe class MirageStoreSetItemExtensions {
         }
 
         public void TryOnSet() => AgentTryon.Instance()->TryOnSilent(row.Items);
+
+        private static int GetOutfitIndex(ReadOnlySpan<uint> outfitIds, uint setRowId) {
+            var setBaseId = ItemUtil.GetBaseId(setRowId).ItemId;
+            foreach (var (slot, id) in outfitIds.ToArray().Index()) {
+                if (id != 0 && ItemUtil.GetBaseId(id).ItemId == setBaseId)
+                    return slot;
+            }
+            return -1;
+        }
     }
 
     internal static RowRef<Item> ItemCtor(ExcelPage page, uint parentOffset, uint offset, uint i)
