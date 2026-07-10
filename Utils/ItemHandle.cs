@@ -92,6 +92,21 @@ public class ItemHandle {
         }
     }
 
+    /// <remarks>
+    /// Returns -1 if the item is not found
+    /// </remarks>
+    public unsafe float Condition {
+        get {
+            if (ItemLocation is null && !TrySetItemLocation()) return -1;
+            var im = InventoryManager.Instance();
+            if (im is null) return -1;
+            var slot = im->GetInventorySlot(ItemLocation.Container, ItemLocation.Slot);
+            return slot is not null && slot->ItemId != 0 ? slot->Condition : -1;
+        }
+    }
+
+    public bool IsRepairable => Condition is not -1 and < 30000f;
+
     public unsafe int GetCount(bool ignoreHq = true)
         => ignoreHq ? InventoryManager.Instance()->GetInventoryItemCount(BaseItemId) + InventoryManager.Instance()->GetInventoryItemCount(ItemId, true)
         : InventoryManager.Instance()->GetInventoryItemCount(ItemId);
