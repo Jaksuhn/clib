@@ -27,14 +27,14 @@ internal sealed unsafe class ArmoireService : IDisposable {
 
         Svc.ClientState.Login += OnLogin;
         Svc.ClientState.Logout += OnLogout;
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "Cabinet", OnCabinetRefresh);
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "Cabinet", OnCabinetRefresh);
 
         if (Svc.ClientState.IsLoggedIn)
             RefreshCache();
     }
 
     public void Dispose() {
-        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "Cabinet", OnCabinetRefresh);
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRefresh, "Cabinet", OnCabinetRefresh);
         Svc.ClientState.Logout -= OnLogout;
         Svc.ClientState.Login -= OnLogin;
 
