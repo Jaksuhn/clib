@@ -182,5 +182,19 @@ public class ItemHandle {
         InventoryManager.Instance()->MoveItemSlot(ItemLocation.Container, ItemLocation.Slot, cont, slot, true);
     }
 
+    public bool Locate() => Locate(out _);
+
+    public bool Locate(out MirageLocation presence) {
+        presence = Svc.Items.GetMirageLocation(ItemId);
+        return presence is not MirageLocation.None;
+    }
+
+    public bool IsInArmoire => Svc.Items.IsInArmoire(ItemId);
+    public bool IsInDresserLoose => Svc.Items.IsInDresserLoose(ItemId);
+    public bool IsInOutfitSlot => Svc.Items.IsInOutfitSlot(ItemId);
+    public MirageLocation MirageLocation => Svc.Items.GetMirageLocation(ItemId);
+    public List<(uint ItemId, uint Amount)> GetCosts() => Svc.Items.GetItemCosts(ItemId);
+    public bool HasAnyCosts => Svc.Items.HasAnyCosts(ItemId);
+
     public override string ToString() => IsValid ? $"[#{ItemId}] {GameData.Value.Name}" : $"{nameof(ItemHandle)}#Invalid";
 }

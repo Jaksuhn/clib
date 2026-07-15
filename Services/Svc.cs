@@ -52,7 +52,7 @@ public class Svc {
     [PluginService] public static IToastGui Toasts { get; private set; } = null!;
     [PluginService] public static IUnlockState UnlockState { get; private set; } = null!;
 
-    public static ArmoireService Armoire { get; private set; } = null!;
+    public static ItemService Items { get; private set; } = null!;
     public static Automation Automation { get; private set; } = null!;
     public static SheetManager SheetManager { get; private set; } = null!;
 
@@ -81,16 +81,16 @@ public class Svc {
         pi.Create<Svc>();
         Navmesh = new NavmeshIPC();
 
-        if (modules.HasFlag(CLibModule.Armoire))
-            Armoire = new();
-        if (modules.HasFlag(CLibModule.Automation))
-            Automation = new();
         if (modules.HasFlag(CLibModule.SheetManager))
             SheetManager = new(pi, Data.GameData, new());
+        if (modules.HasFlag(CLibModule.Items))
+            Items = new();
+        if (modules.HasFlag(CLibModule.Automation))
+            Automation = new();
     }
 
     internal static async ValueTask DisposeAsync() {
-        await DisposeObjectAsync(Armoire).ConfigureAwait(false);
+        await DisposeObjectAsync(Items).ConfigureAwait(false);
         await DisposeObjectAsync(Automation).ConfigureAwait(false);
         await DisposeObjectAsync(SheetManager).ConfigureAwait(false);
 
