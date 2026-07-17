@@ -1,25 +1,36 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+﻿using clib.Services;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 
 namespace clib.Extensions;
 
 public static class IObjectTableExtensions {
-    public static bool TryGetByGameObjectId(this IObjectTable objs, ulong gameObjectId, out IGameObject obj) {
-        if (objs.FirstOrDefault(o => o.GameObjectId == gameObjectId) is { } match) {
-            obj = match;
-            return true;
+    extension(IObjectTable objs) {
+        public IOrderedEnumerable<IGameObject> ByDistance() => objs.OrderBy(o => o.DistanceTo(Svc.Objects.LocalPlayer?.Position ?? Vector3.Zero));
+        public IGameObject? Nearest() => objs.ByDistance().FirstOrDefault();
+
+        public bool TryGetByGameObjectId(ulong gameObjectId, out IGameObject obj) {
+            if (objs.FirstOrDefault(o => o.GameObjectId == gameObjectId) is { } match) {
+                obj = match;
+                return true;
+            }
+            obj = default!;
+            return false;
         }
-        obj = default!;
-        return false;
+
+        public unsafe bool TryGetPlayerByContentId(ulong contentId, out IGameObject obj) {
+            if (objs.OfType<IPlayerCharacter>().FirstOrDefault(o => o.Character->ContentId == contentId) is { } match) {
+                obj = match;
+                return true;
+            }
+            obj = default!;
+            return false;
+        }
     }
 
-    public static unsafe bool TryGetPlayerByContentId(this IObjectTable objs, ulong contentId, out IGameObject obj) {
-        if (objs.OfType<IPlayerCharacter>().FirstOrDefault(o => o.Character->ContentId == contentId) is { } match) {
-            obj = match;
-            return true;
-        }
-        obj = default!;
-        return false;
+    extension(IEnumerable<IGameObject> objs) {
+        public IOrderedEnumerable<IGameObject> ByDistance() => objs.OrderBy(o => o.DistanceTo(Svc.Objects.LocalPlayer?.Position ?? Vector3.Zero));
+        public IGameObject? Nearest() => objs.ByDistance().FirstOrDefault();
     }
 }
