@@ -12,6 +12,8 @@ public static class IGameObjectExtensions {
     extension(IGameObject obj) {
         public unsafe BattleChara* BattleChara => (BattleChara*)obj.Address;
         public unsafe Character* Character => (Character*)obj.Address;
+
+        public int HuntRank => NotoriousMonster.FirstOrNull(r => r.BNpcBase.RowId == obj.BaseId) is { Rank: var rank } ? rank : 0;
     }
 
     public static float DistanceTo(this IGameObject? obj, Vector3 position) => obj is not null ? Vector3.Distance(obj.Position, position) : 0f;
