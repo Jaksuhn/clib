@@ -1,7 +1,6 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
 
@@ -13,8 +12,8 @@ internal sealed unsafe class DresserService : IDisposable {
     private readonly HashSet<uint> _dresserItemIds = [];
 
     public DresserService() {
-        Svc.ClientState.Login += OnLogin;
-        Svc.ClientState.Logout += OnLogout;
+        Svc.ClientState.Login += RefreshCache;
+        Svc.ClientState.Logout += (_, _) => ClearCache();
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "MiragePrismPrismBox", OnPrismBoxRefresh);
 
         if (Svc.ClientState.IsLoggedIn)
@@ -23,8 +22,8 @@ internal sealed unsafe class DresserService : IDisposable {
 
     public void Dispose() {
         Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "MiragePrismPrismBox", OnPrismBoxRefresh);
-        Svc.ClientState.Logout -= OnLogout;
-        Svc.ClientState.Login -= OnLogin;
+        Svc.ClientState.Logout -= (_, _) => ClearCache();
+        Svc.ClientState.Login -= RefreshCache;
         _dresserItemIds.Clear();
     }
 
@@ -91,14 +90,6 @@ internal sealed unsafe class DresserService : IDisposable {
     private static bool IsMirageSetToken(uint itemId)
         => MirageStoreSetItem.TryGetRow(itemId, out var row) && row.RowId > 0;
 
-    private void OnLogin() {
-        Svc.Log.Debug($"[{nameof(DresserService)}] Requesting prism box.");
-        GameMain.ExecuteCommand((int)CommandFlag.RequestPrismBox);
-        RefreshCache();
-    }
-
-    private void OnLogout(int _, int __) => ClearCache();
-
     private void ClearCache() {
         var hadAny = _dresserItemIds.Count > 0;
         _dresserItemIds.Clear();
@@ -114,19 +105,7 @@ internal sealed unsafe class DresserService : IDisposable {
             return;
         }
 
-        var finder = ItemFinderModule.Instance();
-        HashSet<uint> next;
-        if (finder is null) {
-            next = [];
-        }
-        else {
-            next = [];
-            foreach (var id in finder->GlamourDresserBaseItemIds) {
-                if (id != 0)
-                    next.Add(id);
-            }
-        }
-
+        var next = ItemFinderModule.Instance() is not null and var f ? [.. f->GlamourDresserBaseItemIds] : new HashSet<uint>();
         var changed = !_dresserItemIds.SetEquals(next);
         _dresserItemIds.Clear();
         _dresserItemIds.UnionWith(next);
