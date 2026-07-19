@@ -3,9 +3,6 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using FFXIVClientStructs.Interop;
-using InteropGenerator.Runtime;
 using System.Collections.Frozen;
 using static FFXIVClientStructs.FFXIV.Client.Game.UI.Cabinet;
 
@@ -22,7 +19,6 @@ internal sealed unsafe class ArmoireService : IDisposable {
         => Sheets.Cabinet.Where(row => row.RowId > 0 && row.Item.RowId != 0)
             .ToFrozenDictionary(row => row.RowId, row => row.Item.RowId));
 
-    private static readonly Lazy<int> CabinetRowCount = new(() => Svc.Data.GetExcelSheet<Sheets.Cabinet>()!.Count);
     private readonly HashSet<uint> _ownedItemIds = [];
 
     public ArmoireService() {
@@ -42,8 +38,7 @@ internal sealed unsafe class ArmoireService : IDisposable {
     }
 
     public void RefreshCache() {
-        Svc.Log.Debug($"[{nameof(ArmoireService)}] Refreshing cabinet.");
-        GameMain.ExecuteCommand(423);
+        GameMain.ExecuteCommand((int)CommandFlag.RequestCabinet);
         BuildCache(notify: true);
     }
 
@@ -90,18 +85,7 @@ internal sealed unsafe class ArmoireService : IDisposable {
             return false;
 
         ref var cabinet = ref uiState->Cabinet;
-        if (cabinet.State == CabinetState.Loaded && cabinet.IsItemInCabinet(cabinetId))
-            return true;
-
-        if (!useCache)
-            return false;
-
-        var itemFinderModule = ItemFinderModule.Instance();
-        if (itemFinderModule is null)
-            return false;
-
-        var bitArray = new BitArray((byte*)itemFinderModule->CabinetItemUnlockBits.GetPointer(0), CabinetRowCount.Value);
-        return bitArray.Get((int)cabinetId);
+        return cabinet.State == CabinetState.Loaded && cabinet.IsItemInCabinet(cabinetId);
     }
 
     private void OnLogin() => RefreshCache();
@@ -123,6 +107,10 @@ internal sealed unsafe class ArmoireService : IDisposable {
             return;
         }
 
+        var uiState = UIState.Instance();
+        if (uiState is null || uiState->Cabinet.State != CabinetState.Loaded)
+            return;
+
         var nextOwned = new HashSet<uint>();
         foreach (var (itemId, cabinetRowId) in CabinetByItemId.Value) {
             if (IsCabinetItemCollected(cabinetRowId))
@@ -133,9 +121,7 @@ internal sealed unsafe class ArmoireService : IDisposable {
         _ownedItemIds.Clear();
         _ownedItemIds.UnionWith(nextOwned);
 
-        if (notify && changed) {
-            Svc.Log.Debug($"[{nameof(ArmoireService)}] Cabinet changed.");
+        if (notify && changed)
             Changed?.Invoke();
-        }
     }
 }
