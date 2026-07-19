@@ -1,18 +1,15 @@
-using System.Collections.Frozen;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.Interop;
 using InteropGenerator.Runtime;
+using System.Collections.Frozen;
 using static FFXIVClientStructs.FFXIV.Client.Game.UI.Cabinet;
 
 namespace clib.Services;
 
-// Ownership checks follow HaselCommon CabinetService (live when Loaded, else ItemFinder bitset).
-// https://github.com/Haselnussbomber/HaselCommon/blob/main/HaselCommon/Services/CabinetService.cs
 internal sealed unsafe class ArmoireService : IDisposable {
     public event Action? Changed;
 
@@ -46,7 +43,8 @@ internal sealed unsafe class ArmoireService : IDisposable {
 
     public void RefreshCache() {
         Svc.Log.Debug($"[{nameof(ArmoireService)}] Refreshing cabinet.");
-        GameMain.ExecuteCommand((int)CommandFlag.RequestCabinet);
+        Svc.InternalHooks.CabinetRequest(&UIState.Instance()->Cabinet);
+        //GameMain.ExecuteCommand((int)CommandFlag.RequestCabinet);
         BuildCache(notify: true);
     }
 

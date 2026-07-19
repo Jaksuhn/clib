@@ -57,6 +57,7 @@ public class Svc {
     public static SheetManager SheetManager { get; private set; } = null!;
 
     internal static NavmeshIPC Navmesh { get; private set; } = null!;
+    internal static Hooks InternalHooks { get; private set; } = null!;
 
     private static readonly ConcurrentDictionary<Type, object> Singletons = new();
 
@@ -80,6 +81,7 @@ public class Svc {
     internal static void Init(IDalamudPluginInterface pi, CLibModule modules) {
         pi.Create<Svc>();
         Navmesh = new NavmeshIPC();
+        InternalHooks = new Hooks();
 
         if (modules.HasFlag(CLibModule.SheetManager))
             SheetManager = new(pi, Data.GameData, new());
@@ -93,6 +95,7 @@ public class Svc {
         await DisposeObjectAsync(Items).ConfigureAwait(false);
         await DisposeObjectAsync(Automation).ConfigureAwait(false);
         await DisposeObjectAsync(SheetManager).ConfigureAwait(false);
+        await DisposeObjectAsync(InternalHooks).ConfigureAwait(false);
 
         foreach (var s in Singletons.Values) {
             try {
