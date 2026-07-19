@@ -1,6 +1,7 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.Interop;
@@ -22,7 +23,6 @@ internal sealed unsafe class ArmoireService : IDisposable {
             .ToFrozenDictionary(row => row.RowId, row => row.Item.RowId));
 
     private static readonly Lazy<int> CabinetRowCount = new(() => Svc.Data.GetExcelSheet<Sheets.Cabinet>()!.Count);
-
     private readonly HashSet<uint> _ownedItemIds = [];
 
     public ArmoireService() {
@@ -43,8 +43,7 @@ internal sealed unsafe class ArmoireService : IDisposable {
 
     public void RefreshCache() {
         Svc.Log.Debug($"[{nameof(ArmoireService)}] Refreshing cabinet.");
-        Svc.InternalHooks.CabinetRequest(&UIState.Instance()->Cabinet);
-        //GameMain.ExecuteCommand((int)CommandFlag.RequestCabinet);
+        GameMain.ExecuteCommand(423);
         BuildCache(notify: true);
     }
 
@@ -91,8 +90,8 @@ internal sealed unsafe class ArmoireService : IDisposable {
             return false;
 
         ref var cabinet = ref uiState->Cabinet;
-        if (cabinet.State == CabinetState.Loaded)
-            return cabinet.IsItemInCabinet(cabinetId);
+        if (cabinet.State == CabinetState.Loaded && cabinet.IsItemInCabinet(cabinetId))
+            return true;
 
         if (!useCache)
             return false;
