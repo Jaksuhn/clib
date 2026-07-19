@@ -3,7 +3,7 @@
 namespace clib.Enums;
 
 /// <summary>
-/// For <see cref="CommandFlag.RepairAllItems"/> and <seealso cref="CommandFlag.RepairAllItemsNPC"/>
+/// For <see cref="CommandFlag.RepairAllItemsNPC"/>
 /// </summary>
 public enum RepairCategory : int {
     MainOffHand = 0,
