@@ -94,9 +94,9 @@ internal sealed unsafe class ArmoireService : IDisposable {
         var bitsetInCabinet = false;
         var itemFinderModule = ItemFinderModule.Instance();
         if (itemFinderModule is not null) {
-            var (byteIndex, bitOffset) = Math.DivRem(cabinetRowId - 1048, 32u);
-            if (itemFinderModule->CabinetItemUnlockBits.Length > byteIndex)
-                bitsetInCabinet = (itemFinderModule->CabinetItemUnlockBits[(int)byteIndex] & (1 << (int)bitOffset)) != 0;
+            var (wordIndex, bitOffset) = Math.DivRem(cabinetRowId, 32u);
+            if (itemFinderModule->CabinetItemUnlockBits.Length > wordIndex)
+                bitsetInCabinet = (itemFinderModule->CabinetItemUnlockBits[(int)wordIndex] & (1u << (int)bitOffset)) != 0;
         }
 
         return liveInCabinet || bitsetInCabinet;
