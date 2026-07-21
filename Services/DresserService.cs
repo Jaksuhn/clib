@@ -1,7 +1,6 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
 
@@ -10,7 +9,7 @@ namespace clib.Services;
 internal sealed unsafe class DresserService : IDisposable {
     public event System.Action? Changed;
 
-    private readonly HashSet<uint> _dresserItemIds = [];
+    private HashSet<uint> _lastNotifiedIds = [];
 
     public DresserService() {
         Svc.ClientState.Login += OnLogin;
@@ -18,21 +17,19 @@ internal sealed unsafe class DresserService : IDisposable {
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "MiragePrismPrismBox", OnPrismBoxRefresh);
 
         if (Svc.ClientState.IsLoggedIn)
-            RefreshCache();
+            NotifyIfChanged();
     }
 
     public void Dispose() {
         Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "MiragePrismPrismBox", OnPrismBoxRefresh);
         Svc.ClientState.Logout -= OnLogout;
         Svc.ClientState.Login -= OnLogin;
-        _dresserItemIds.Clear();
+        _lastNotifiedIds = [];
     }
 
-    public void RefreshCache() => BuildCache(notify: true);
-
     public HashSet<uint> GetDresserItemIds() {
-        BuildCache(notify: false);
-        return [.. _dresserItemIds];
+        var finder = ItemFinderModule.Instance();
+        return finder is null ? [] : [.. finder->GlamourDresserBaseItemIds];
     }
 
     public bool IsInDresserLoose(uint itemId, ISet<uint>? outfitTokenIds = null) {
@@ -91,49 +88,23 @@ internal sealed unsafe class DresserService : IDisposable {
     private static bool IsMirageSetToken(uint itemId)
         => MirageStoreSetItem.TryGetRow(itemId, out var row) && row.RowId > 0;
 
-    private void OnLogin() {
-        Svc.Log.Debug($"[{nameof(DresserService)}] Requesting prism box.");
-        GameMain.ExecuteCommand((int)CommandFlag.RequestPrismBox);
-        RefreshCache();
-    }
+    private void OnLogin() => NotifyIfChanged();
 
-    private void OnLogout(int _, int __) => ClearCache();
-
-    private void ClearCache() {
-        var hadAny = _dresserItemIds.Count > 0;
-        _dresserItemIds.Clear();
-        if (hadAny)
-            Changed?.Invoke();
-    }
-
-    private void OnPrismBoxRefresh(AddonEvent _, AddonArgs __) => BuildCache(notify: true);
-
-    private void BuildCache(bool notify) {
-        if (!Svc.ClientState.IsLoggedIn) {
-            ClearCache();
+    private void OnLogout(int _, int __) {
+        if (_lastNotifiedIds.Count == 0)
             return;
-        }
+        _lastNotifiedIds = [];
+        Changed?.Invoke();
+    }
 
-        var finder = ItemFinderModule.Instance();
-        HashSet<uint> next;
-        if (finder is null) {
-            next = [];
-        }
-        else {
-            next = [];
-            foreach (var id in finder->GlamourDresserBaseItemIds) {
-                if (id != 0)
-                    next.Add(id);
-            }
-        }
+    private void OnPrismBoxRefresh(AddonEvent _, AddonArgs __) => NotifyIfChanged();
 
-        var changed = !_dresserItemIds.SetEquals(next);
-        _dresserItemIds.Clear();
-        _dresserItemIds.UnionWith(next);
-
-        if (notify && changed) {
-            Svc.Log.Debug($"[{nameof(DresserService)}] Dresser changed.");
-            Changed?.Invoke();
-        }
+    private void NotifyIfChanged() {
+        var next = GetDresserItemIds();
+        if (_lastNotifiedIds.SetEquals(next))
+            return;
+        _lastNotifiedIds = next;
+        Svc.Log.Debug($"[{nameof(DresserService)}] Dresser changed.");
+        Changed?.Invoke();
     }
 }

@@ -1,10 +1,10 @@
-using System.Collections.Frozen;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using System.Collections.Frozen;
+using static FFXIVClientStructs.FFXIV.Client.Game.UI.Cabinet;
 
 namespace clib.Services;
 
@@ -19,44 +19,32 @@ internal sealed unsafe class ArmoireService : IDisposable {
         => Sheets.Cabinet.Where(row => row.RowId > 0 && row.Item.RowId != 0)
             .ToFrozenDictionary(row => row.RowId, row => row.Item.RowId));
 
-    private Dictionary<uint, Sheets.Cabinet> _cabinetByItemId = [];
     private readonly HashSet<uint> _ownedItemIds = [];
 
     public ArmoireService() {
-        LoadReverseCabinetMap();
-
         Svc.ClientState.Login += OnLogin;
         Svc.ClientState.Logout += OnLogout;
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "Cabinet", OnCabinetRefresh);
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "Cabinet", OnCabinetRefresh);
 
         if (Svc.ClientState.IsLoggedIn)
             RefreshCache();
     }
 
     public void Dispose() {
-        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRefresh, "Cabinet", OnCabinetRefresh);
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "Cabinet", OnCabinetRefresh);
         Svc.ClientState.Logout -= OnLogout;
         Svc.ClientState.Login -= OnLogin;
-
         _ownedItemIds.Clear();
     }
 
     public void RefreshCache() {
-        if (!LoadReverseCabinetMap()) {
-            Svc.Log.Debug($"[{nameof(ArmoireService)}] Refreshing cabinet.");
-            GameMain.ExecuteCommand((int)CommandFlag.RequestCabinet);
-        }
+        GameMain.ExecuteCommand((int)CommandFlag.RequestCabinet);
         BuildCache(notify: true);
     }
 
     public HashSet<uint> GetArmoireItems() {
         BuildCache(notify: false);
         return [.. _ownedItemIds];
-    }
-
-    public Sheets.Cabinet? GetCabinetRow(uint itemId) {
-        LoadReverseCabinetMap();
-        return _cabinetByItemId.TryGetValue(itemId, out var row) ? row : null;
     }
 
     public bool IsCabinetItem(uint itemId)
@@ -68,6 +56,13 @@ internal sealed unsafe class ArmoireService : IDisposable {
             return false;
         BuildCache(notify: false);
         return _ownedItemIds.Contains(itemId) || IsInCabinet(itemId);
+    }
+
+    public bool IsInCabinet(uint itemId, bool useCache = true) {
+        itemId = ItemUtil.GetBaseId(itemId).ItemId;
+        if (!CabinetByItemId.Value.TryGetValue(itemId, out var cabinetRowId))
+            return false;
+        return IsCabinetItemCollected(cabinetRowId, useCache);
     }
 
     public uint ResolveCabinetItemId(uint cacheOrEntryId) {
@@ -83,30 +78,17 @@ internal sealed unsafe class ArmoireService : IDisposable {
         return baseId;
     }
 
-    public bool IsInCabinet(uint itemId) {
-        itemId = ItemUtil.GetBaseId(itemId).ItemId;
-        if (!CabinetByItemId.Value.TryGetValue(itemId, out var cabinetRowId))
+    // https://github.com/Haselnussbomber/HaselCommon/blob/a411775f6e97b0c82fc81a66ae918a2027c709d3/HaselCommon/Services/CabinetService.cs#L36-L53
+    private static bool IsCabinetItemCollected(uint cabinetId, bool useCache = true) {
+        var uiState = UIState.Instance();
+        if (uiState is null)
             return false;
 
-        var uiState = UIState.Instance();
-        var liveInCabinet = uiState is not null && uiState->Cabinet.IsCabinetLoaded() && uiState->Cabinet.IsItemInCabinet(cabinetRowId);
-
-        var bitsetInCabinet = false;
-        var itemFinderModule = ItemFinderModule.Instance();
-        if (itemFinderModule is not null) {
-            var (byteIndex, bitOffset) = Math.DivRem(cabinetRowId - 1048, 32u);
-            if (itemFinderModule->CabinetItemUnlockBits.Length > byteIndex)
-                bitsetInCabinet = (itemFinderModule->CabinetItemUnlockBits[(int)byteIndex] & (1 << (int)bitOffset)) != 0;
-        }
-
-        return liveInCabinet || bitsetInCabinet;
+        ref var cabinet = ref uiState->Cabinet;
+        return cabinet.State == CabinetState.Loaded && cabinet.IsItemInCabinet(cabinetId);
     }
 
-    private void OnLogin() {
-        Svc.Log.Debug($"[{nameof(ArmoireService)}] Refreshing cabinet.");
-        GameMain.ExecuteCommand((int)CommandFlag.RequestCabinet);
-        RefreshCache();
-    }
+    private void OnLogin() => RefreshCache();
 
     private void OnLogout(int _, int __) => ClearCache();
 
@@ -125,27 +107,21 @@ internal sealed unsafe class ArmoireService : IDisposable {
             return;
         }
 
+        var uiState = UIState.Instance();
+        if (uiState is null || uiState->Cabinet.State != CabinetState.Loaded)
+            return;
+
         var nextOwned = new HashSet<uint>();
-        foreach (var (itemId, cabinetRow) in _cabinetByItemId) {
-            if (IsInCabinet(itemId))
-                nextOwned.Add(ItemUtil.GetBaseId(itemId).ItemId);
+        foreach (var (itemId, cabinetRowId) in CabinetByItemId.Value) {
+            if (IsCabinetItemCollected(cabinetRowId))
+                nextOwned.Add(itemId);
         }
 
         var changed = !_ownedItemIds.SetEquals(nextOwned);
         _ownedItemIds.Clear();
         _ownedItemIds.UnionWith(nextOwned);
 
-        if (notify && changed) {
-            Svc.Log.Debug($"[{nameof(ArmoireService)}] Cabinet changed.");
+        if (notify && changed)
             Changed?.Invoke();
-        }
-    }
-
-    private bool LoadReverseCabinetMap() {
-        if (_cabinetByItemId.Count > 0)
-            return false;
-
-        _cabinetByItemId = Sheets.Cabinet.Where(x => x.RowId > 0 && x.Item.RowId > 0).GroupBy(x => x.Item.RowId).ToDictionary(g => g.Key, g => g.First());
-        return true;
     }
 }

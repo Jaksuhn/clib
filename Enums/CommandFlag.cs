@@ -1,10 +1,11 @@
-﻿namespace clib.Enums;
+namespace clib.Enums;
 
 /// <summary>
 /// Command ids for <see cref="FFXIVClientStructs.FFXIV.Client.Game.GameMain.ExecuteCommand"/>
 /// </summary>
-// https://github.com/AtmoOmen/OmenTools/blob/main/Infos/ExecuteCommandFlag.cs
+// straight copy of https://github.com/AtmoOmen/OmenTools/blob/main/Info/Game/Enums/ExecuteCommandFlag.cs
 public enum CommandFlag {
+
     /// <summary>
     /// Draw or sheathe weapon
     /// </summary>
@@ -12,7 +13,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: 1 - Draw, 0 - Sheathe</para>
     /// <para><c>param2</c>: Unknown, fixed at 1</para>
     /// </remarks>
-    DrawOrSheatheWeapon = 1,
+    ToggleWeapon = 1,
 
     /// <summary>
     /// Auto attack
@@ -22,7 +23,7 @@ public enum CommandFlag {
     /// <para><c>param2</c>: Target object ID</para>
     /// <para><c>param3</c>: Whether it is manual operation (0 - No, 1 - Yes)</para>
     /// </remarks>
-    AutoAttack = 2,
+    ToggleAutoAttack = 2,
 
     /// <summary>
     /// Select target
@@ -40,7 +41,12 @@ public enum CommandFlag {
     /// <para><c>param2</c>: Parameter 1</para>
     /// <para><c>param3</c>: Parameter 2</para>
     /// </remarks>
-    PVPQuickChat = 5,
+    SnedPVPQuickChat = 5,
+
+    /// <summary>
+    /// GM command
+    /// </summary>
+    GMCommand11 = 11,
 
     /// <summary>
     /// Dismount
@@ -56,12 +62,12 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Pet ID</para>
     /// </remarks>
-    SummonPet = 102,
+    SummonMinion = 102,
 
     /// <summary>
     /// Withdraw pet
     /// </summary>
-    WithdrawPet = 103,
+    WithdrawMinion = 103,
 
     /// <summary>
     /// Remove specified status effect from self
@@ -70,7 +76,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Status ID</para>
     /// <para><c>param3</c>: Status source GameObjectID, or use 0xE0000000 to remove the first status of this type from any source</para>
     /// </remarks>
-    StatusOff = 104,
+    RemoveStatus = 104,
 
     /// <summary>
     /// Cancel cast
@@ -87,14 +93,47 @@ public enum CommandFlag {
     RidePillion = 106,
 
     /// <summary>
-    /// Withdraw fashion accessory
+    /// Ride pillion ()
     /// </summary>
-    WithdrawParasol109 = 109,
+    /// <remarks>
+    ///     <para><c>param1</c>: Rider Entity ID</para>
+    /// </remarks>
+    RidePillionAuto = 107,
+
+    /// <summary>
+    /// Load Party Member
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: (0 6)</para>
+    ///     <para><c>param2</c>: EntityID</para>
+    /// </remarks>
+    LoadPartyMember = 108,
 
     /// <summary>
     /// Withdraw fashion accessory
     /// </summary>
-    WithdrawParasol110 = 110,
+    WithdrawParasolForced = 109,
+
+    /// <summary>
+    /// Withdraw fashion accessory
+    /// </summary>
+    WithdrawParasol = 110,
+
+    /// <summary>
+    /// Update Parasol State
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: ID (0 )</para>
+    /// </remarks>
+    UpdateParasolState = 111,
+
+    /// <summary>
+    /// Set Parasol To Auto Use
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: ID (0 )</para>
+    /// </remarks>
+    SetParasolToAutoUse = 112,
 
     /// <summary>
     /// Revive
@@ -155,7 +194,7 @@ public enum CommandFlag {
     ///     </item>
     /// </list>
     /// </remarks>
-    TerritoryTransport = 201,
+    StartTerritoryTransport = 201,
 
     /// <summary>
     /// Teleport to specified aetheryte
@@ -173,13 +212,42 @@ public enum CommandFlag {
     AcceptTeleportOffer = 203,
 
     /// <summary>
+    /// Cancel Teleport
+    /// </summary>
+    CancelTeleport = 204,
+
+    /// <summary>
+    /// Reject Revive
+    /// </summary>
+    RejectRevive = 205,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Event Kind</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    /// </remarks>
+    PublicContentCommand206 = 206,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown parameter high 32 bits</para>
+    ///     <para><c>param2</c>: Unknown parameter</para>
+    ///     <para><c>param3</c>: Unknown parameter</para>
+    /// </remarks>
+    TeleportCommand207 = 207,
+
+    /// <summary>
     /// Request friend house teleport information
     /// </summary>
     /// <remarks>
     /// <para><c>param1</c>: Unknown</para>
     /// <para><c>param2</c>: Unknown</para>
     /// </remarks>
-    RequestFriendHouseTeleport = 210,
+    RequestFriendHousingTeleportInfo = 210,
 
     /// <summary>
     /// Teleport to friend house
@@ -193,14 +261,19 @@ public enum CommandFlag {
     TeleportToFriendHouse = 211,
 
     /// <summary>
-    /// Return to the nearest safe point on the current map if current race is not Lalafell
+    /// If not Lalafell, return to the nearest safe point in the current area
     /// </summary>
-    ReturnIfNotLalafell = 213,
+    ReturnToSafePointIfNotLalafell = 213,
 
     /// <summary>
-    /// Instantly return to return point, or to duty respawn point if in a duty
+    /// Return to the nearest safe point on the current map if current race is not Lalafell
     /// </summary>
-    InstantReturn = 214,
+    ReturnIfNotLalafell = 214,
+
+    /// <summary>
+    /// Alias for <see cref="ReturnIfNotLalafell"/> (legacy clib name).
+    /// </summary>
+    InstantReturn = ReturnIfNotLalafell,
 
     /// <summary>
     /// Inspect specified player
@@ -219,12 +292,25 @@ public enum CommandFlag {
     ChangeTitle = 302,
 
     /// <summary>
+    /// Request title data
+    /// </summary>
+    RequestTitles = 303,
+
+    /// <summary>
+    /// Mark a HowTo as seen
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: HowTo ID</para>
+    /// </remarks>
+    MarkHowToSeen = 306,
+
+    /// <summary>
     /// Request cutscene data
     /// </summary>
     /// <remarks>
     /// <para><c>param1</c>: Cutscene index in Cutscene.csv</para>
     /// </remarks>
-    RequestCutscene307 = 307,
+    RequestCutsceneInfo307 = 307,
 
     /// <summary>
     /// Request challenge log data for specific category
@@ -235,9 +321,23 @@ public enum CommandFlag {
     RequestContentsNoteCategory = 310,
 
     /// <summary>
+    /// Unknown ()
+    /// </summary>
+    UnknownCommand312 = 312,
+
+    /// <summary>
     /// Clear field markers
     /// </summary>
     ClearFieldMarkers = 313,
+
+    /// <summary>
+    /// AutoChangeCameraMode
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, 1 0</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    /// </remarks>
+    AutoChangeCameraModeCommand314 = 314,
 
     /// <summary>
     /// Assign or swap Blue Mage action to active slot
@@ -247,7 +347,7 @@ public enum CommandFlag {
     /// <para><c>param2</c>: Slot index (starts from 0, less than 24)</para>
     /// <para><c>param3</c>: Action ID / Slot index (starts from 0, less than 24)</para>
     /// </remarks>
-    AssignBLUActionToSlot = 315,
+    SetBlueAction = 315,
 
     /// <summary>
     /// Request world travel data
@@ -291,12 +391,50 @@ public enum CommandFlag {
     SetRetainerMarketPrice = 400,
 
     /// <summary>
+    /// Request Monster Note
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: (Agent byte MonsterNote)</para>
+    ///     <para><c>param2</c></para>
+    ///     <para><c>param3</c>: Unknown, Agent 0, Yes 0</para>
+    /// </remarks>
+    RequestMonsterNote = 401,
+
+    /// <summary>
+    /// Clear Reclaim Notification
+    /// </summary>
+    ClearReclaimNotification = 402,
+
+    /// <summary>
+    /// 1.0 NPC
+    /// </summary>
+    ReclaimItems = 403,
+
+    /// <summary>
     /// Request specified inventory data
     /// </summary>
     /// <remarks>
     /// <para><c>param1</c>: (int)InventoryType</para>
     /// </remarks>
-    RequestInventory = 405,
+    RequestInventory = 404,
+
+    /// <summary>
+    /// Move Item Between Inventory
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: InventoryType</para>
+    ///     <para><c>param2</c>: InventoryType</para>
+    /// </remarks>
+    MoveItemBetweenInventory = 405,
+
+    /// <summary>
+    /// (Yes, , )
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: InventoryType</para>
+    ///     <para><c>param2</c>: InventoryType</para>
+    /// </remarks>
+    NotifyBlockedInventoryOperation = 406,
 
     /// <summary>
     /// Enter materia attach state
@@ -304,22 +442,107 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Item ID</para>
     /// </remarks>
-    EnterMateriaAttachState = 408,
+    EnterMateriaAttachState = 407,
+
+    /// <summary>
+    /// Finish Materia Attach
+    /// </summary>
+    FinishMateriaAttach = 408,
 
     /// <summary>
     /// Leave materia attach state
     /// </summary>
-    LeaveMateriaAttachState = 410,
+    LeaveMateriaAttachState = 409,
+
+    /// <summary>
+    /// Enter materia attach request state
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, MateriaRequestManager</para>
+    /// </remarks>
+    EnterMateriaAttachRequestState = 410,
+
+    /// <summary>
+    /// Leave Materia Attach Request State
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, 0 1</para>
+    ///     <para><c>param2</c>: Unknown, 0 1</para>
+    /// </remarks>
+    LeaveMateriaAttachRequestState = 411,
+
+    /// <summary>
+    /// Send Materia Attach Request
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: EntityID</para>
+    /// </remarks>
+    SendMateriaAttachRequest = 412,
+
+    /// <summary>
+    /// Toggle Free Company Crest Decal
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: InventoryType</para>
+    ///     <para><c>param2</c>: InventorySlot</para>
+    ///     <para><c>param3</c>: 0 - , 1</para>
+    /// </remarks>
+    ToggleFreeCompanyCrestDecal = 414,
+
+    /// <summary>
+    /// Toggle Free Company Crest Decal Batch Equipped
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: 0 - , 1</para>
+    /// </remarks>
+    ToggleFreeCompanyCrestDecalBatchEquipped = 415,
+
+    /// <summary>
+    /// Toggle Free Company Crest Decal Batch
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: (5 - ; 6 - )</para>
+    ///     <para><c>param2</c>: 0 - , 1</para>
+    /// </remarks>
+    ToggleFreeCompanyCrestDecalBatch = 416,
+
+    /// <summary>
+    /// Cancel Materia Attach Request Forced
+    /// </summary>
+    CancelMateriaAttachRequestForced = 418,
 
     /// <summary>
     /// Cancel materia meld request
     /// </summary>
-    CancelMateriaMeldRequest = 419,
+    FinishInventoryOperation = 419,
+
+    /// <summary>
+    /// Deposit gil to free company chest
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Amount</para>
+    ///     <para>Requires calling <see cref="MoveItemBetweenInventory" /></para>
+    /// </remarks>
+    DepositFreeCompanyChestGil = 420,
+
+    /// <summary>
+    /// Withdraw gil from free company chest
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Amount</para>
+    ///     <para>Requires calling <see cref="MoveItemBetweenInventory" /></para>
+    /// </remarks>
+    WithdrawFreeCompanyChestGil = 421,
+
+    /// <summary>
+    /// Request free company chest log
+    /// </summary>
+    RequestFreeCompanyChestLog = 422,
 
     /// <summary>
     /// Request armoire data
     /// </summary>
-    RequestCabinet = 424,
+    RequestCabinet = 423,
 
     /// <summary>
     /// Store item to armoire
@@ -327,7 +550,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Item index in Cabinet.csv</para>
     /// </remarks>
-    StoreToCabinet = 425,
+    StoreToCabinet = 424,
 
     /// <summary>
     /// Restore item from armoire
@@ -335,33 +558,40 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Item index in Cabinet.csv</para>
     /// </remarks>
-    RestoreFromCabinet = 426,
+    RestoreFromCabinet = 425,
 
     /// <summary>
-    /// Repair item
+    /// Unknown armoire command (executing reports <c>cutscene interrupted</c>)
     /// </summary>
     /// <remarks>
-    /// <para><c>param1</c>: Inventory Type</para>
-    /// <para><c>param2</c>: Inventory Slot</para>
-    /// <para><c>param3</c>: Item ID</para>
+    ///     <para><c>param1</c>: Cabinet ID</para>
+    ///     <para><c>param2</c>: Inventory Type</para>
+    ///     <para><c>param3</c>: Inventory Slot</para>
     /// </remarks>
-    RepairItem = 434,
+    CabinetCommand426 = 426,
 
     /// <summary>
-    /// Repair all equipped items
+    /// Finish armoire data request (sets flag to 1)
     /// </summary>
-    /// <remarks>
-    /// <para><c>param1</c>: Inventory Type (fixed at 1000)</para>
-    /// </remarks>
-    RepairEquippedItems = 435,
+    FinishCabinetRequest = 427,
 
     /// <summary>
-    /// Repair all items
+    /// Accept mob hunt bill
     /// </summary>
     /// <remarks>
-    /// <para><c>param1</c>: Category (0 - Main hand/Off hand; 1 - Head/Body/Arms; 2 - Legs/Feet; 3 - Ear/Neck; 4 - Wrist/Ring; 5 - Items)</para>
+    ///     <para><c>param1</c>: Index in UI.MobHunt.AvailableMarkId</para>
+    ///     <para><c>param2</c>: Mark ID</para>
     /// </remarks>
-    RepairAllItems = 436,
+    AcceptMobHuntBill = 428,
+
+    /// <summary>
+    /// Abandon mob hunt bill
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Index in UI.MobHunt.AvailableMarkId</para>
+    ///     <para><c>param2</c>: Mark ID</para>
+    /// </remarks>
+    AbandonMobHuntBill = 429,
 
     /// <summary>
     /// Extract materia
@@ -373,9 +603,47 @@ public enum CommandFlag {
     ExtractMateria = 437,
 
     /// <summary>
+    /// Retainer
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Inventory Type</para>
+    ///     <para><c>param2</c>: Inventory Slot</para>
+    ///     <para><c>param3</c>: Inventory Type</para>
+    ///     <para><c>param4</c>: Inventory Slot</para>
+    /// </remarks>
+    CastRetainerGlamour = 438,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Inventory Type</para>
+    ///     <para><c>param2</c>: Inventory Slot</para>
+    /// </remarks>
+    MiragePrismCommand439 = 439,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Inventory Type</para>
+    ///     <para><c>param2</c>: Inventory Slot</para>
+    /// </remarks>
+    RelicSphereCommand440 = 440,
+
+    /// <summary>
     /// Change gearset
     /// </summary>
-    GearsetChange = 441,
+    ChangeGearset = 441,
+
+    /// <summary>
+    /// Recover Blocked Item
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: InventoryType</para>
+    ///     <para><c>param2</c>: InventorySlot</para>
+    /// </remarks>
+    RecoverBlockedItem = 442,
 
     /// <summary>
     /// Request saddlebag data
@@ -385,12 +653,21 @@ public enum CommandFlag {
     /// <summary>
     /// Request reconstruction buyback item data
     /// </summary>
-    RequestReconstrcutionBuyBack445 = 445,
+    RequestEnclaveBuyBack = 445,
 
     /// <summary>
     /// Request reconstruction buyback item data
     /// </summary>
-    RequestReconstrcutionBuyBack446 = 446,
+    FinishRequestEnclaveBuyBack = 446,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Context ID ( 0)</para>
+    ///     <para><c>param2</c>: Type ( 725)</para>
+    /// </remarks>
+    InventoryOperationCommand449 = 449,
 
     /// <summary>
     /// Send repair request
@@ -401,12 +678,41 @@ public enum CommandFlag {
     SendRepairRequest = 450,
 
     /// <summary>
+    /// Finish Repair Request
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, AgentRepairRequest.Instance()</para>
+    ///     <para><c>param2</c>: Unknown, AgentRepairRequest.Instance()</para>
+    ///     <para><c>param3</c>: Unknown, AtkValue</para>
+    /// </remarks>
+    FinishRepairRequest = 451,
+
+    /// <summary>
+    /// Start Repair Request
+    /// </summary>
+    StartRepairRequest = 452,
+
+    /// <summary>
     /// Cancel repair request
     /// </summary>
     /// <remarks>
     /// <para><c>param1</c>: Target Entity ID</para>
     /// </remarks>
     CancelRepairRequest = 453,
+
+    /// <summary>
+    /// Confirm Repair Request
+    /// </summary>
+    ConfirmRepairRequest = 454,
+
+    /// <summary>
+    /// Equip Facewear
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Glasses Slot</para>
+    ///     <para><c>param2</c>: Glasses ID</para>
+    /// </remarks>
+    EquipFacewear = 455,
 
     /// <summary>
     /// Interrupt current emote
@@ -424,7 +730,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param2</c>: Posture index</para>
     /// </remarks>
-    IdlePostureChange = 505,
+    SetIdlePosture = 505,
 
     /// <summary>
     /// Enter idle posture
@@ -432,22 +738,70 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param2</c>: Posture index</para>
     /// </remarks>
-    IdlePostureEnter = 506,
+    EnterIdlePosture = 506,
 
     /// <summary>
     /// Exit idle posture
     /// </summary>
-    IdlePostureExit = 507,
+    ExitIdlePosture = 507,
+
+    /// <summary>
+    /// Cleanup Gimmick Jump State 602
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown (Yes)</para>
+    /// </remarks>
+    CleanupGimmickJumpState602 = 602,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    ControlCommand604 = 604,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: X</para>
+    ///     <para><c>param2</c>: Y</para>
+    ///     <para><c>param3</c>: Z</para>
+    ///     <para><c>param4</c>: Character Rotation</para>
+    /// </remarks>
+    ControlCommand605 = 605,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown ()</para>
+    /// </remarks>
+    ControlCommand606 = 606,
 
     /// <summary>
     /// Enter swim state (also forces dismount)
     /// </summary>
-    EnterSwim = 608,
+    EnterSwimState = 608,
 
     /// <summary>
     /// Leave swim state
     /// </summary>
-    LeaveSwim = 609,
+    LeaveSwimState = 609,
+
+    /// <summary>
+    /// Cleanup Gimmick Jump State 611
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown (Yes)</para>
+    /// </remarks>
+    CleanupGimmickJumpState611 = 611,
+
+    /// <summary>
+    /// Cleanup Gimmick Jump State 613
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown (Yes)</para>
+    /// </remarks>
+    CleanupGimmickJumpState613 = 613,
 
     /// <summary>
     /// Enable/disable mounting restriction
@@ -458,9 +812,27 @@ public enum CommandFlag {
     DisableMounting = 612,
 
     /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, 0 1</para>
+    /// </remarks>
+    ControlCommand614 = 614,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: X</para>
+    ///     <para><c>param2</c>: Y</para>
+    ///     <para><c>param3</c>: Z</para>
+    /// </remarks>
+    ControlCommand615 = 615,
+
+    /// <summary>
     /// Enter flight state
     /// </summary>
-    EnterFlight = 616,
+    EnterFlightState = 616,
 
     /// <summary>
     /// Craft
@@ -480,20 +852,125 @@ public enum CommandFlag {
     /// </para>
     /// <para><c>param2</c>: Additional parameter (If changing bait, item ID; If mooching, bait index)</para>
     /// </remarks>
-    Fish = 701,
+    Fishing = 701,
 
     /// <summary>
-    /// Load craft log data
+    /// ()
     /// </summary>
     /// <remarks>
-    /// <para><c>param1</c>: Class index (left to right, starts from 0, ends at 7)</para>
+    ///     <para><c>param1</c>: FishingNoteInfo ID</para>
     /// </remarks>
-    LoadCraftLog = 710,
+    RequestFishingNote = 702,
+
+    /// <summary>
+    /// ()
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: FishingNoteInfo ID</para>
+    /// </remarks>
+    RequestSpearfishNote = 703,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, 1 2</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    /// </remarks>
+    QuestCommand704 = 704,
+
+    /// <summary>
+    /// Set Last Read Quest
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, 1</para>
+    ///     <para><c>param2</c>: Quest ID (ushort)</para>
+    /// </remarks>
+    SetLastReadQuest = 705,
+
+    /// <summary>
+    /// Request Gathering Point
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: GatheringPoint ID</para>
+    /// </remarks>
+    RequestGatheringPoint = 706,
+
+    /// <summary>
+    /// Mark Gather Division Level Range Seen
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Division Index</para>
+    ///     <para><c>param2</c>: LevelRange Index</para>
+    /// </remarks>
+    MarkGatherDivisionLevelRangeSeen = 708,
 
     /// <summary>
     /// Exit craft
     /// </summary>
-    ExitCraft = 711,
+    MarkCraftDivisionLevelRangeSeen = 711,
+
+    /// <summary>
+    /// Leave Quick Synthesis
+    /// </summary>
+    LeaveQuickSynthesis = 712,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Action ID</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    /// </remarks>
+    SpearFishingCommand713 = 713,
+
+    /// <summary>
+    /// Unknown ()
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown, 0, 1, 2</para>
+    /// </remarks>
+    SpearFishingCommand714 = 714,
+
+    /// <summary>
+    /// (, )
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: PerformanceCount 32</para>
+    ///     <para><c>param2</c>: PerformanceCount high 32 bits</para>
+    /// </remarks>
+    MarkSpearFishingActionUsage = 715,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    /// </remarks>
+    SpearFishingCommand716 = 716,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    ///     <para><c>param4</c>: Unknown</para>
+    /// </remarks>
+    SpearFishingCommand717 = 717,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    /// </remarks>
+    SpearFishingCommand718 = 718,
 
     /// <summary>
     /// Abandon quest
@@ -517,6 +994,14 @@ public enum CommandFlag {
     AbandonLeveQuest = 802,
 
     /// <summary>
+    /// Mark Leve Ready To Accept
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Leve ID</para>
+    /// </remarks>
+    MarkLeveReadyToAccept = 803,
+
+    /// <summary>
     /// Start leve quest
     /// </summary>
     /// <remarks>
@@ -526,9 +1011,17 @@ public enum CommandFlag {
     StartLeveQuest = 804,
 
     /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Quest ID</para>
+    /// </remarks>
+    CompanyLeveQuestCommand = 805,
+
+    /// <summary>
     /// Content related
     /// </summary>
-    Content = 808,
+    RequestContent = 808,
 
     /// <summary>
     /// Start specified FATE
@@ -537,7 +1030,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: FATE ID</para>
     /// <para><c>param2</c>: Target Object ID</para>
     /// </remarks>
-    FateStart = 809,
+    StartFate = 809,
 
     /// <summary>
     /// Load FATE information
@@ -546,7 +1039,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: FATE ID</para>
     /// </remarks>
-    FateLoad = 810,
+    LoadFate = 810,
 
     /// <summary>
     /// Enter FATE range (This command will not be sent if FATE spawns directly underfoot)
@@ -554,7 +1047,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: FATE ID</para>
     /// </remarks>
-    FateEnter = 812,
+    EnterFate = 812,
 
     /// <summary>
     /// Level sync for FATE
@@ -563,7 +1056,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: FATE ID</para>
     /// <para><c>param2</c>: Whether to level sync (0 - No, 1 - Yes)</para>
     /// </remarks>
-    FateLevelSync = 813,
+    SyncToFateLevel = 813,
 
     /// <summary>
     /// FATE mob spawn
@@ -571,12 +1064,31 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Object ID</para>
     /// </remarks>
-    FateMobSpawn = 814,
+    LoadFateMob = 814,
 
     /// <summary>
     /// Territory transport finish
     /// </summary>
-    TerritoryTransportFinish = 816,
+    FinishTerritoryTransport = 816,
+
+    /// <summary>
+    /// (Yes?)
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown, 0 1</para>
+    /// </remarks>
+    SaveAnimaWeaponQuestGender = 817,
+
+    /// <summary>
+    /// Unknown ()
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Festival ID</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    /// </remarks>
+    FestivalQuestWorkCommand818 = 818,
 
     /// <summary>
     /// Leave duty
@@ -585,6 +1097,34 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Type (0 - Normal exit, 1 - Inactive for a period)</para>
     /// </remarks>
     LeaveDuty = 819,
+
+    /// <summary>
+    /// Sync Timezone Offset
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: UTC</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    /// </remarks>
+    SyncTimezoneOffset = 820,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    /// </remarks>
+    QuestRedoCommand821 = 821,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    /// </remarks>
+    QuestRedoCommand822 = 822,
 
     /// <summary>
     /// Send solo quest battle request
@@ -603,9 +1143,41 @@ public enum CommandFlag {
     QuestRedo = 824,
 
     /// <summary>
+    /// Continue Quest Redo
+    /// </summary>
+    ContinueQuestRedo = 825,
+
+    /// <summary>
+    /// Delete Quest Redo Save
+    /// </summary>
+    DeleteQuestRedoSave = 826,
+
+    /// <summary>
+    /// Reset Quest Redo UI
+    /// </summary>
+    ResetQuestRedoUI = 827,
+
+    /// <summary>
+    /// FATE
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Fate ID</para>
+    ///     <para><c>param2</c>: 0 - , 1</para>
+    /// </remarks>
+    SyncToFateLevelAuto = 828,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: FATE ID</para>
+    /// </remarks>
+    FateCommand829 = 829,
+
+    /// <summary>
     /// Refresh inventory
     /// </summary>
-    InventoryRefresh = 830,
+    RefreshInventory = 830,
 
     /// <summary>
     /// Request cutscene data
@@ -614,6 +1186,23 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Cutscene index in Cutscene.csv</para>
     /// </remarks>
     RequestCutscene831 = 831,
+
+    /// <summary>
+    /// Unknown EventFramework
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    /// </remarks>
+    EventFrameworkCommand832 = 832,
+
+    /// <summary>
+    /// EventTutorial
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: EventTutorial ID</para>
+    /// </remarks>
+    MarkEventTutorialSeen = 833,
 
     /// <summary>
     /// Request achievement progress data
@@ -626,7 +1215,7 @@ public enum CommandFlag {
     /// <summary>
     /// Request all achievement overview (excluding specific achievement content)
     /// </summary>
-    RequestAllAchievement = 1001,
+    RequestCompletedAchievement = 1001,
 
     /// <summary>
     /// Request near completion achievement overview (excluding specific achievement content)
@@ -634,7 +1223,76 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Unknown, fixed at 1</para>
     /// </remarks>
-    RequestNearCompletionAchievement = 1002,
+    RequestNearCompletedAchievement = 1002,
+
+    /// <summary>
+    /// Unknown ActorControl
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    /// </remarks>
+    ActorControlCommand1003 = 1003,
+
+    /// <summary>
+    /// FATE
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c></para>
+    /// </remarks>
+    RequestFateProgressAchievement = 1009,
+
+    /// <summary>
+    /// Request All Achievements
+    /// </summary>
+    RequestAllAchievements = 1010,
+
+    /// <summary>
+    /// ()
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Achievement Row ID</para>
+    /// </remarks>
+    RequestAchievementSpecial = 1011,
+
+    /// <summary>
+    /// Build House On Plot
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Ward Index</para>
+    /// </remarks>
+    BuildHouseOnPlot = 1100,
+
+    /// <summary>
+    /// Enter Exterior Fixtures State
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Ward Index</para>
+    /// </remarks>
+    EnterExteriorFixturesState = 1101,
+
+    /// <summary>
+    /// Enter Interior Fixtures State
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Ward Index</para>
+    /// </remarks>
+    EnterInteriorFixturesState = 1102,
+
+    /// <summary>
+    /// Remove House From Plot
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Ward Index</para>
+    /// </remarks>
+    RemoveHouseFromPlot = 1103,
+
+    /// <summary>
+    /// Request Housing Area
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Fixed to 255</para>
+    /// </remarks>
+    RequestHousingArea = 1104,
 
     /// <summary>
     /// Request lottery data
@@ -654,7 +1312,7 @@ public enum CommandFlag {
     /// var position = districtOffset + houseID]]>
     /// </code>
     /// </remarks>
-    RequestLotteryData = 1105,
+    RequestHousingLottery = 1105,
 
     /// <summary>
     /// Request placard data
@@ -674,7 +1332,7 @@ public enum CommandFlag {
     /// var position = districtOffset + houseID]]>
     /// </code>
     /// </remarks>
-    RequestPlacardData = 1106,
+    RequestHousingPlacard = 1106,
 
     /// <summary>
     /// Request housing area data
@@ -683,7 +1341,27 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Territory Type</para>
     /// <para><c>param2</c>: Ward index</para>
     /// </remarks>
-    RequestHousingAreaData = 1107,
+    RequestHousingWard = 1107,
+
+    /// <summary>
+    /// Load Exterior Appearance Inventory
+    /// </summary>
+    LoadExteriorAppearanceInventory = 1108,
+
+    /// <summary>
+    /// Load Interior Appearance Inventory
+    /// </summary>
+    LoadInteriorAppearanceInventory = 1109,
+
+    /// <summary>
+    /// Load Exterior Furnish Inventory
+    /// </summary>
+    LoadExteriorFurnishInventory = 1110,
+
+    /// <summary>
+    /// Load Interior Furnish Inventory
+    /// </summary>
+    LoadInteriorFurnishInventory = 1111,
 
     /// <summary>
     /// Store specified item to house storage
@@ -723,19 +1401,28 @@ public enum CommandFlag {
     /// Request housing greeting setting data
     /// </summary>
     /// <remarks>
-    /// <para><c>param1</c>: HouseManager 相关区域的 HouseID 地址的高 32 位</para>
+    /// <para><c>param1</c>: High 32 bits of HouseID address for HouseManager related area</para>
     /// <code>*(long*)((nint)HousingManager.Instance()->IndoorTerritory + 38560) >> 32</code>
-    /// <para><c>param2</c>: HouseManager 相关区域的 HouseID</para>
+    /// <para><c>param2</c>: HouseID for HouseManager related area</para>
     /// </remarks>
     RequestHousingGreeting = 1115,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown | Unknown &lt;&lt; 8</para>
+    /// </remarks>
+    HousingCommand1116 = 1116,
 
     /// <summary>
     /// Request housing guest access setting data
     /// </summary>
     /// <remarks>
-    /// <para><c>param1</c>: HouseManager 相关区域的 HouseID 地址的高 32 位</para>
+    /// <para><c>param1</c>: High 32 bits of HouseID address for HouseManager related area</para>
     /// <code>*(long*)((nint)HousingManager.Instance()->IndoorTerritory + 38560) >> 32</code>
-    /// <para><c>param2</c>: HouseManager 相关区域的 HouseID</para>
+    /// <para><c>param2</c>: HouseID for HouseManager related area</para>
     /// </remarks>
     RequestHousingGuestAccess = 1117,
 
@@ -748,15 +1435,15 @@ public enum CommandFlag {
     /// <para><c>param2</c>: HouseID for HouseManager related area</para>
     /// <para><c>param3</c>: Setting enum value combination (Known: 1 - Teleport permission; 65536 - Entry permission)</para>
     /// </remarks>
-    SaveHousingGuestAccess = 1118,
+    SetHousingGuestAccess = 1118,
 
     /// <summary>
     /// Request housing estate tag setting data
     /// </summary>
     /// <remarks>
-    /// <para><c>param1</c>: HouseManager 相关区域的 HouseID 地址的高 32 位</para>
+    /// <para><c>param1</c>: High 32 bits of HouseID address for HouseManager related area</para>
     /// <code>*(long*)((nint)HousingManager.Instance()->IndoorTerritory + 38560) >> 32</code>
-    /// <para><c>param2</c>: HouseManager 相关区域的 HouseID</para>
+    /// <para><c>param2</c>: HouseID for HouseManager related area</para>
     /// </remarks>
     RequestHousingEstateTag = 1119,
 
@@ -769,7 +1456,15 @@ public enum CommandFlag {
     /// <para><c>param2</c>: HouseID for HouseManager related area</para>
     /// <para><c>param3</c>: Setting enum value combination (Note: Even Tags with the same name have different enum values at different positions)</para>
     /// </remarks>
-    SaveHousingEstateTag = 1120,
+    SetHousingEstateTag = 1120,
+
+    /// <summary>
+    /// Request Placed Furnitures
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: 0 - ; 1</para>
+    /// </remarks>
+    RequestPlacedFurnitures = 1121,
 
     /// <summary>
     /// Move to house front gate
@@ -785,7 +1480,20 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param2</c>: House plot index (0 for apartment)</para>
     /// </remarks>
-    FurnishState = 1123,
+    EnterFurnishState = 1123,
+
+    /// <summary>
+    /// UnknownFC estate
+    /// </summary>
+    FreeCompanyHousingCommand1124 = 1124,
+
+    /// <summary>
+    /// UnknownFC estate
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Room Index</para>
+    /// </remarks>
+    FreeCompanyHousingPersonalRoomCommand1125 = 1125,
 
     /// <summary>
     /// View house detail
@@ -809,22 +1517,135 @@ public enum CommandFlag {
     ViewHouseDetail = 1126,
 
     /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    /// </remarks>
+    HousingCommand1127 = 1127,
+
+    /// <summary>
+    /// Request Housing Outdoor Territory
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, 0 1</para>
+    ///     <para><c>param2</c>: Unknown, 0 1</para>
+    /// </remarks>
+    RequestHousingOutdoorTerritory = 1128,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    /// </remarks>
+    GMCommand1129 = 1129,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    /// </remarks>
+    GMCommand1130 = 1130,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: IndoorTerritory HouseID high 32 bits</para>
+    ///     <para><c>param2</c>: IndoorTerritory HouseID</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    ///     <para><c>param4</c>: Unknown</para>
+    /// </remarks>
+    MannequinCommand1132 = 1132,
+
+    /// <summary>
+    /// FC estate
+    /// </summary>
+    RemoveFreeCompanyHouse = 1133,
+
+    /// <summary>
+    /// Retainer
+    /// </summary>
+    RequestHousingRetainerList = 1134,
+
+    /// <summary>
+    /// Request Housing Share Holders
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: 0 - ; 1</para>
+    /// </remarks>
+    RequestHousingShareHolders = 1135,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: HouseID high 32 bits</para>
+    ///     <para><c>param2</c>: HouseID</para>
+    /// </remarks>
+    HousingCommand1136 = 1136,
+
+    /// <summary>
     /// Adjust house lighting
     /// </summary>
     /// <remarks>
     /// <para><c>param1</c>: Brightness level (0 - Brightest, 5 - Darkest)</para>
     /// </remarks>
-    AdjustHouseLight = 1137,
+    SetIndoorEnvironment = 1137,
+
+    /// <summary>
+    /// Request Airship
+    /// </summary>
+    RequestAirship = 1138,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c></para>
+    /// </remarks>
+    AirshipCommand1139 = 1139,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c></para>
+    /// </remarks>
+    AirshipCommand1140 = 1140,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c></para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Inventory Type</para>
+    ///     <para><c>param4</c>: Inventory Slot</para>
+    /// </remarks>
+    AirshipCommand1141 = 1141,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c></para>
+    ///     <para><c>param2</c>: Unknown</para>
+    /// </remarks>
+    AirshipCommand1142 = 1142,
 
     /// <summary>
     /// Refresh free company material delivery information
     /// </summary>
-    RefreshFCMaterialDelivery = 1143,
+    RequestCompanyProject = 1143,
 
     /// <summary>
     /// Refresh submarine completion information
     /// </summary>
-    RefreshSubmarineInfo = 1144,
+    RequestSubmarine = 1144,
 
     /// <summary>
     /// Set house background music
@@ -833,6 +1654,35 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Orchestrion roll index in Orchestrion.csv</para>
     /// </remarks>
     SetHouseBackgroundMusic = 1145,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    ///     <para><c>param4</c>: Unknown</para>
+    /// </remarks>
+    HousingCommand1146 = 1146,
+
+    /// <summary>
+    /// Set Orchestrion Playlist
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: ID</para>
+    /// </remarks>
+    SetOrchestrionPlaylist = 1147,
+
+    /// <summary>
+    /// Toggle Orchestrion
+    /// </summary>
+    ToggleOrchestrion = 1148,
+
+    /// <summary>
+    /// Play Next Orchestrion Track
+    /// </summary>
+    PlayNextOrchestrionTrack = 1149,
 
     /// <summary>
     /// Retrieve and place specified item from house storage
@@ -844,7 +1694,27 @@ public enum CommandFlag {
     /// <para><c>param3</c>: InventoryType (25000 to 25010 / 27000 to 27008)</para>
     /// <para><c>param4</c>: InventorySlot</para>
     /// </remarks>
-    Furnish = 1150,
+    PlaceFurnish = 1150,
+
+    /// <summary>
+    /// Request Housing Storeroom
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: HouseManager HouseID high 32 bits</para>
+    ///     <para><c>param2</c>: HouseManager HouseID</para>
+    /// </remarks>
+    RequestHousingStoreroom = 1151,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Inventory Type</para>
+    ///     <para><c>param4</c>: Inventory Slot</para>
+    /// </remarks>
+    HousingCommand1152 = 1152,
 
     /// <summary>
     /// Repair submarine part
@@ -856,12 +1726,146 @@ public enum CommandFlag {
     RepairSubmarinePart = 1153,
 
     /// <summary>
+    /// Request Housing Guest Book 1154
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: HouseManager HouseID high 32 bits</para>
+    ///     <para><c>param2</c>: HouseManager HouseID</para>
+    ///     <para><c>param3</c></para>
+    /// </remarks>
+    RequestHousingGuestBook1154 = 1154,
+
+    /// <summary>
+    /// Request Housing Guest Book 1155
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: HouseManager HouseID high 32 bits</para>
+    ///     <para><c>param2</c>: HouseManager HouseID</para>
+    ///     <para><c>param3</c></para>
+    /// </remarks>
+    RequestHousingGuestBook1155 = 1155,
+
+    /// <summary>
+    /// Request Housing Guest Book 1156
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: HouseManager HouseID high 32 bits</para>
+    ///     <para><c>param2</c>: HouseManager HouseID</para>
+    ///     <para><c>param3</c></para>
+    /// </remarks>
+    RequestHousingGuestBook1156 = 1156,
+
+    /// <summary>
+    /// Request Housing Guest Book 1157
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: HouseManager HouseID high 32 bits</para>
+    ///     <para><c>param2</c>: HouseManager HouseID</para>
+    ///     <para><c>param3</c></para>
+    /// </remarks>
+    RequestHousingGuestBook1157 = 1157,
+
+    /// <summary>
+    /// Request Housing Guest Book 1158
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: HouseManager HouseID high 32 bits</para>
+    ///     <para><c>param2</c>: HouseManager HouseID</para>
+    ///     <para><c>param3</c></para>
+    /// </remarks>
+    RequestHousingGuestBook1158 = 1158,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    /// </remarks>
+    HousingCommand1159 = 1159,
+
+    /// <summary>
+    /// Open Housing Retainer Sales Setting UI
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, 0 2</para>
+    /// </remarks>
+    OpenHousingRetainerSalesSettingUI = 1160,
+
+    /// <summary>
+    /// UnknownRetainer
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Inventory Type</para>
+    ///     <para><c>param2</c>: Inventory Slot</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    ///     <para><c>param4</c>: Unknown</para>
+    /// </remarks>
+    RetainerMarketCommand1161 = 1161,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    /// </remarks>
+    HousingCommand1162 = 1162,
+
+    /// <summary>
+    /// Open Housing Retainer Buy UI
+    /// </summary>
+    OpenHousingRetainerBuyUI = 1163,
+
+    /// <summary>
+    /// Retainer
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    ///     <para><c>param4</c>: Unknown</para>
+    /// </remarks>
+    UpdateHousingRetainerPose = 1164,
+
+    /// <summary>
+    /// Retainer
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Inventory Type</para>
+    ///     <para><c>param2</c>: Inventory Slot</para>
+    /// </remarks>
+    SetHousingRetainerWeapon = 1165,
+
+    /// <summary>
+    /// RetainerYesNo
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: 0 - ; 1</para>
+    /// </remarks>
+    ToggleHousingRetainerWeapon = 1166,
+
+    /// <summary>
+    /// Request Housing
+    /// </summary>
+    RequestHousing = 1167,
+
+    /// <summary>
+    /// Request Housing Interior Design
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, Fixed to 255</para>
+    /// </remarks>
+    RequestHousingInteriorDesign = 1168,
+
+    /// <summary>
     /// Request house interior design information
     /// </summary>
     /// <remarks>
     /// <para><c>param1</c>: House index (starts from 0, ends at 59)</para>
     /// </remarks>
-    HouseInteriorDesignRequest = 1169,
+    ChangeHousingInteriorDesign = 1169,
 
     /// <summary>
     /// Change house interior design style
@@ -870,7 +1874,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: House index (starts from 0, ends at 59)</para>
     /// <para><c>param2</c>: Interior design style (3 - Mist style; 6 - Lavender Beds style; 9 - Goblet style; 12 - Shirogane style; 15 - Empyreum style; 18 - Simple style)</para>
     /// </remarks>
-    HouseInteriorDesignChange = 1170,
+    HouseInteriorPatternCommand1170 = 1170,
 
     /// <summary>
     /// Collect trophy crystal
@@ -930,7 +1934,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Index in BuddyAction.csv</para>
     /// </remarks>
-    BuddyAction = 1700,
+    SetBuddyAction = 1700,
 
     /// <summary>
     /// Chocobo barding
@@ -939,7 +1943,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Part (0 - Head, 1 - Body, 2 - Legs)</para>
     /// <para><c>param2</c>: Equipment index in BuddyEquip.csv (0 - Remove equipment)</para>
     /// </remarks>
-    BuddyEquip = 1701,
+    SetBuddyEquip = 1701,
 
     /// <summary>
     /// Chocobo learn skill
@@ -947,17 +1951,17 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Skill index</para>
     /// </remarks>
-    BuddyLearnSkill = 1702,
+    LearnBuddySkill = 1702,
 
     /// <summary>
     /// Request Gold Saucer panel general information
     /// </summary>
-    RequestGSGeneral = 1850,
+    RequestGoldSaucerGeneral = 1850,
 
     /// <summary>
     /// Request Gold Saucer panel chocobo information
     /// </summary>
-    RequestGSChocobo = 1900,
+    RequestGoldSaucerChocobo = 1900,
 
     /// <summary>
     /// Start duty record
@@ -967,17 +1971,55 @@ public enum CommandFlag {
     /// <summary>
     /// End duty record
     /// </summary>
-    EndDutyRecord = 1981,
+    FinishDutyRecord = 1981,
 
     /// <summary>
     /// Request Gold Saucer panel Lord of Verminion information
     /// </summary>
-    RequestGSLordofVerminion = 2010,
+    RequestGoldSaucerVerminion = 2010,
+
+    /// <summary>
+    /// Confirm Verminion Palette
+    /// </summary>
+    ConfirmVerminionPalette = 2011,
+
+    /// <summary>
+    /// Dissmiss Novice State
+    /// </summary>
+    DissmissNoviceState = 2100,
+
+    /// <summary>
+    /// Set Novice State
+    /// </summary>
+    SetNoviceState = 2101,
 
     /// <summary>
     /// Enable/disable auto join novice network setting
     /// </summary>
-    EnableAutoJoinNoviceNetwork = 2102,
+    SetAutoJoinNoviceNetworkMentor = 2102,
+
+    /// <summary>
+    /// YesNo
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: 0 - ; 1</para>
+    /// </remarks>
+    AcceptNoviceNetworkInvitation = 2103,
+
+    /// <summary>
+    /// Dismiss Returner State
+    /// </summary>
+    DismissReturnerState = 2104,
+
+    /// <summary>
+    /// ()
+    /// </summary>
+    RefreshNoviceNetwork = 2106,
+
+    /// <summary>
+    /// YesNo
+    /// </summary>
+    JoinNoviceNetworkReturner = 2107,
 
     /// <summary>
     /// Send duel request
@@ -1001,12 +2043,9 @@ public enum CommandFlag {
     ConfirmDuel = 2202,
 
     /// <summary>
-    /// Confirm Wondrous Tails result
+    /// Unknown
     /// </summary>
-    /// <remarks>
-    /// <para><c>param1</c>: Index (left to right, top to bottom, starts from 0)</para>
-    /// </remarks>
-    WondrousTailsConfirm = 2253,
+    ReviveCommand2204 = 2204,
 
     /// <summary>
     /// Wondrous Tails other operations
@@ -1015,12 +2054,38 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Operation (0 - Think again)</para>
     /// <para><c>param2</c>: Index (left to right, top to bottom, starts from 0)</para>
     /// </remarks>
-    WondrousTailsOperate = 2253,
+    ConfirmWondrousTailsSlot = 2253,
+
+    /// <summary>
+    /// Wondrous Tails
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: (0 - )</para>
+    ///     <para><c>param2</c>: (, 0 )</para>
+    /// </remarks>
+    WondrousTails = 2254,
+
+    /// <summary>
+    /// ENPC
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: ENPC Data ID</para>
+    /// </remarks>
+    RequestENPC = 2300,
 
     /// <summary>
     /// Request prism box data
     /// </summary>
     RequestPrismBox = 2350,
+
+    /// <summary>
+    /// Store To Prsim Box
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Inventory Type</para>
+    ///     <para><c>param1</c>: Inventory Slot</para>
+    /// </remarks>
+    StoreToPrsimBox = 2351,
 
     /// <summary>
     /// Restore prism box item
@@ -1031,9 +2096,20 @@ public enum CommandFlag {
     RestorePrsimBoxItem = 2352,
 
     /// <summary>
+    /// Restore Prsim Box Set Item
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c></para>
+    ///     <para><c>param2</c>: 32</para>
+    ///     <para><c>param3</c>: high 32 bits</para>
+    ///     <para>1 : 4, 8, 16, 32, 64, 128, 256...</para>
+    /// </remarks>
+    RestorePrsimBoxSetItem = 2353,
+
+    /// <summary>
     /// Request glamour plates data
     /// </summary>
-    RequestGlamourPlates = 2355,
+    ApplyGlamour = 2355,
 
     /// <summary>
     /// Enter/exit glamour plate selection state
@@ -1042,7 +2118,15 @@ public enum CommandFlag {
     /// <para><c>param1</c>: 0 - Exit, 1 - Enter</para>
     /// <para><c>param2</c>: Unknown, possibly 0 or 1</para>
     /// </remarks>
-    EnterGlamourPlateState = 2356,
+    RequestGlamourPlate = 2356,
+
+    /// <summary>
+    /// Toggle Glamour Plate State
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: 0 - ; 1</para>
+    /// </remarks>
+    ToggleGlamourPlateState = 2357,
 
     /// <summary>
     /// Apply glamour plate (must enter glamour plate selection state first)
@@ -1050,17 +2134,40 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Glamour plate index</para>
     /// </remarks>
-    ApplyGlamourPlate = 2357,
+    ApplyGlamourPlate = 2358,
+
+    /// <summary>
+    /// Dispell Glamours
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: AgentMiragePrismMiragePlateData.DispellItemsSelectedBitmask</para>
+    /// </remarks>
+    DispellGlamours = 2359,
 
     /// <summary>
     /// Get Fashion Report weekly participation reward
     /// </summary>
-    FashionCheckEntryReward = 2450,
+    CliamFashionCheckEntryReward = 2450,
 
     /// <summary>
     /// Get Fashion Report weekly bonus reward
     /// </summary>
-    FashionCheckBonusReward = 2451,
+    ClaimFashionCheckBonusReward = 2451,
+
+    /// <summary>
+    /// Claim Fashion Check New Gear Reward
+    /// </summary>
+    ClaimFashionCheckNewGearReward = 2452,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    FashionCheckCommand2453 = 2453,
+
+    /// <summary>
+    /// Request Enclave
+    /// </summary>
+    RequestEnclave = 2500,
 
     /// <summary>
     /// Buy back reconstruction item
@@ -1068,17 +2175,22 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Item index</para>
     /// </remarks>
-    BuybackReconstrcutionItem = 2501,
+    BuybackEnclaveItem = 2501,
 
     /// <summary>
     /// Request Gold Saucer panel Mahjong information
     /// </summary>
-    RequestGSMahjong = 2550,
+    RequestGoldSaucerMahjong = 2550,
+
+    /// <summary>
+    /// Request Blue Content Briefing
+    /// </summary>
+    RequestBlueContentBriefing = 2600,
 
     /// <summary>
     /// Request Blue Mage spellbook data
     /// </summary>
-    RequstAOZNotebook = 2601,
+    RequstBlueNotebook = 2601,
 
     /// <summary>
     /// Request Trust data
@@ -1109,7 +2221,12 @@ public enum CommandFlag {
     /// <para><c>param3</c>: Inventory Slot</para>
     /// <para><c>param4</c>: Item ID</para>
     /// </remarks>
-    Desynthesize = 2800,
+    EventFrameworkAction = 2800,
+
+    /// <summary>
+    /// Request Bozja War Result Notebook
+    /// </summary>
+    RequestBozjaWarResultNotebook = 2900,
 
     /// <summary>
     /// Bozja assign lost action from holster to slot
@@ -1118,12 +2235,68 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Lost action holster index</para>
     /// <para><c>param2</c>: Slot to assign to</para>
     /// </remarks>
-    BozjaUseFromHolster = 2950,
+    AssignBozjaActionFromHolster = 2950,
+
+    /// <summary>
+    /// Request Bozja Holster Outside
+    /// </summary>
+    RequestBozjaHolsterOutside = 2951,
+
+    /// <summary>
+    /// (Lua )
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    ///     <para><c>param3</c>: Unknown</para>
+    ///     <para><c>param4</c>: Unknown</para>
+    /// </remarks>
+    PrepareSceneJump = 3000,
+
+    /// <summary>
+    /// (Lua )
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown (Yes X )</para>
+    ///     <para><c>param2</c>: Unknown (Yes Y )</para>
+    ///     <para><c>param3</c>: Unknown (Yes Z )</para>
+    ///     <para><c>param4</c>: Unknown (Yes)</para>
+    /// </remarks>
+    StartSceneJumpLua = 3001,
+
+    /// <summary>
+    /// Capture MJI Animal
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: BaseID</para>
+    ///     <para><c>param2</c>: EntityID</para>
+    ///     <para><c>param3</c>: MJIManager.CurrentMode</para>
+    ///     <para><c>param4</c>: MJIManager.CurrentModeItem</para>
+    /// </remarks>
+    CaptureMJIAnimal = 3050,
+
+    /// <summary>
+    /// Request Item Action Unlock State
+    /// </summary>
+    RequestItemActionUnlockState = 3100,
+
+    /// <summary>
+    /// Get Server Value
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: ID</para>
+    /// </remarks>
+    GetServerValue = 3150,
 
     /// <summary>
     /// Request portraits list data
     /// </summary>
-    RequestPortraits = 3200,
+    RequestPortrait = 3200,
+
+    /// <summary>
+    /// Request Character Card
+    /// </summary>
+    RequestCharacterCard = 3201,
 
     /// <summary>
     /// Switch Island Sanctuary mode
@@ -1131,7 +2304,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Mode (0 - Free; 1 - Harvest; 2 - Plant; 3 - Water; 4 - Remove; 6 - Feed; 7 - Pet; 8 - Call; 9 - Capture)</para>
     /// </remarks>
-    MJISetMode = 3250,
+    SetMJIMode = 3250,
 
     /// <summary>
     /// Set Island Sanctuary mode parameter, set to 0 when switching modes, set to corresponding item ID when planting, feeding, or capturing
@@ -1139,7 +2312,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Parameter</para>
     /// </remarks>
-    MJISetModeParam = 3251,
+    SetMJIModeParam = 3251,
 
     /// <summary>
     /// Island Sanctuary settings panel toggle
@@ -1147,7 +2320,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: State (1 - Open; 0 - Close)</para>
     /// </remarks>
-    MJISettingPanelToggle = 3252,
+    ToggleMJISettingPanel = 3252,
 
     /// <summary>
     /// Request Island Sanctuary workshop schedule data
@@ -1155,12 +2328,20 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Specific day (0 is first day of current cycle, 7 is first day of next cycle)</para>
     /// </remarks>
-    MJIWorkshopRequest = 3254,
+    RequestMJIWorkshop = 3254,
+
+    /// <summary>
+    /// Request MJI Workshop Consumption
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown, 0, 1, 2</para>
+    /// </remarks>
+    RequestMJIWorkshopConsumption = 3255,
 
     /// <summary>
     /// Request Island Sanctuary workshop schedule item data
     /// </summary>
-    MJIWorkshopRequestItem = 3258,
+    RequestMJIWorkshopAssignment = 3258,
 
     /// <summary>
     /// Island Sanctuary workshop schedule assignment
@@ -1170,7 +2351,7 @@ public enum CommandFlag {
     /// <para><c>param2</c>: Specific day (0 - First day of current cycle, 7 - First day of next cycle)</para>
     /// <para><c>param4</c>: Add/Remove (0 - Add, 1 - Remove)</para>
     /// </remarks>
-    MJIWorkshopAssign = 3259,
+    AssignMJIWorkshop = 3259,
 
     /// <summary>
     /// Cancel Island Sanctuary workshop schedule
@@ -1179,7 +2360,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Item and schedule time slot: (8 * (startingHour | (32 * craftObjectId)))</para>
     /// <para><c>param2</c>: Specific day (0 - First day of current cycle, 7 - First day of next cycle)</para>
     /// </remarks>
-    MJIWorkshopCancel = 3260,
+    CancelMJIWorkshopAssignment = 3260,
 
     /// <summary>
     /// Set Island Sanctuary rest cycles
@@ -1190,7 +2371,7 @@ public enum CommandFlag {
     /// <para><c>param3</c>: Rest day 3</para>
     /// <para><c>param4</c>: Rest day 4</para>
     /// </remarks>
-    MJISetRestCycles = 3261,
+    SetMJIWorkshopRest = 3261,
 
     /// <summary>
     /// Collect Island Sanctuary granary exploration results
@@ -1198,7 +2379,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Granary index</para>
     /// </remarks>
-    MJIGranaryCollect = 3262,
+    CollectMJIGranary = 3262,
 
     /// <summary>
     /// View Island Sanctuary granary exploration destinations
@@ -1206,7 +2387,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Granary index</para>
     /// </remarks>
-    MJIGranaryViewDestinations = 3263,
+    ViewMJIGranaryDestination = 3263,
 
     /// <summary>
     /// Island Sanctuary granary dispatch exploration
@@ -1216,7 +2397,7 @@ public enum CommandFlag {
     /// <para><c>param2</c>: Destination index</para>
     /// <para><c>param3</c>: Exploration days</para>
     /// </remarks>
-    MJIGranaryAssign = 3264,
+    AssignMJIGranary = 3264,
 
     /// <summary>
     /// Release minion on Island Sanctuary
@@ -1225,7 +2406,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Minion ID</para>
     /// <para><c>param2</c>: Release area index</para>
     /// </remarks>
-    MJIReleaseMinion = 3265,
+    ReleaseMJIMinion = 3265,
 
     /// <summary>
     /// Release Island Sanctuary pasture animal
@@ -1233,7 +2414,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Animal index</para>
     /// </remarks>
-    MJIReleaseAnimal = 3268,
+    ReleaseMJIAnimal = 3268,
 
     /// <summary>
     /// Collect Island Sanctuary pasture animal leavings
@@ -1242,7 +2423,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Animal index</para>
     /// <para><c>param2</c>: Collection flag</para>
     /// </remarks>
-    MJICollectAnimalLeavings = 3269,
+    CollectMJIAnimalLeaving = 3269,
 
     /// <summary>
     /// Collect all Island Sanctuary pasture animal leavings
@@ -1250,7 +2431,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Expected number of leavings to collect (MJIManager.Instance()->PastureHandler->AvailableMammetLeavings)</para>
     /// </remarks>
-    MJICollectAllAnimalLeavings = 3271,
+    CollectMJIAllAnimalLeaving = 3271,
 
     /// <summary>
     /// Entrust Island Sanctuary pasture animal
@@ -1259,7 +2440,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Animal index</para>
     /// <para><c>param2</c>: Feed item ID</para>
     /// </remarks>
-    MJIEntrustAnimal = 3272,
+    EntrustMJIAnimal = 3272,
 
     /// <summary>
     /// Recall minion released on Island Sanctuary
@@ -1267,7 +2448,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Minion index</para>
     /// </remarks>
-    MJIRecallMinion = 3277,
+    RecallMJIMinion = 3277,
 
     /// <summary>
     /// Entrust single Island Sanctuary farm plot
@@ -1276,7 +2457,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Farm plot index</para>
     /// <para><c>param2</c>: Seed item ID</para>
     /// </remarks>
-    MJIFarmEntrustSingle = 3279,
+    EntrustMJIFarm = 3279,
 
     /// <summary>
     /// Dismiss single Island Sanctuary farm plot
@@ -1284,7 +2465,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Farm plot index</para>
     /// </remarks>
-    MJIFarmDismiss = 3280,
+    DismissMJIFarmEntrust = 3280,
 
     /// <summary>
     /// Collect single Island Sanctuary farm plot
@@ -1293,7 +2474,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Farm plot index</para>
     /// <para><c>param2</c>: Whether to dismiss after collection (0 - No, 1 - Yes)</para>
     /// </remarks>
-    MJIFarmCollectSingle = 3281,
+    CollectMJIFarm = 3281,
 
     /// <summary>
     /// Collect all Island Sanctuary farm plots
@@ -1301,12 +2482,43 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: *(int*)MJIManager.Instance()->GranariesState</para>
     /// </remarks>
-    MJIFarmCollectAll = 3282,
+    CollectMJIAllFarm = 3282,
+
+    /// <summary>
+    /// Play Orchestrion Track
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Orchestrion ID</para>
+    /// </remarks>
+    PlayOrchestrionTrack = 3283,
 
     /// <summary>
     /// Request Island Sanctuary workshop favor state data
     /// </summary>
-    MJIFavorStateRequest = 3292,
+    RequestMJIWorkshopFavor = 3292,
+
+    /// <summary>
+    /// Aetheryte
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Aetheryte ID</para>
+    /// </remarks>
+    RemoveFavoriteAetheryte = 3350,
+
+    /// <summary>
+    /// Remove Free Aetheryte
+    /// </summary>
+    RemoveFreeAetheryte = 3351,
+
+    /// <summary>
+    /// PlayStation Plus
+    /// </summary>
+    RemoveFreeAetherytePSPlus = 3352,
+
+    /// <summary>
+    /// Nintendo Switch Online
+    /// </summary>
+    RemoveFreeAetheryteNSO = 3353,
 
     /// <summary>
     /// Change Wonderous Kaiten mode
@@ -1314,17 +2526,25 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Mode index</para>
     /// </remarks>
-    WKSChangeMode = 3400,
+    SetWKSMode = 3400,
 
     /// <summary>
     /// Wonderous Kaiten end interaction 1
     /// </summary>
-    WKSEndInteraction1 = 3401,
+    FinishWKSInteraction3401 = 3401,
 
     /// <summary>
     /// Wonderous Kaiten end interaction 2
     /// </summary>
-    WKSEndInteraction2 = 3402,
+    FinishWKSInteraction3402 = 3402,
+
+    /// <summary>
+    /// Unknown ()
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: WKSDevGrade Unknown13</para>
+    /// </remarks>
+    WKSDevelopmentCommand = 3403,
 
     /// <summary>
     /// Wonderous Kaiten start mission
@@ -1332,17 +2552,17 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Mission Unit ID</para>
     /// </remarks>
-    WKSStartMission = 3440,
+    AcceptWKSMission = 3440,
 
     /// <summary>
     /// Wonderous Kaiten complete mission
     /// </summary>
-    WKSCompleteMission = 3441,
+    FinishWKSMission = 3441,
 
     /// <summary>
     /// Wonderous Kaiten abandon mission
     /// </summary>
-    WKSAbandonMission = 3442,
+    AbandonWKSMission = 3442,
 
     /// <summary>
     /// Wonderous Kaiten start lottery
@@ -1350,7 +2570,7 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Type: 0 - Lunar credit; 1 - Faenna credit</para>
     /// </remarks>
-    WKSStartLottery = 3450,
+    StartWKSLottery = 3450,
 
     /// <summary>
     /// Wonderous Kaiten choose lottery wheel
@@ -1359,7 +2579,7 @@ public enum CommandFlag {
     /// <para><c>param1</c>: Type: 0 - Lunar credit; 1 - Faenna credit</para>
     /// <para><c>param2</c>: Wheel type (Left - 0, Right - 1)</para>
     /// </remarks>
-    WKSChooseLottery = 3451,
+    ChooseWKSLotteryType = 3451,
 
     /// <summary>
     /// Wonderous Kaiten end lottery
@@ -1367,12 +2587,12 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: Type: 0 - Lunar credit; 1 - Faenna credit</para>
     /// </remarks>
-    WKSEndLottery = 3452,
+    FinishWKSLottery = 3452,
 
     /// <summary>
     /// Wonderous Kaiten request exploration successes data
     /// </summary>
-    WKSRequestSuccesses = 3460,
+    RequestWKSSuccesses = 3460,
 
     /// <summary>
     /// Wonderous Kaiten request mecha data
@@ -1380,7 +2600,29 @@ public enum CommandFlag {
     /// <remarks>
     /// <para><c>param1</c>: WKSMechaEventData Row ID (0 - Currently not started)</para>
     /// </remarks>
-    WKSRequestMecha = 3478,
+    RequestWKSMecha = 3478,
+
+    /// <summary>
+    /// Request content inventory (auto on zone change)
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: ContentInventoryProvider 8</para>
+    /// </remarks>
+    RequestContentInventory = 3500,
+
+    /// <summary>
+    /// Request massive PC content (auto-refresh when internal field expires)
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Unknown</para>
+    ///     <para><c>param2</c>: Unknown</para>
+    /// </remarks>
+    RequestMassivePCContent = 3600,
+
+    /// <summary>
+    /// Unknown quest-like command
+    /// </summary>
+    QuestCommand4000 = 4000,
 
     /// <summary>
     /// Roll dice
@@ -1392,15 +2634,15 @@ public enum CommandFlag {
     RollDice = 9000,
 
     /// <summary>
+    /// Request Yo-kai Watch crossover info (every 5 seconds)
+    /// </summary>
+    /// <remarks>
+    ///     <para><c>param1</c>: Fixed to 39</para>
+    /// </remarks>
+    RequestYokaiWatchState = 9002,
+
+    /// <summary>
     /// Retainer
     /// </summary>
     Retainer = 9003,
-
-    /// <summary>
-    /// Set character display range
-    /// </summary>
-    /// <remarks>
-    /// <para><c>param1</c>: Type (0 - Standard; 1 - Large; 2 - Maximum)</para>
-    /// </remarks>
-    AroundRangeSetMode = 9005,
 }
