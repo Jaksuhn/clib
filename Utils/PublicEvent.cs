@@ -43,14 +43,14 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     }
     public static implicit operator PublicEvent(WKSMechaEvent mechaEvent) => new((nint)(&mechaEvent), FateType.MechaEvent, mechaEvent.WKSMechaEventDataRowId);
 
-    public static PublicEvent? CurrentFate => Svc.Objects.LocalPlayer.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
+    public static PublicEvent? CurrentFate => Svc.Objects.LocalPlayer?.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
         TerritoryIntendedUse.Overworld => GetCurrentFateOverworld(),
         TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetCurrentForayEvent(),
         TerritoryIntendedUse.CosmicExploration => GetCurrentCosmicEvent(),
         _ => null, // zone doesn't support FATEs (instance, city, etc.)
     };
 
-    public static IEnumerable<PublicEvent> Fates => Svc.Objects.LocalPlayer.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
+    public static IEnumerable<PublicEvent> Fates => Svc.Objects.LocalPlayer?.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
         TerritoryIntendedUse.Overworld => GetOverworldFates(),
         TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetForayFates(),
         TerritoryIntendedUse.CosmicExploration => GetCosmicFates(),
@@ -60,8 +60,9 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     public static PublicEvent? GetFateById(uint id) => Fates.FirstOrDefault(f => f.Id == id);
 
     private static PublicEvent? GetCurrentFateOverworld() {
-        var fate = FateManager.Instance()->CurrentFate;
-        return fate != null ? (PublicEvent)fate : null;
+        if (FateManager.Instance() is not (not null and var fm)) return null; // someone actually saw this syntax and said "LGTM, ship it"
+        if (fm->CurrentFate is not (not null and var f)) return null; // just give me ?->
+        return (PublicEvent)f;
     }
 
     private static PublicEvent? GetCurrentForayEvent() {
