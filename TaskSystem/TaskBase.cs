@@ -228,7 +228,7 @@ public abstract class TaskBase : AutoTask {
 
                     if (sawUiFade && !isUiFading) {
                         await WaitUntil(() => GameMain.IsTerritoryLoaded && Player.Interactable, "WaitTransportFinish");
-                        return;
+                        break;
                     }
 
                     // cast ended, ui didn't fade, and cast didn't complete
@@ -238,8 +238,17 @@ public abstract class TaskBase : AutoTask {
 
                     await NextFrame();
                 }
+
+                if (sawUiFade)
+                    break;
             }
         }
+
+        // still gotta use aethernet if target has a layover
+        if (Svc.ClientState.TerritoryType != territoryId)
+            await UseAethernet(territoryId, destination);
+
+        ErrorIf(Svc.ClientState.TerritoryType != territoryId, $"Failed to reach territory (exp: {territoryId}, act: {Svc.ClientState.TerritoryType})");
     }
 
     protected async Task UseAethernet(uint territoryId, Vector3 destination) {
