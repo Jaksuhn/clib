@@ -37,6 +37,6 @@
 
 	<ItemGroup>
 	  <PackageReference Include="AllaganLib.GameSheets" Version="2.2.6" />
-	  <PackageReference Include="LuminaSupplemental.Excel" Version="5.0.1" />
+	  <PackageReference Include="LuminaSupplemental.Excel" Version="5.1.0" />
 	</ItemGroup>
 </Project>
