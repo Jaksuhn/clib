@@ -3,22 +3,17 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using System.Collections.Frozen;
-using static FFXIVClientStructs.FFXIV.Client.Game.UI.Cabinet;
 
 namespace clib.Services;
 
 internal sealed unsafe class ArmoireService : IDisposable {
     public event Action? Changed;
 
-    private static readonly Lazy<FrozenDictionary<uint, uint>> CabinetByItemId = new(()
-        => Sheets.Cabinet.Where(row => row.Item.RowId != 0)
-            .ToFrozenDictionary(row => row.Item.RowId, row => row.RowId));
-
-    private static readonly Lazy<FrozenDictionary<uint, uint>> CabinetByRowId = new(()
-        => Sheets.Cabinet.Where(row => row.RowId > 0 && row.Item.RowId != 0)
-            .ToFrozenDictionary(row => row.RowId, row => row.Item.RowId));
-
+    private static readonly IEnumerable<Sheets.Cabinet> CabinetRows = Sheets.Cabinet.Where(r => r.RowId > 0 && r.Item.RowId > 0);
+    private static readonly FrozenDictionary<uint, List<uint>> CabinetRowsByItemId = CabinetRows.GroupBy(r => r.Item.RowId).ToFrozenDictionary(g => g.Key, g => g.Select(r => r.RowId).ToList());
+    private static readonly FrozenDictionary<uint, uint> CabinetByRowId = CabinetRows.ToFrozenDictionary(r => r.RowId, r => r.Item.RowId);
     private readonly HashSet<uint> _ownedItemIds = [];
 
     public ArmoireService() {
@@ -48,7 +43,7 @@ internal sealed unsafe class ArmoireService : IDisposable {
     }
 
     public bool IsCabinetItem(uint itemId)
-        => ItemUtil.GetBaseId(itemId).ItemId is var baseId and not 0 && CabinetByItemId.Value.ContainsKey(baseId);
+        => ItemUtil.GetBaseId(itemId).ItemId is var baseId and not 0 && CabinetRowsByItemId.ContainsKey(baseId);
 
     public bool IsInArmoire(uint itemId) {
         itemId = ResolveCabinetItemId(itemId);
@@ -58,38 +53,39 @@ internal sealed unsafe class ArmoireService : IDisposable {
         return _ownedItemIds.Contains(itemId) || IsInCabinet(itemId);
     }
 
-    public bool IsInCabinet(uint itemId, bool useCache = true) {
-        itemId = ItemUtil.GetBaseId(itemId).ItemId;
-        if (!CabinetByItemId.Value.TryGetValue(itemId, out var cabinetRowId))
-            return false;
-        return IsCabinetItemCollected(cabinetRowId, useCache);
-    }
+    public bool IsInCabinet(uint itemId)
+        => ItemUtil.GetBaseId(itemId).ItemId is var baseId and not 0 && CabinetRowsByItemId.TryGetValue(baseId, out var rowIds) && rowIds.Any(IsCabinetItemCollected);
 
     public uint ResolveCabinetItemId(uint cacheOrEntryId) {
         if (cacheOrEntryId == 0)
             return 0;
         var baseId = ItemUtil.GetBaseId(cacheOrEntryId).ItemId;
-        if (CabinetByItemId.Value.ContainsKey(baseId))
+        if (CabinetRowsByItemId.ContainsKey(baseId))
             return baseId;
-        if (CabinetByRowId.Value.TryGetValue(cacheOrEntryId, out var fromEntry))
+        if (CabinetByRowId.TryGetValue(cacheOrEntryId, out var fromEntry) || CabinetByRowId.TryGetValue(baseId, out fromEntry))
             return ItemUtil.GetBaseId(fromEntry).ItemId;
-        if (CabinetByRowId.Value.TryGetValue(baseId, out var fromBase))
-            return ItemUtil.GetBaseId(fromBase).ItemId;
         return baseId;
     }
 
-    // https://github.com/Haselnussbomber/HaselCommon/blob/a411775f6e97b0c82fc81a66ae918a2027c709d3/HaselCommon/Services/CabinetService.cs#L36-L53
-    private static bool IsCabinetItemCollected(uint cabinetId, bool useCache = true) {
+    private static bool IsCabinetItemCollected(uint cabinetRowId) {
         var uiState = UIState.Instance();
-        if (uiState is null)
+        return uiState is not null && uiState->Cabinet.IsCabinetLoaded() && uiState->Cabinet.IsItemInCabinet(cabinetRowId) || IsItemFinderBitSet(cabinetRowId);
+    }
+
+    private static bool IsItemFinderBitSet(uint cabinetRowId) {
+        if (cabinetRowId < 1048)
             return false;
 
-        ref var cabinet = ref uiState->Cabinet;
-        return cabinet.State == CabinetState.Loaded && cabinet.IsItemInCabinet(cabinetId);
+        var finder = ItemFinderModule.Instance();
+        if (finder is null)
+            return false;
+
+        var bits = finder->CabinetItemUnlockBits;
+        var (wordIndex, bitOffset) = Math.DivRem(cabinetRowId - 1048, 32u);
+        return wordIndex < (uint)bits.Length && (bits[(int)wordIndex] & (1u << (int)bitOffset)) != 0;
     }
 
     private void OnLogin() => RefreshCache();
-
     private void OnLogout(int _, int __) => ClearCache();
 
     private void ClearCache() {
@@ -107,16 +103,7 @@ internal sealed unsafe class ArmoireService : IDisposable {
             return;
         }
 
-        var uiState = UIState.Instance();
-        if (uiState is null || uiState->Cabinet.State != CabinetState.Loaded)
-            return;
-
-        var nextOwned = new HashSet<uint>();
-        foreach (var (itemId, cabinetRowId) in CabinetByItemId.Value) {
-            if (IsCabinetItemCollected(cabinetRowId))
-                nextOwned.Add(itemId);
-        }
-
+        HashSet<uint> nextOwned = [.. CabinetRowsByItemId.Where(kv => kv.Value.Any(IsCabinetItemCollected)).Select(kv => kv.Key)];
         var changed = !_ownedItemIds.SetEquals(nextOwned);
         _ownedItemIds.Clear();
         _ownedItemIds.UnionWith(nextOwned);
