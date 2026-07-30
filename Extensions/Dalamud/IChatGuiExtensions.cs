@@ -39,19 +39,19 @@ public static class IChatGuiExtensions {
         SendMessageUnsafe(_, bytes);
     }
 
-    public static void PrintMessage(this IChatGui chat, string message)
+    public static void EchoMessage(this IChatGui chat, string message)
         => chat.Print(new XivChatEntry {
             Type = XivChatType.Echo,
             Message = $"[{CLibMain.Name}] {message}"
         });
 
-    public static void PrintError(this IChatGui chat, string message)
+    public static void EchoError(this IChatGui chat, string message)
         => chat.Print(new XivChatEntry {
             Type = XivChatType.SystemError,
             Message = $"[{CLibMain.Name}] {message}"
         });
 
-    public static void PrintColor(this IChatGui chat, string message, UIColor color)
+    public static void EchoMessage(this IChatGui chat, string message, UIColor color)
         => chat.Print(new XivChatEntry {
             Type = XivChatType.Echo,
             Message = new SeString(

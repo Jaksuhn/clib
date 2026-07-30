@@ -14,7 +14,7 @@ public static class CLibMain {
         if (instance is not (IDalamudPlugin or IAsyncDalamudPlugin))
             throw new InvalidOperationException($"Invalid plugin instance. Must be of type {nameof(IDalamudPlugin)} or {nameof(IAsyncDalamudPlugin)}");
         Svc.Init(pi, modules);
-        Name = instance.GetType().Name;
+        Name = pi.Manifest.Name;
     }
 
     public static ValueTask DisposeAsync() => Svc.DisposeAsync();
