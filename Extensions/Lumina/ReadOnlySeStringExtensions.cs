@@ -11,17 +11,9 @@ public static class ReadOnlySeStringExtensions {
         return seString.ContainsText(bytes);
     }
 
-    public static bool ContainsText(this ReadOnlySeString seString, ReadOnlySeString needle) {
-        if (seString.IsEmpty || needle.IsEmpty) return false;
-        return seString.ContainsText(needle.AsSpan());
-    }
+    public static bool ContainsText(this ReadOnlySeString seString, ReadOnlySeString needle)
+        => !seString.IsEmpty && !needle.IsEmpty && seString.ContainsText(needle.AsSpan());
 
-    public static bool ContainsAny(this ReadOnlySeString seString, IEnumerable<string> needles) {
-        if (seString.IsEmpty) return false;
-        foreach (var n in needles) {
-            var bytes = new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(n));
-            return seString.ContainsText(bytes);
-        }
-        return false;
-    }
+    public static bool ContainsAny(this ReadOnlySeString seString, IEnumerable<string> needles)
+        => !seString.IsEmpty && needles.Any(n => !n.IsNullOrEmpty() && seString.ContainsText(new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(n))));
 }
