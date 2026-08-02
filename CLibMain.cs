@@ -13,7 +13,7 @@ public static class CLibMain {
     public static void Init(IDalamudPluginInterface pi, object instance, CLibModule modules = CLibModule.None) {
         if (instance is not (IDalamudPlugin or IAsyncDalamudPlugin))
             throw new InvalidOperationException($"Invalid plugin instance. Must be of type {nameof(IDalamudPlugin)} or {nameof(IAsyncDalamudPlugin)}");
-        Svc.Init(pi, modules);
+        Svc.Init(pi, instance, modules);
         Name = pi.Manifest.Name;
     }
 

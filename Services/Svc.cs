@@ -3,6 +3,8 @@ using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using System.Collections.Concurrent;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace clib.Services;
@@ -77,7 +79,7 @@ public class Svc {
         return (T)instance;
     }
 
-    internal static void Init(IDalamudPluginInterface pi, CLibModule modules) {
+    internal static void Init(IDalamudPluginInterface pi, object pluginInstance, CLibModule modules) {
         pi.Create<Svc>();
         Navmesh = new NavmeshIPC();
 
@@ -87,6 +89,8 @@ public class Svc {
             Items = new();
         if (modules.HasFlag(CLibModule.Automation))
             Automation = new();
+
+        RegisterPluginServices(pluginInstance.GetType().Assembly);
     }
 
     internal static async ValueTask DisposeAsync() {
@@ -116,6 +120,17 @@ public class Svc {
             return ValueTask.CompletedTask;
         }
         return ValueTask.CompletedTask;
+    }
+
+    private static void RegisterPluginServices(Assembly assembly) {
+        foreach (var type in assembly.GetTypes()
+                .Where(t => t is { IsClass: true, IsAbstract: false }
+                        && typeof(IPluginService).IsAssignableFrom(t))
+                .OrderBy(t => ((IPluginService)RuntimeHelpers.GetUninitializedObject(t)).InitOrder)
+                .ThenBy(t => t.FullName)) {
+            if (!Singletons.TryAdd(type, Activator.CreateInstance(type)!))
+                throw new InvalidOperationException($"[{nameof(Svc)}] {type.FullName} is already registered.");
+        }
     }
 }
 
