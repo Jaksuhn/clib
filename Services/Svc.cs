@@ -3,7 +3,9 @@ using Dalamud.Configuration;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Newtonsoft.Json;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -140,8 +142,9 @@ public class Svc {
         }
     }
 
+    // need this because GetPluginConfig() wouldn't work from clib
     private static object CreatePluginService(Type type)
-        => typeof(IPluginConfiguration).IsAssignableFrom(type) && Interface.GetPluginConfig() is { } config && type.IsInstanceOfType(config) ? config : Activator.CreateInstance(type)!;
+        => typeof(IPluginConfiguration).IsAssignableFrom(type) && Interface.ConfigFile is { Exists: true } file && JsonConvert.DeserializeObject(File.ReadAllText(file.FullName), type) is { } loaded ? loaded : Activator.CreateInstance(type)!;
 
     private static void RegisterPluginCommands() {
         var commandSets = Singletons.Values.OfType<IPluginCommands>().ToList();
