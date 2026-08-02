@@ -1,4 +1,3 @@
-using clib.Services;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Enums;
@@ -43,14 +42,14 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     }
     public static implicit operator PublicEvent(WKSMechaEvent mechaEvent) => new((nint)(&mechaEvent), FateType.MechaEvent, mechaEvent.WKSMechaEventDataRowId);
 
-    public static PublicEvent? CurrentFate => Svc.Objects.LocalPlayer?.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
+    public static PublicEvent? CurrentFate => IObjectTable.Get().LocalPlayer?.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
         TerritoryIntendedUse.Overworld => GetCurrentFateOverworld(),
         TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetCurrentForayEvent(),
         TerritoryIntendedUse.CosmicExploration => GetCurrentCosmicEvent(),
         _ => null, // zone doesn't support FATEs (instance, city, etc.)
     };
 
-    public static IEnumerable<PublicEvent> Fates => Svc.Objects.LocalPlayer?.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
+    public static IEnumerable<PublicEvent> Fates => IObjectTable.Get().LocalPlayer?.Territory.Value.TerritoryIntendedUse.Value.StructsEnum switch {
         TerritoryIntendedUse.Overworld => GetOverworldFates(),
         TerritoryIntendedUse.Bozja or TerritoryIntendedUse.OccultCrescent => GetForayFates(),
         TerritoryIntendedUse.CosmicExploration => GetCosmicFates(),
@@ -207,9 +206,9 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     );
 
     public string Name => FateType switch {
-        FateType.Normal => Svc.Data.GetRef<Sheets.Fate>(Id).Value.Name.ToString() ?? $"FATE {Id}",
-        FateType.DynamicEvent => Svc.Data.GetRef<Sheets.DynamicEvent>(Id).Value.Name.ToString() ?? $"DynamicEvent {Id}",
-        FateType.MechaEvent => Svc.Data.GetRef<Sheets.WKSMechaEventData>(Id).Value.Name.ToString() ?? $"MechaEvent {Id}",
+        FateType.Normal => IDataManager.Get().GetRef<Sheets.Fate>(Id).Value.Name.ToString() ?? $"FATE {Id}",
+        FateType.DynamicEvent => IDataManager.Get().GetRef<Sheets.DynamicEvent>(Id).Value.Name.ToString() ?? $"DynamicEvent {Id}",
+        FateType.MechaEvent => IDataManager.Get().GetRef<Sheets.WKSMechaEventData>(Id).Value.Name.ToString() ?? $"MechaEvent {Id}",
         _ => $"Unknown Type: {Id}",
     };
 
@@ -222,14 +221,14 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
 
     public IGameObject? MotivationNpc => GetValue(
         // sometimes when they're initially loaded, the gameobject is garbage with an entity id of 200000001 and object kind MountType
-        fate => Svc.Objects.FirstOrDefault(o => o.EntityId == fate.As<FateContext>()->MotivationNpc && o.ObjectKind == ObjectKind.BattleNpc),
+        fate => IObjectTable.Get().FirstOrDefault(o => o.EntityId == fate.As<FateContext>()->MotivationNpc && o.ObjectKind == ObjectKind.BattleNpc),
         _ => null,
         _ => null,
         null
     );
 
     public IGameObject? ObjectiveNpc => GetValue(
-        fate => Svc.Objects.FirstOrDefault(o => o.EntityId == fate.As<FateContext>()->ObjectiveNpc),
+        fate => IObjectTable.Get().FirstOrDefault(o => o.EntityId == fate.As<FateContext>()->ObjectiveNpc),
         _ => null,
         _ => null,
         null

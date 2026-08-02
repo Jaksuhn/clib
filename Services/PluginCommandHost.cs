@@ -21,18 +21,18 @@ internal sealed class PluginCommandHost : IDisposable {
                 var result = router.Execute(args, null!, rootLabel);
                 if (!result.Success) {
                     if (result.Error is not null)
-                        Svc.Chat.PrintError(result.Error);
+                        IChatGui.Get().PrintError(result.Error);
                     if (result.Usage is not null)
-                        Svc.Chat.Print(result.Usage);
+                        IChatGui.Get().Print(result.Usage);
                     return;
                 }
 
                 if (result.Help is not null)
-                    Svc.Chat.Print(result.Help);
+                    IChatGui.Get().Print(result.Help);
             }
 
             foreach (var alias in set.Commands) {
-                Svc.Commands.AddHandler(alias, new CommandInfo(OnCommand) { HelpMessage = set.HelpMessage });
+                ICommandManager.Get().AddHandler(alias, new CommandInfo(OnCommand) { HelpMessage = set.HelpMessage });
                 _registered.Add(alias);
             }
         }
@@ -40,7 +40,7 @@ internal sealed class PluginCommandHost : IDisposable {
 
     public void Dispose() {
         foreach (var alias in _registered)
-            Svc.Commands.RemoveHandler(alias);
+            ICommandManager.Get().RemoveHandler(alias);
         _registered.Clear();
     }
 }

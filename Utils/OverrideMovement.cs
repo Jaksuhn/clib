@@ -52,15 +52,15 @@ public unsafe class OverrideMovement : IDisposable {
     private readonly Hook<RMIFlyDelegate> _rmiFlyHook = null!;
 
     public OverrideMovement() {
-        Svc.Hook.InitializeFromAttributes(this);
-        _rmiWalkIsInputEnabled1 = Marshal.GetDelegateForFunctionPointer<RMIWalkIsInputEnabled>(Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 84 C0 75 10 38 43 3C"));
-        _rmiWalkIsInputEnabled2 = Marshal.GetDelegateForFunctionPointer<RMIWalkIsInputEnabled>(Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 84 C0 75 03 88 47 3F"));
-        Svc.GameConfig.UiControlChanged += OnConfigChanged;
+        IGameInteropProvider.Get().InitializeFromAttributes(this);
+        _rmiWalkIsInputEnabled1 = Marshal.GetDelegateForFunctionPointer<RMIWalkIsInputEnabled>(ISigScanner.Get().ScanText("E8 ?? ?? ?? ?? 84 C0 75 10 38 43 3C"));
+        _rmiWalkIsInputEnabled2 = Marshal.GetDelegateForFunctionPointer<RMIWalkIsInputEnabled>(ISigScanner.Get().ScanText("E8 ?? ?? ?? ?? 84 C0 75 03 88 47 3F"));
+        IGameConfig.Get().UiControlChanged += OnConfigChanged;
         UpdateLegacyMode();
     }
 
     public void Dispose() {
-        Svc.GameConfig.UiControlChanged -= OnConfigChanged;
+        IGameConfig.Get().UiControlChanged -= OnConfigChanged;
         _rmiWalkHook.Dispose();
         _rmiFlyHook.Dispose();
     }
@@ -68,7 +68,7 @@ public unsafe class OverrideMovement : IDisposable {
     private void RMIWalkDetour(void* self, float* sumLeft, float* sumForward, float* sumTurnLeft, byte* haveBackwardOrStrafe, byte* a6, byte bAdditiveUnk) {
         _rmiWalkHook.Original(self, sumLeft, sumForward, sumTurnLeft, haveBackwardOrStrafe, a6, bAdditiveUnk);
         // TODO: we really need to introduce some extra checks that PlayerMoveController::readInput does - sometimes it skips reading input, and returning something non-zero breaks stuff...
-        var movementAllowed = bAdditiveUnk == 0 && _rmiWalkIsInputEnabled1(self) && _rmiWalkIsInputEnabled2(self); //&& !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BeingMoved];
+        var movementAllowed = bAdditiveUnk == 0 && _rmiWalkIsInputEnabled1(self) && _rmiWalkIsInputEnabled2(self); //&& !ICondition.Get()[Dalamud.Game.ClientState.Conditions.ConditionFlag.BeingMoved];
         if (movementAllowed && (IgnoreUserInput || *sumLeft == 0 && *sumForward == 0) && DirectionToDestination(false) is var relDir && relDir != null) {
             var dir = relDir.Value.h.ToDirection();
             *sumLeft = dir.X;
@@ -88,7 +88,7 @@ public unsafe class OverrideMovement : IDisposable {
     }
 
     private (Angle h, Angle v)? DirectionToDestination(bool allowVertical) {
-        var player = Svc.Objects.LocalPlayer;
+        var player = IObjectTable.Get().LocalPlayer;
         if (player == null)
             return null;
 
@@ -99,18 +99,16 @@ public unsafe class OverrideMovement : IDisposable {
         var dirH = Angle.FromDirectionXZ(dist);
         var dirV = allowVertical ? Angle.FromDirection(new(dist.Y, new Vector2(dist.X, dist.Z).Length())) : default;
 
-        var refDir = _legacyMode
-            ? CameraManager.Instance()->GetActiveCamera()->DirH.Radians() + 180.Degrees()
-            : player.Rotation.Radians();
+        var refDir = _legacyMode ? CameraManager.Instance()->GetActiveCamera()->DirH.Radians() + 180.Degrees() : player.Rotation.Radians();
         return (dirH - refDir, dirV);
     }
 
     private void OnConfigChanged(object? sender, ConfigChangeEvent evt) => UpdateLegacyMode();
     private void UpdateLegacyMode() {
-        var newMode = Svc.GameConfig.UiControl.TryGetUInt("MoveMode", out var mode) && mode == 1;
+        var newMode = IGameConfig.Get().UiControl.TryGetUInt("MoveMode", out var mode) && mode == 1;
         if (_legacyMode != newMode) {
             _legacyMode = newMode;
-            Svc.Log.Print($"Legacy mode is now {(_legacyMode ? "enabled" : "disabled")}");
+            IPluginLog.Get().Print($"Legacy mode is now {(_legacyMode ? "enabled" : "disabled")}");
         }
     }
 }

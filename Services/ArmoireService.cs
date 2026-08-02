@@ -17,18 +17,18 @@ internal sealed unsafe class ArmoireService : IDisposable {
     private readonly HashSet<uint> _ownedItemIds = [];
 
     public ArmoireService() {
-        Svc.ClientState.Login += OnLogin;
-        Svc.ClientState.Logout += OnLogout;
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "Cabinet", OnCabinetRefresh);
+        IClientState.Get().Login += OnLogin;
+        IClientState.Get().Logout += OnLogout;
+        IAddonLifecycle.Get().RegisterListener(AddonEvent.PostRequestedUpdate, "Cabinet", OnCabinetRefresh);
 
-        if (Svc.ClientState.IsLoggedIn)
+        if (IClientState.Get().IsLoggedIn)
             RefreshCache();
     }
 
     public void Dispose() {
-        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "Cabinet", OnCabinetRefresh);
-        Svc.ClientState.Logout -= OnLogout;
-        Svc.ClientState.Login -= OnLogin;
+        IAddonLifecycle.Get().UnregisterListener(AddonEvent.PostRequestedUpdate, "Cabinet", OnCabinetRefresh);
+        IClientState.Get().Logout -= OnLogout;
+        IClientState.Get().Login -= OnLogin;
         _ownedItemIds.Clear();
     }
 
@@ -98,7 +98,7 @@ internal sealed unsafe class ArmoireService : IDisposable {
     private void OnCabinetRefresh(AddonEvent _, AddonArgs __) => BuildCache(notify: true);
 
     private void BuildCache(bool notify) {
-        if (!Svc.ClientState.IsLoggedIn) {
+        if (!IClientState.Get().IsLoggedIn) {
             ClearCache();
             return;
         }

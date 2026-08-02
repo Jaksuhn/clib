@@ -12,18 +12,18 @@ internal sealed unsafe class DresserService : IDisposable {
     private HashSet<uint> _lastNotifiedIds = [];
 
     public DresserService() {
-        Svc.ClientState.Login += OnLogin;
-        Svc.ClientState.Logout += OnLogout;
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "MiragePrismPrismBox", OnPrismBoxRefresh);
+        IClientState.Get().Login += OnLogin;
+        IClientState.Get().Logout += OnLogout;
+        IAddonLifecycle.Get().RegisterListener(AddonEvent.PostRequestedUpdate, "MiragePrismPrismBox", OnPrismBoxRefresh);
 
-        if (Svc.ClientState.IsLoggedIn)
+        if (IClientState.Get().IsLoggedIn)
             NotifyIfChanged();
     }
 
     public void Dispose() {
-        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostRequestedUpdate, "MiragePrismPrismBox", OnPrismBoxRefresh);
-        Svc.ClientState.Logout -= OnLogout;
-        Svc.ClientState.Login -= OnLogin;
+        IAddonLifecycle.Get().UnregisterListener(AddonEvent.PostRequestedUpdate, "MiragePrismPrismBox", OnPrismBoxRefresh);
+        IClientState.Get().Logout -= OnLogout;
+        IClientState.Get().Login -= OnLogin;
         _lastNotifiedIds = [];
     }
 
@@ -104,7 +104,7 @@ internal sealed unsafe class DresserService : IDisposable {
         if (_lastNotifiedIds.SetEquals(next))
             return;
         _lastNotifiedIds = next;
-        Svc.Log.Debug($"[{nameof(DresserService)}] Dresser changed.");
+        IPluginLog.Get().Debug($"[{nameof(DresserService)}] Dresser changed.");
         Changed?.Invoke();
     }
 }

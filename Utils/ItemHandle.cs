@@ -65,7 +65,7 @@ public class ItemHandle {
         return false;
     }
 
-    public RowRef<Item> GameData => Svc.Data.GetRef<Item>(ItemUtil.GetBaseId(ItemId).ItemId);
+    public RowRef<Item> GameData => IDataManager.Get().GetRef<Item>(ItemUtil.GetBaseId(ItemId).ItemId);
     public bool IsValid => ItemId is not 0;
 
     public uint BaseItemId => ItemUtil.GetBaseId(ItemId).ItemId;
@@ -114,7 +114,7 @@ public class ItemHandle {
     public unsafe bool LowerItemQuality() {
         if (ItemLocation is null) return false;
         if (RaptureAtkModule.Instance()->AgentUpdateFlag.HasFlag(RaptureAtkModule.AgentUpdateFlags.InventoryUpdate)) return false;
-        if (!Svc.Condition.CanLowerItemQuality()) return false;
+        if (!ICondition.Get().CanLowerItemQuality()) return false;
         var item = InventoryManager.Instance()->GetInventorySlot(ItemLocation.Container, ItemLocation.Slot);
         if (!item->IsHighQuality()) return true;
         AgentInventoryContext.Instance()->LowerItemQuality(item, ItemLocation.Container, ItemLocation.Slot, 0);
@@ -130,7 +130,7 @@ public class ItemHandle {
         PlayerState.Instance()->GrandCompany,
         PvPProfile.Instance()->GetPvPRank(),
         ExcelRow);
-        errorMsg = Svc.Data.GetRef<LogMessage>((uint)logMessageId);
+        errorMsg = IDataManager.Get().GetRef<LogMessage>((uint)logMessageId);
         return logMessageId is 0 || logMessageId is 703 && GameData.Value.ClassJobCategory.Value.HasJobsAtLevel(GameData.Value.LevelEquip); // 703 = Cannot equip as current class. It shows erronously so we check ourselves
     }
 
@@ -140,7 +140,7 @@ public class ItemHandle {
     /// TODO: ring slots
     public unsafe void Equip() {
         if (ItemLocation is null) return;
-        Svc.Log.Debug($"Equipping item [{this}] from {ItemLocation} to {new ItemLocation(InventoryType.EquippedItems, (ushort)GameData.Value.EquipSlot)}");
+        IPluginLog.Get().Debug($"Equipping item [{this}] from {ItemLocation} to {new ItemLocation(InventoryType.EquippedItems, (ushort)GameData.Value.EquipSlot)}");
         InventoryManager.Instance()->MoveItemSlot(ItemLocation.Container, ItemLocation.Slot, InventoryType.EquippedItems, (ushort)GameData.Value.EquipSlot, true);
         // This seems to not work depending on the item. Conditionally uses ODR location? Can't tell, don't care that much
         //if (ItemLocation.Container.GetContainerId() is not 0 and var srcContId && InventoryType.EquippedItems.GetContainerId() is not 0 and var destContId) {
@@ -150,7 +150,7 @@ public class ItemHandle {
         //    eis[1].SetUInt(ItemLocation.Slot);
         //    eis[2].SetUInt(destContId);
         //    eis[3].SetUInt(GameData.Value.EquipSlot);
-        //    Svc.Log.Debug($"Equipping item [{this}] from {ItemLocation}/{ItemLocation.GetODR()} to {(InventoryType.EquippedItems, GameData.Value.EquipSlot)}");
+        //    IPluginLog.Get().Debug($"Equipping item [{this}] from {ItemLocation}/{ItemLocation.GetODR()} to {(InventoryType.EquippedItems, GameData.Value.EquipSlot)}");
         //    RaptureAtkModule.Instance()->HandleItemMove(dropOut, eis, 4);
         //}
     }

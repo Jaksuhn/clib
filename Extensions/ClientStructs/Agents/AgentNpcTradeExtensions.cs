@@ -15,12 +15,12 @@ public static unsafe class AgentNpcTradeExtensions {
         public static void TurnInRequests() {
             var agent = AgentNpcTrade.Instance();
             if (!agent->IsAgentActive()) {
-                Svc.Log.PrintError("Agent not active...");
+                IPluginLog.Get().PrintError("Agent not active...");
                 return;
             }
 
             if (agent->SelectedTurnInSlot >= 0) {
-                Svc.Log.PrintError($"Turn-in already in progress for slot {agent->SelectedTurnInSlot}");
+                IPluginLog.Get().PrintError($"Turn-in already in progress for slot {agent->SelectedTurnInSlot}");
                 return;
             }
 
@@ -42,7 +42,7 @@ public static unsafe class AgentNpcTradeExtensions {
             //agent->ReceiveEvent(&res, param.GetPointer(0), 4, 0);
 
             if (agent->SelectedTurnInSlot != 0 || agent->SelectedTurnInSlotItemOptions <= 0) {
-                Svc.Log.PrintError($"Failed to start turn-in: cur slot={agent->SelectedTurnInSlot}, count={agent->SelectedTurnInSlotItemOptions}");
+                IPluginLog.Get().PrintError($"Failed to start turn-in: cur slot={agent->SelectedTurnInSlot}, count={agent->SelectedTurnInSlotItemOptions}");
                 return;
             }
 
@@ -51,7 +51,7 @@ public static unsafe class AgentNpcTradeExtensions {
             agent->ReceiveEvent(&res, param.GetPointer(0), 4, 1);
 
             if (agent->SelectedTurnInSlot >= 0) {
-                Svc.Log.PrintError($"Turn-in not confirmed: cur slot={agent->SelectedTurnInSlot}");
+                IPluginLog.Get().PrintError($"Turn-in not confirmed: cur slot={agent->SelectedTurnInSlot}");
                 return;
             }
 

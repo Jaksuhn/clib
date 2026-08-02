@@ -1,5 +1,4 @@
-﻿using clib.Services;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace clib.Extensions;
 
@@ -7,13 +6,13 @@ public static class MethodBaseExtensions {
     public static void Log(this MethodBase method) {
         var parameters = method.GetParameters();
         if (parameters.Length == 0) {
-            Svc.Log.Debug($"{method.DeclaringType?.Name}.{method.Name}()");
+            IPluginLog.Get().Debug($"{method.DeclaringType?.Name}.{method.Name}()");
             return;
         }
 
         var paramStrings = parameters.Select(p => $"{p.Name}: {p.ParameterType.Name}");
         var joined = string.Join(", ", paramStrings);
-        Svc.Log.Debug($"{method.DeclaringType?.Name}.{method.Name}({joined})");
+        IPluginLog.Get().Debug($"{method.DeclaringType?.Name}.{method.Name}({joined})");
     }
 
     public static void Log(this MethodBase method, params object?[] parameterValues) => Log(method, parameterValues, []);
@@ -35,10 +34,10 @@ public static class MethodBaseExtensions {
         if (additionalValues is { Length: > 0 }) {
             var additionalStrings = additionalValues.Select(FormatValue);
             var additionalJoined = string.Join(", ", additionalStrings);
-            Svc.Log.Debug($"{methodCall} {{ {additionalJoined} }}");
+            IPluginLog.Get().Debug($"{methodCall} {{ {additionalJoined} }}");
         }
         else
-            Svc.Log.Debug(methodCall);
+            IPluginLog.Get().Debug(methodCall);
     }
 
     private static string FormatValue(object? value) => value switch {

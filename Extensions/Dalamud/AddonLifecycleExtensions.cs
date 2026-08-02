@@ -1,7 +1,6 @@
 ﻿using clib.Services;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace clib.Extensions;
@@ -25,11 +24,11 @@ public static class AddonLifecycleExtensions {
     private static void Logger(AddonEvent type, AddonArgs args) {
         switch (args) {
             case AddonReceiveEventArgs receiveEventArgs:
-                Svc.Log.Print($"[{args.AddonName}] {(AtkEventType)receiveEventArgs.AtkEventType}: {receiveEventArgs.EventParam}");
+                IPluginLog.Get().Print($"[{args.AddonName}] {(AtkEventType)receiveEventArgs.AtkEventType}: {receiveEventArgs.EventParam}");
                 break;
 
             default:
-                Svc.Log.Print($"{args.AddonName} called {type}");
+                IPluginLog.Get().Print($"{args.AddonName} called {type}");
                 break;
         }
     }

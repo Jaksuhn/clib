@@ -3,6 +3,7 @@ global using clib.Extensions;
 global using clib.Internal;
 global using clib.Internal.Extensions;
 global using clib.Utils;
+global using Dalamud.Plugin.Services;
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;

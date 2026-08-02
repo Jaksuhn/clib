@@ -54,7 +54,7 @@ public abstract class AutoTask {
         InvokeDisposables();
     }
 
-    public void Run(Action completed, Action? OnCompleted = null) => Svc.Framework.Run(async () => {
+    public void Run(Action completed, Action? OnCompleted = null) => IFramework.Get().Run(async () => {
         _activeTask.Value = this;
 
         if (this is IAutoTaskHooks hookable) {
@@ -66,7 +66,7 @@ public abstract class AutoTask {
         var task = Execute();
         await task.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing); // we don't really care about cancelation...
         if (task.IsFaulted)
-            Svc.Log.Warning($"Task ended with error: {task.Exception}");
+            IPluginLog.Get().Warning($"Task ended with error: {task.Exception}");
         InvokeDisposables();
         completed();
         OnCompleted?.Invoke();
@@ -80,7 +80,7 @@ public abstract class AutoTask {
     protected CancellationToken CancelToken => _cts.Token;
 
     // wait for a few frames
-    protected Task NextFrame(int numFramesToWait = 1) => Svc.Framework.DelayTicks(numFramesToWait, _cts.Token);
+    protected Task NextFrame(int numFramesToWait = 1) => IFramework.Get().DelayTicks(numFramesToWait, _cts.Token);
 
     /// <summary>
     /// Wait until condition function returns false, checking once every N frames
@@ -168,9 +168,9 @@ public abstract class AutoTask {
         }
     }
 
-    protected void Log(string message) => Svc.Log.Debug($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
-    protected void Verbose(string message) => Svc.Log.Verbose($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
-    protected void Warning(string message) => Svc.Log.Warning($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
+    protected void Log(string message) => IPluginLog.Get().Debug($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
+    protected void Verbose(string message) => IPluginLog.Get().Verbose($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
+    protected void Warning(string message) => IPluginLog.Get().Warning($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     protected void WarningIf(bool condition, string message) {
         if (condition)
             Warning(message);
@@ -181,7 +181,7 @@ public abstract class AutoTask {
 
     // abort a task unconditionally
     protected void Error(string message) {
-        Svc.Log.Error($"Error: {message}");
+        IPluginLog.Get().Error($"Error: {message}");
         throw new Exception($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
     }
 
@@ -235,7 +235,7 @@ public sealed class Automation : IDisposable {
         }
 
         if (CurrentTask != null) {
-            Svc.Log.Debug($"[{nameof(Automation)}] {task.GetType().Name} is starting and cancelling current task: {CurrentTask.GetType().Name}");
+            IPluginLog.Get().Debug($"[{nameof(Automation)}] {task.GetType().Name} is starting and cancelling current task: {CurrentTask.GetType().Name}");
         }
         Stop();
         CurrentTask = task;

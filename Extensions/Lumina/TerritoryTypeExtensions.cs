@@ -1,4 +1,3 @@
-using clib.Services;
 using Lumina.Excel.Sheets;
 using Lumina.Extensions;
 
@@ -55,7 +54,7 @@ public static class TerritoryTypeExtensions {
                 return weatherRateIndex.Weather[i].Value;
             }
         }
-        Svc.Log.Warning($"Failed to calculate weather for #{row.RowId} {row.Name} at {time}, [t:{target}, tr:{rateAccumulator}]");
+        IPluginLog.Get().Warning($"Failed to calculate weather for #{row.RowId} {row.Name} at {time}, [t:{target}, tr:{rateAccumulator}]");
         return weatherRateIndex.Weather[0].Value;
     }
 

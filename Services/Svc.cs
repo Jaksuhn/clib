@@ -2,7 +2,6 @@ using AllaganLib.GameSheets.Service;
 using Dalamud.Configuration;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using System.IO;
@@ -13,6 +12,7 @@ using System.Threading.Tasks;
 namespace clib.Services;
 
 public class Svc {
+    // TODO: get rid of these and just make interface internal
     [PluginService] public static IAddonEventManager AddonEventManager { get; private set; } = null!;
     [PluginService] public static IAddonLifecycle AddonLifecycle { get; private set; } = null!;
     [PluginService] public static IAetheryteList AetheryteList { get; private set; } = null!;
@@ -87,7 +87,7 @@ public class Svc {
         Navmesh = new NavmeshIPC();
 
         if (modules.HasFlag(CLibModule.SheetManager))
-            SheetManager = new(pi, Data.GameData, new());
+            SheetManager = new(pi, IDataManager.Get().GameData, new());
         if (modules.HasFlag(CLibModule.Items))
             Items = new();
         if (modules.HasFlag(CLibModule.Automation))
@@ -110,7 +110,7 @@ public class Svc {
                 await DisposeObjectAsync(s).ConfigureAwait(false);
             }
             catch {
-                Log.Error($"[{nameof(Svc)}] Failed disposal of {s.GetType().FullName}");
+                IPluginLog.Get().Error($"[{nameof(Svc)}] Failed disposal of {s.GetType().FullName}");
             }
         }
 
@@ -133,8 +133,7 @@ public class Svc {
 
     private static void RegisterPluginServices(Assembly assembly) {
         foreach (var type in assembly.GetTypes()
-                .Where(t => t is { IsClass: true, IsAbstract: false }
-                        && typeof(IPluginService).IsAssignableFrom(t))
+                .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(IPluginService).IsAssignableFrom(t))
                 .OrderBy(t => ((IPluginService)RuntimeHelpers.GetUninitializedObject(t)).InitOrder)
                 .ThenBy(t => t.FullName)) {
             if (!Singletons.TryAdd(type, CreatePluginService(type)))

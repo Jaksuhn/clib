@@ -1,6 +1,4 @@
-﻿using clib.Services;
-using Dalamud.Hooking;
-using Dalamud.Plugin.Services;
+﻿using Dalamud.Hooking;
 using System.Runtime.InteropServices;
 
 namespace clib.Extensions;
@@ -14,6 +12,6 @@ public static class IGameInteropProviderExtensions {
             => gameInteropProvider.HookFromAddress(*(nint*)(vtblAddress + vfIndex * 0x08), detour);
 
         public unsafe T GetDelegate<T>(string signature, int offset = 0)
-            => Marshal.GetDelegateForFunctionPointer<T>(Svc.SigScanner.ScanText(signature) + offset);
+            => Marshal.GetDelegateForFunctionPointer<T>(ISigScanner.Get().ScanText(signature) + offset);
     }
 }

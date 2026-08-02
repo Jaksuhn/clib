@@ -1,5 +1,4 @@
-﻿using clib.Services;
-using Dalamud.Game.ClientState.Objects.Types;
+﻿using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
@@ -30,7 +29,7 @@ public static class IGameObjectExtensions {
         var cs = (GameObject*)obj.Address;
         return cs == null || cs->EventHandler == null ? null : cs->EventHandler->Info;
     }
-    public static unsafe bool IsInInteractRange(this IGameObject obj) => EventFramework.Instance()->CheckInteractRange((GameObject*)Svc.Objects.LocalPlayer!.Address, (GameObject*)obj.Address, 1, false);
+    public static unsafe bool IsInInteractRange(this IGameObject obj) => EventFramework.Instance()->CheckInteractRange((GameObject*)IObjectTable.Get().LocalPlayer!.Address, (GameObject*)obj.Address, 1, false);
     public static unsafe bool IsInLineOfSight(this IGameObject? obj, Vector3 point) {
         if (obj is null) return false;
         var adjustedOrigin = obj.Position.AddY(2);

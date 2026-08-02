@@ -1,4 +1,3 @@
-using clib.Services;
 using Lumina.Excel;
 using Lumina.Extensions;
 
@@ -7,21 +6,21 @@ namespace clib.Extensions;
 public static class IExcelRowExtensions {
     extension<T>(IExcelRow<T> excelRow) where T : struct, IExcelRow<T> {
         public T WithLanguage(Dalamud.Game.ClientLanguage language)
-            => Svc.Data.GetExcelSheet<T>(language: language).GetRow(excelRow.RowId);
+            => IDataManager.Get().GetExcelSheet<T>(language: language).GetRow(excelRow.RowId);
 
         public T WithLanguage(Lumina.Data.Language language)
-            => Svc.Data.GetExcelSheet<T>(language: (Dalamud.Game.ClientLanguage)language).GetRow(excelRow.RowId);
+            => IDataManager.Get().GetExcelSheet<T>(language: (Dalamud.Game.ClientLanguage)language).GetRow(excelRow.RowId);
 
-        public static IEnumerable<T> Rows => Svc.Data.GetExcelSheet<T>();
+        public static IEnumerable<T> Rows => IDataManager.Get().GetExcelSheet<T>();
 
         public static RowRef<T> GetRowRef(uint id, Lumina.Data.Language? language = null)
-            => new(Svc.Data.Excel, id, language);
+            => new(IDataManager.Get().Excel, id, language);
 
         public static T GetRow(uint id, Dalamud.Game.ClientLanguage? language = null)
-            => Svc.Data.GetExcelSheet<T>(language: language).GetRow(id);
+            => IDataManager.Get().GetExcelSheet<T>(language: language).GetRow(id);
 
         public static bool TryGetRow(uint id, out T row, Dalamud.Game.ClientLanguage? language = null) {
-            if (Svc.Data.GetExcelSheet<T>(language: language).TryGetRow(id, out var r)) {
+            if (IDataManager.Get().GetExcelSheet<T>(language: language).TryGetRow(id, out var r)) {
                 row = r;
                 return true;
 
@@ -33,46 +32,46 @@ public static class IExcelRowExtensions {
         }
 
         public static bool Any(Func<T, bool> predicate)
-            => Svc.Data.GetExcelSheet<T>().Any(r => predicate(r));
+            => IDataManager.Get().GetExcelSheet<T>().Any(r => predicate(r));
 
         public static int Count(Func<T, bool> predicate)
-            => Svc.Data.GetExcelSheet<T>().Count(r => predicate(r));
+            => IDataManager.Get().GetExcelSheet<T>().Count(r => predicate(r));
 
         public static bool All(Func<T, bool> predicate)
-            => Svc.Data.GetExcelSheet<T>().All(r => predicate(r));
+            => IDataManager.Get().GetExcelSheet<T>().All(r => predicate(r));
 
         public static T[] Where(Func<T, bool> predicate)
-            => [.. Svc.Data.GetExcelSheet<T>().Where(r => predicate(r))];
+            => [.. IDataManager.Get().GetExcelSheet<T>().Where(r => predicate(r))];
 
         public static TResult[] Select<TResult>(Func<T, TResult> selector)
-            => [.. Svc.Data.GetExcelSheet<T>().Select(selector)];
+            => [.. IDataManager.Get().GetExcelSheet<T>().Select(selector)];
 
         public static T? FirstOrNull()
-            => Svc.Data.GetExcelSheet<T>().FirstOrNull();
+            => IDataManager.Get().GetExcelSheet<T>().FirstOrNull();
 
         public static T? FirstOrNull(Func<T, bool> predicate)
-            => Svc.Data.GetExcelSheet<T>().Where(r => predicate(r)).FirstOrNull();
+            => IDataManager.Get().GetExcelSheet<T>().Where(r => predicate(r)).FirstOrNull();
     }
 }
 
 public static class IExcelSubrowExtensions {
     extension<T>(IExcelSubrow<T> row) where T : struct, IExcelSubrow<T> {
         public T? WithLanguage(ushort subRowId, Dalamud.Game.ClientLanguage language)
-            => Svc.Data.GetSubrowSheet<T>(language: language).GetSubrowOrDefault(row.RowId, subRowId);
+            => IDataManager.Get().GetSubrowSheet<T>(language: language).GetSubrowOrDefault(row.RowId, subRowId);
 
         public T? WithLanguage(ushort subRowId, Lumina.Data.Language language)
-            => Svc.Data.GetSubrowSheet<T>(language: (Dalamud.Game.ClientLanguage)language).GetSubrowOrDefault(row.RowId, subRowId);
+            => IDataManager.Get().GetSubrowSheet<T>(language: (Dalamud.Game.ClientLanguage)language).GetSubrowOrDefault(row.RowId, subRowId);
 
-        public static IEnumerable<T> Rows => Svc.Data.GetSubrowSheet<T>().SelectMany(r => r);
+        public static IEnumerable<T> Rows => IDataManager.Get().GetSubrowSheet<T>().SelectMany(r => r);
 
         public static SubrowRef<T> GetSubrowRef(uint rowId, Lumina.Data.Language? language = null)
-            => new(Svc.Data.Excel, rowId, language);
+            => new(IDataManager.Get().Excel, rowId, language);
 
         public static T? GetSubrow(uint rowId, ushort subRowId, Dalamud.Game.ClientLanguage? language = null)
-            => Svc.Data.GetSubrowSheet<T>(language: language).GetSubrowOrDefault(rowId, subRowId);
+            => IDataManager.Get().GetSubrowSheet<T>(language: language).GetSubrowOrDefault(rowId, subRowId);
 
         public static bool TryGetSubrow(uint rowId, ushort subRowId, out T subrow, Dalamud.Game.ClientLanguage? language = null) {
-            if (Svc.Data.GetSubrowSheet<T>(language: language).TryGetSubrow(rowId, subRowId, out var r)) {
+            if (IDataManager.Get().GetSubrowSheet<T>(language: language).TryGetSubrow(rowId, subRowId, out var r)) {
                 subrow = r;
                 return true;
             }
@@ -83,7 +82,7 @@ public static class IExcelSubrowExtensions {
         }
 
         public static bool TryGetSubrows(uint rowId, out SubrowCollection<T> subrows) {
-            if (Svc.Data.TryGetSubrows<T>(rowId, out var r)) {
+            if (IDataManager.Get().TryGetSubrows<T>(rowId, out var r)) {
                 subrows = r;
                 return true;
             }
@@ -116,5 +115,5 @@ public static class IExcelSubrowExtensions {
     }
 
     private static IEnumerable<T> EnumerateSubrows<T>(Dalamud.Game.ClientLanguage? language = null) where T : struct, IExcelSubrow<T>
-        => Svc.Data.GetSubrowSheet<T>(language: language).SelectMany(r => r);
+        => IDataManager.Get().GetSubrowSheet<T>(language: language).SelectMany(r => r);
 }

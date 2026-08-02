@@ -1,5 +1,4 @@
-﻿using clib.Services;
-using Dalamud.Hooking;
+﻿using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
@@ -27,7 +26,7 @@ public unsafe class OverrideCamera : IDisposable {
     [Signature("40 53 48 83 EC 70 44 0F 29 44 24 ?? 48 8B D9")]
     private readonly Hook<RMICameraDelegate> _rmiCameraHook = null!;
 
-    public OverrideCamera() => Svc.Hook.InitializeFromAttributes(this);
+    public OverrideCamera() => IGameInteropProvider.Get().InitializeFromAttributes(this);
 
     public void Dispose() {
         _rmiCameraHook.Dispose();

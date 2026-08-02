@@ -1,6 +1,5 @@
 ﻿using clib.Services;
 using Dalamud.Game;
-using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
@@ -23,8 +22,8 @@ public static class IDataManagerExtensions {
         var scene = GetRow<TerritoryType>(data, territoryId)!.Value.Bg.ToString();
         var filenameStart = scene.LastIndexOf('/') + 1;
         var planeventLayerGroup = "bg/" + scene[0..filenameStart] + "planevent.lgb";
-        Svc.Log.Print($"Territory {territoryId} -> {planeventLayerGroup}");
-        var lvb = Svc.Data.GetFile<LgbFile>(planeventLayerGroup);
+        IPluginLog.Get().Print($"Territory {territoryId} -> {planeventLayerGroup}");
+        var lvb = IDataManager.Get().GetFile<LgbFile>(planeventLayerGroup);
         if (lvb != null) {
             foreach (var layer in lvb.Layers) {
                 foreach (var instance in layer.InstanceObjects) {
@@ -34,11 +33,11 @@ public static class IDataManagerExtensions {
                     if (baseId == enpcId) {
                         var npcId = (1ul << 32) | instance.InstanceId;
                         Vector3 npcLocation = new(instance.Transform.Translation.X, instance.Transform.Translation.Y, instance.Transform.Translation.Z);
-                        Svc.Log.Print($"Found npc {baseId} {instance.InstanceId} '{GetRow<ENpcResident>(data, baseId)?.Singular}' at {npcLocation}");
+                        IPluginLog.Get().Print($"Found npc {baseId} {instance.InstanceId} '{GetRow<ENpcResident>(data, baseId)?.Singular}' at {npcLocation}");
                         if (itemId != 0) {
                             var vendor = FindVendorItem(data, baseId, itemId);
                             if (vendor.itemIndex >= 0) {
-                                Svc.Log.Print($"Found shop #{vendor.shopId} and item index #{vendor.itemIndex}");
+                                IPluginLog.Get().Print($"Found shop #{vendor.shopId} and item index #{vendor.itemIndex}");
                                 return new NPCInfo(npcId, npcLocation, vendor.shopId);
                             }
                         }
@@ -69,13 +68,13 @@ public static class IDataManagerExtensions {
     // Regular sheets
 
     public static RowRef<T> GetRef<T>(this IDataManager data, uint rowId, ClientLanguage? language = null) where T : struct, IExcelRow<T>
-        => new(data.Excel, rowId, (language ?? Svc.ClientState.ClientLanguage).ToLumina());
+        => new(data.Excel, rowId, (language ?? IClientState.Get().ClientLanguage).ToLumina());
 
     public static ExcelSheet<T> GetSheet<T>(this IDataManager data, ClientLanguage? language = null) where T : struct, IExcelRow<T>
-        => data.GetExcelSheet<T>(language ?? Svc.ClientState.ClientLanguage)!;
+        => data.GetExcelSheet<T>(language ?? IClientState.Get().ClientLanguage)!;
 
     public static ExcelSheet<T> GetSheet<T>(this IDataManager data, string sheetName, ClientLanguage? language = null) where T : struct, IExcelRow<T>
-        => data.GetExcelSheet<T>(language ?? Svc.ClientState.ClientLanguage, sheetName)!;
+        => data.GetExcelSheet<T>(language ?? IClientState.Get().ClientLanguage, sheetName)!;
 
     public static T? GetRow<T>(this IDataManager data, uint rowId, ClientLanguage? language = null) where T : struct, IExcelRow<T>
         => GetSheet<T>(data, language).GetRowOrDefault(rowId);
@@ -84,31 +83,31 @@ public static class IDataManagerExtensions {
         => TryGetRow(data, rowId, null, out row);
 
     public static bool TryGetRow<T>(this IDataManager data, uint rowId, ClientLanguage? language, out T row) where T : struct, IExcelRow<T>
-        => GetSheet<T>(data, language ?? Svc.ClientState.ClientLanguage).TryGetRow(rowId, out row);
+        => GetSheet<T>(data, language ?? IClientState.Get().ClientLanguage).TryGetRow(rowId, out row);
 
     public static bool TryGetRow<T>(this IDataManager data, string sheetName, uint rowId, out T row) where T : struct, IExcelRow<T>
         => TryGetRow(data, sheetName, rowId, null, out row);
 
     public static bool TryGetRow<T>(this IDataManager data, string sheetName, uint rowId, ClientLanguage? language, out T row) where T : struct, IExcelRow<T>
-        => GetSheet<T>(data, sheetName, language ?? Svc.ClientState.ClientLanguage).TryGetRow(rowId, out row);
+        => GetSheet<T>(data, sheetName, language ?? IClientState.Get().ClientLanguage).TryGetRow(rowId, out row);
 
     public static bool TryFindRow<T>(this IDataManager data, string sheetName, Predicate<T> predicate, out T row) where T : struct, IExcelRow<T>
         => TryFindRow(data, sheetName, predicate, null, out row);
 
     public static bool TryFindRow<T>(this IDataManager data, string sheetName, Predicate<T> predicate, ClientLanguage? language, out T row) where T : struct, IExcelRow<T>
-        => GetSheet<T>(data, sheetName, language ?? Svc.ClientState.ClientLanguage).TryGetFirst(predicate, out row);
+        => GetSheet<T>(data, sheetName, language ?? IClientState.Get().ClientLanguage).TryGetFirst(predicate, out row);
 
     public static bool TryFindRow<T>(this IDataManager data, Predicate<T> predicate, out T row) where T : struct, IExcelRow<T>
         => TryFindRow(data, predicate, null, out row);
 
     public static bool TryFindRow<T>(this IDataManager data, Predicate<T> predicate, ClientLanguage? language, out T row) where T : struct, IExcelRow<T>
-        => GetSheet<T>(data, language ?? Svc.ClientState.ClientLanguage).TryGetFirst(predicate, out row);
+        => GetSheet<T>(data, language ?? IClientState.Get().ClientLanguage).TryGetFirst(predicate, out row);
 
     public static T? FindRow<T>(this IDataManager data, Func<T, bool> predicate) where T : struct, IExcelRow<T>
          => GetSheet<T>(data).FirstOrNull(row => predicate(row));
 
     public static IReadOnlyList<T> FindRows<T>(this IDataManager data, Predicate<T> predicate, ClientLanguage? language = null) where T : struct, IExcelRow<T>
-        => [.. GetSheet<T>(data, language ?? Svc.ClientState.ClientLanguage).Where(row => predicate(row))];
+        => [.. GetSheet<T>(data, language ?? IClientState.Get().ClientLanguage).Where(row => predicate(row))];
 
     public static bool TryFindRows<T>(this IDataManager data, Predicate<T> predicate, out IReadOnlyList<T> rows) where T : struct, IExcelRow<T>
         => TryFindRows(data, predicate, null, out rows);
@@ -121,13 +120,13 @@ public static class IDataManagerExtensions {
     // Subrow Sheets
 
     public static SubrowRef<T> GetSubRef<T>(this IDataManager data, uint rowId, ClientLanguage? language = null) where T : struct, IExcelSubrow<T>
-        => new(data.Excel, rowId, (language ?? Svc.ClientState.ClientLanguage).ToLumina());
+        => new(data.Excel, rowId, (language ?? IClientState.Get().ClientLanguage).ToLumina());
 
     public static SubrowExcelSheet<T> GetSubrowSheet<T>(this IDataManager data, ClientLanguage? language = null) where T : struct, IExcelSubrow<T>
-        => data.GetSubrowExcelSheet<T>(language ?? Svc.ClientState.ClientLanguage)!;
+        => data.GetSubrowExcelSheet<T>(language ?? IClientState.Get().ClientLanguage)!;
 
     public static SubrowExcelSheet<T> GetSubrowSheet<T>(this IDataManager data, string sheetName, ClientLanguage? language = null) where T : struct, IExcelSubrow<T>
-        => data.GetSubrowExcelSheet<T>(language ?? Svc.ClientState.ClientLanguage, sheetName)!;
+        => data.GetSubrowExcelSheet<T>(language ?? IClientState.Get().ClientLanguage, sheetName)!;
 
     public static T? GetRow<T>(this IDataManager data, uint rowId, ushort subRowId, ClientLanguage? language = null) where T : struct, IExcelSubrow<T>
         => GetSubrowSheet<T>(data, language).GetSubrowOrDefault(rowId, subRowId);
@@ -136,13 +135,13 @@ public static class IDataManagerExtensions {
         => TryGetSubrows(data, rowId, null, out rows);
 
     public static bool TryGetSubrows<T>(this IDataManager data, uint rowId, ClientLanguage? language, out SubrowCollection<T> rows) where T : struct, IExcelSubrow<T>
-        => GetSubrowSheet<T>(data, language ?? Svc.ClientState.ClientLanguage).TryGetRow(rowId, out rows);
+        => GetSubrowSheet<T>(data, language ?? IClientState.Get().ClientLanguage).TryGetRow(rowId, out rows);
 
     public static bool TryGetSubrow<T>(this IDataManager data, uint rowId, int subRowIndex, out T row) where T : struct, IExcelSubrow<T>
         => TryGetSubrow(data, rowId, subRowIndex, null, out row);
 
     public static bool TryGetSubrow<T>(this IDataManager data, uint rowId, int subRowIndex, ClientLanguage? language, out T row) where T : struct, IExcelSubrow<T> {
-        if (!GetSubrowSheet<T>(data, language ?? Svc.ClientState.ClientLanguage).TryGetRow(rowId, out var rows) || subRowIndex < rows.Count) {
+        if (!GetSubrowSheet<T>(data, language ?? IClientState.Get().ClientLanguage).TryGetRow(rowId, out var rows) || subRowIndex < rows.Count) {
             row = default;
             return false;
         }
@@ -155,7 +154,7 @@ public static class IDataManagerExtensions {
         => TryFindSubrow(data, predicate, null, out subrow);
 
     public static bool TryFindSubrow<T>(this IDataManager data, Predicate<T> predicate, ClientLanguage? language, out T subrow) where T : struct, IExcelSubrow<T> {
-        foreach (var irow in GetSubrowSheet<T>(data, language ?? Svc.ClientState.ClientLanguage)) {
+        foreach (var irow in GetSubrowSheet<T>(data, language ?? IClientState.Get().ClientLanguage)) {
             foreach (var isubrow in irow) {
                 if (predicate(isubrow)) {
                     subrow = isubrow;

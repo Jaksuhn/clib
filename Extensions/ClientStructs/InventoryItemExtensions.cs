@@ -1,5 +1,4 @@
-﻿using clib.Services;
-using Dalamud.Utility;
+﻿using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
@@ -11,6 +10,6 @@ public static class InventoryItemExtensions {
         /// <summary>
         /// Use with <see cref="RowRef.TryGetValue{T}(out T)"/> since this will return either an Item or EventItem row
         /// </summary>
-        public RowRef GameData => ItemUtil.GetBaseId(item.ItemId).Kind is ItemKind.EventItem ? RowRef.Create<EventItem>(Svc.Data.Excel, item.ItemId) : RowRef.Create<Item>(Svc.Data.Excel, item.GetBaseItemId());
+        public RowRef GameData => ItemUtil.GetBaseId(item.ItemId).Kind is ItemKind.EventItem ? RowRef.Create<EventItem>(IDataManager.Get().Excel, item.ItemId) : RowRef.Create<Item>(IDataManager.Get().Excel, item.GetBaseItemId());
     }
 }

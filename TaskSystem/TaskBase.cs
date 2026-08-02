@@ -29,9 +29,9 @@ public static class MovementOptionsExtensions {
     extension(MovementOptions) {
         public static MovementOptions Current {
             get {
-                if (Svc.Objects.LocalPlayer.InFlight)
+                if (IObjectTable.Get().LocalPlayer.InFlight)
                     return MovementOptions.Mount | MovementOptions.Fly | MovementOptions.Dismount;
-                if (Svc.Objects.LocalPlayer.Mounted)
+                if (IObjectTable.Get().LocalPlayer.Mounted)
                     return MovementOptions.Mount | MovementOptions.Dismount;
                 return MovementOptions.None;
             }
@@ -67,7 +67,7 @@ public enum UiSkipOptions {
 
 public abstract class TaskBase : AutoTask {
     private readonly OverrideMovement movement = new();
-    private static IPlayerCharacter? Player => Svc.Objects.LocalPlayer;
+    private static IPlayerCharacter? Player => IObjectTable.Get().LocalPlayer;
 
     protected TaskBase() {
         RegisterCleanup(movement);
@@ -98,7 +98,7 @@ public abstract class TaskBase : AutoTask {
         }
         await TeleportTo(teleportTerritoryId, teleportDestination);
         await UseAethernet(flag.TerritoryId, destination);
-        ErrorIf(Svc.ClientState.TerritoryType != flag.TerritoryId, $"Failed to reach flag territory (exp: {flag.TerritoryId}, act: {Svc.ClientState.TerritoryType})");
+        ErrorIf(IClientState.Get().TerritoryType != flag.TerritoryId, $"Failed to reach flag territory (exp: {flag.TerritoryId}, act: {IClientState.Get().TerritoryType})");
         await NavmeshReady();
         if (Svc.Navmesh.FlagToPoint() is not { } pof) {
             Error($"Unable to convert flag to point on floor");
@@ -117,7 +117,7 @@ public abstract class TaskBase : AutoTask {
         }
         await TeleportTo(teleportTerritoryId, teleportDestination);
         await UseAethernet(territoryId, dest);
-        ErrorIf(Svc.ClientState.TerritoryType != territoryId, $"Failed to reach territory (exp: {territoryId}, act: {Svc.ClientState.TerritoryType})");
+        ErrorIf(IClientState.Get().TerritoryType != territoryId, $"Failed to reach territory (exp: {territoryId}, act: {IClientState.Get().TerritoryType})");
         await MoveTo(dest, config, allowTeleportIfFaster, stopCondition, onStopReached, allowAethernet: allowAethernetWithinTerritory);
         await NavmeshReady();
     }
@@ -130,12 +130,12 @@ public abstract class TaskBase : AutoTask {
             return;
 
         if (allowTeleportIfFaster && Coords.IsTeleportingFaster(dest)) {
-            await TeleportTo(Svc.ClientState.TerritoryType, dest, allowSameZoneTeleport: true);
+            await TeleportTo(IClientState.Get().TerritoryType, dest, allowSameZoneTeleport: true);
             await WaitWhile(() => Player.IsBusy, "WaitForAvailable");
         }
 
         if (allowAethernet)
-            await UseAethernet(Svc.ClientState.TerritoryType, dest);
+            await UseAethernet(IClientState.Get().TerritoryType, dest);
 
         if (config.Movement.HasFlag(MovementOptions.Mount) || config.Movement.HasFlag(MovementOptions.Fly))
             await Mount();
@@ -199,7 +199,7 @@ public abstract class TaskBase : AutoTask {
 
     protected async Task TeleportTo(uint territoryId, Vector3 destination, bool allowSameZoneTeleport = false) {
         using var scope = BeginScope("Teleport");
-        if (!allowSameZoneTeleport && Svc.ClientState.TerritoryType == territoryId)
+        if (!allowSameZoneTeleport && IClientState.Get().TerritoryType == territoryId)
             return; // already in correct zone
 
         // must wait for ui or else a world travel (that fades ui) will conflict because teleport is called before it fades back in
@@ -209,7 +209,7 @@ public abstract class TaskBase : AutoTask {
         var teleportAetheryteId = Coords.FindPrimaryAetheryte(closestAetheryteId);
         ErrorIf(teleportAetheryteId == 0, $"Failed to find aetheryte in [{territoryId}] {Sheets.TerritoryType.GetRowRef(territoryId).Value.PlaceName.Value.Name}");
         if (Sheets.Aetheryte.GetRowRef(teleportAetheryteId) is { Value.Territory.RowId: var destinationId, Value.PlaceName.Value.Name: var destinationName } &&
-            (Svc.ClientState.TerritoryType != destinationId || allowSameZoneTeleport)) {
+            (IClientState.Get().TerritoryType != destinationId || allowSameZoneTeleport)) {
             Status = $"Teleporting to {destinationName}";
 
             while (true) { // infinite loops are my passion
@@ -245,10 +245,10 @@ public abstract class TaskBase : AutoTask {
         }
 
         // still gotta use aethernet if target has a layover
-        if (Svc.ClientState.TerritoryType != territoryId)
+        if (IClientState.Get().TerritoryType != territoryId)
             await UseAethernet(territoryId, destination);
 
-        ErrorIf(Svc.ClientState.TerritoryType != territoryId, $"Failed to reach territory (exp: {territoryId}, act: {Svc.ClientState.TerritoryType})");
+        ErrorIf(IClientState.Get().TerritoryType != territoryId, $"Failed to reach territory (exp: {territoryId}, act: {IClientState.Get().TerritoryType})");
     }
 
     protected async Task UseAethernet(uint territoryId, Vector3 destination) {
@@ -270,7 +270,7 @@ public abstract class TaskBase : AutoTask {
             return;
         }
 
-        var sourceAetheryteId = Coords.FindClosestAetheryte(Svc.ClientState.TerritoryType, Player!.Position, includeAethernet: true) ?? 0;
+        var sourceAetheryteId = Coords.FindClosestAetheryte(IClientState.Get().TerritoryType, Player!.Position, includeAethernet: true) ?? 0;
         var destinationAetheryteId = Coords.FindClosestAetheryte(territoryId, destination, includeAethernet: true) ?? 0;
         if (sourceAetheryteId == 0 || destinationAetheryteId == 0 || sourceAetheryteId == destinationAetheryteId)
             return;
@@ -296,10 +296,10 @@ public abstract class TaskBase : AutoTask {
         else
             await WaitUntil(() => AtkUnitBase.IsAddonReady("TelepotTown"), "WaitForAddon");
         PacketDispatcher.TeleportToAethernet(sourceAetheryteId, destinationAetheryteId);
-        await WaitUntilThenFalse(() => Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas], "TeleportStart");
+        await WaitUntilThenFalse(() => ICondition.Get()[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas], "TeleportStart");
 
-        if (Svc.ClientState.TerritoryType != territoryId)
-            await WaitUntil(() => Svc.ClientState.TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinish");
+        if (IClientState.Get().TerritoryType != territoryId)
+            await WaitUntil(() => IClientState.Get().TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinish");
         else
             await WaitUntil(() => GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinishSameTerritory");
     }
@@ -375,7 +375,7 @@ public abstract class TaskBase : AutoTask {
 
     protected async Task WaitUntilTerritory(uint territoryId) {
         using var scope = BeginScope("WaitUntilTerritory");
-        await WaitUntil(() => Svc.ClientState.TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "WaitingForTerritory");
+        await WaitUntil(() => IClientState.Get().TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "WaitingForTerritory");
     }
 
     protected async Task InteractWith(IGameObject obj, Func<bool>? waitUntil = null, int? selectStringIndex = null, UiSkipOptions skip = UiSkipOptions.None) {

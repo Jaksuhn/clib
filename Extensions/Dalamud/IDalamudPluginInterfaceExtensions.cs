@@ -1,5 +1,4 @@
 ﻿using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using System.Reflection;

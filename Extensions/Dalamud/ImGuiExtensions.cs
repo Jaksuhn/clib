@@ -1,4 +1,3 @@
-using clib.Services;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Textures;
@@ -130,7 +129,7 @@ public static class ImGuiExtensions {
                 if (!child) return false;
 
                 foreach (var item in itemSearchResults) {
-                    if (Svc.Texture.GetFromGameIcon(new GameIconLookup { IconId = item.Icon }).GetWrapOrDefault() is { Handle: var handle }) {
+                    if (ITextureProvider.Get().GetFromGameIcon(new GameIconLookup { IconId = item.Icon }).GetWrapOrDefault() is { Handle: var handle }) {
                         ImGui.Image(handle, new Vector2(16, 16));
                         ImGui.SameLine();
                     }
@@ -159,7 +158,7 @@ public static class ImGuiExtensions {
 
             foreach (var (itemId, displayName) in customItems) {
                 if (Item.TryGetRow(itemId, out var item)) {
-                    if (Svc.Texture.GetFromGameIcon(new GameIconLookup { IconId = item.Icon }).GetWrapOrDefault() is { Handle: var handle }) {
+                    if (ITextureProvider.Get().GetFromGameIcon(new GameIconLookup { IconId = item.Icon }).GetWrapOrDefault() is { Handle: var handle }) {
                         ImGui.Image(handle, new Vector2(16, 16));
                         ImGui.SameLine();
                     }

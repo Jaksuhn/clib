@@ -1,13 +1,11 @@
-﻿using clib.Services;
-using Dalamud.Game.ClientState.Objects.SubKinds;
+﻿using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Plugin.Services;
 
 namespace clib.Extensions;
 
 public static class IObjectTableExtensions {
     extension(IObjectTable objs) {
-        public IOrderedEnumerable<IGameObject> ByDistance() => objs.OrderBy(o => o.DistanceTo(Svc.Objects.LocalPlayer?.Position ?? Vector3.Zero));
+        public IOrderedEnumerable<IGameObject> ByDistance() => objs.OrderBy(o => o.DistanceTo(IObjectTable.Get().LocalPlayer?.Position ?? Vector3.Zero));
         public IGameObject? Nearest() => objs.ByDistance().FirstOrDefault();
 
         public bool TryGetByGameObjectId(ulong gameObjectId, out IGameObject obj) {
@@ -30,7 +28,7 @@ public static class IObjectTableExtensions {
     }
 
     extension(IEnumerable<IGameObject> objs) {
-        public IOrderedEnumerable<IGameObject> ByDistance() => objs.OrderBy(o => o.DistanceTo(Svc.Objects.LocalPlayer?.Position ?? Vector3.Zero));
+        public IOrderedEnumerable<IGameObject> ByDistance() => objs.OrderBy(o => o.DistanceTo(IObjectTable.Get().LocalPlayer?.Position ?? Vector3.Zero));
         public IGameObject? Nearest() => objs.ByDistance().FirstOrDefault();
     }
 }

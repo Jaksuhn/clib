@@ -18,11 +18,11 @@ public sealed unsafe class ItemService : IDisposable {
     public ItemService() {
         _armoire.Changed += OnArmoireChanged;
         _dresser.Changed += OnDresserChanged;
-        Svc.GameInventory.InventoryChanged += OnInventoryChanged;
+        IGameInventory.Get().InventoryChanged += OnInventoryChanged;
     }
 
     public void Dispose() {
-        Svc.GameInventory.InventoryChanged -= OnInventoryChanged;
+        IGameInventory.Get().InventoryChanged -= OnInventoryChanged;
         _armoire.Changed -= OnArmoireChanged;
         _dresser.Changed -= OnDresserChanged;
         _armoire.Dispose();
@@ -151,7 +151,7 @@ public sealed unsafe class ItemService : IDisposable {
     }
 
     private void OnInventoryChanged(IReadOnlyCollection<InventoryEventArgs> events) {
-        if (!Svc.ClientState.IsLoggedIn || events.Count == 0) return;
+        if (!IClientState.Get().IsLoggedIn || events.Count == 0) return;
         Changed?.Invoke();
     }
 
