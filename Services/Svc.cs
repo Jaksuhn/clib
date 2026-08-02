@@ -91,12 +91,16 @@ public class Svc {
             Automation = new();
 
         RegisterPluginServices(pluginInstance.GetType().Assembly);
+        RegisterPluginCommands();
     }
 
     internal static async ValueTask DisposeAsync() {
         await DisposeObjectAsync(Items).ConfigureAwait(false);
         await DisposeObjectAsync(Automation).ConfigureAwait(false);
         await DisposeObjectAsync(SheetManager).ConfigureAwait(false);
+
+        if (Singletons.TryRemove(typeof(PluginCommandHost), out var commandHost))
+            await DisposeObjectAsync(commandHost).ConfigureAwait(false);
 
         foreach (var s in Singletons.Values) {
             try {
@@ -106,6 +110,8 @@ public class Svc {
                 Log.Error($"[{nameof(Svc)}] Failed disposal of {s.GetType().FullName}");
             }
         }
+
+        Singletons.Clear();
     }
 
     internal static void Dispose()
@@ -131,6 +137,15 @@ public class Svc {
             if (!Singletons.TryAdd(type, Activator.CreateInstance(type)!))
                 throw new InvalidOperationException($"[{nameof(Svc)}] {type.FullName} is already registered.");
         }
+    }
+
+    private static void RegisterPluginCommands() {
+        var commandSets = Singletons.Values.OfType<IPluginCommands>().ToList();
+        if (commandSets.Count == 0)
+            return;
+
+        if (!Singletons.TryAdd(typeof(PluginCommandHost), new PluginCommandHost(commandSets)))
+            throw new InvalidOperationException($"[{nameof(Svc)}] {nameof(PluginCommandHost)} is already registered.");
     }
 }
 

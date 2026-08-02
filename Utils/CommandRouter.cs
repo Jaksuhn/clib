@@ -35,13 +35,7 @@ public sealed class CommandValues {
     }
 }
 
-public sealed record CommandArgument(
-    string Name,
-    CommandArgumentKind Kind,
-    bool Optional = false,
-    int? MinInt = null,
-    int? MaxInt = null
-);
+public sealed record CommandArgument(string Name, CommandArgumentKind Kind, bool Optional = false, int? MinInt = null, int? MaxInt = null);
 
 public sealed class CommandNode<TContext> {
     private readonly List<CommandNode<TContext>> _children = [];
@@ -88,6 +82,12 @@ public sealed class CommandNode<TContext> {
         return this;
     }
 
+    public CommandNode<TContext> Sub(string name, string description, Action handler)
+        => Sub(name, description, n => n.Handle(handler));
+
+    public CommandNode<TContext> Sub(string name, string description, Action<CommandValues> handler)
+        => Sub(name, description, n => n.Handle(handler));
+
     public CommandNode<TContext> ArgWord(string name, bool optional = false) {
         _arguments.Add(new(name, CommandArgumentKind.Word, optional));
         return this;
@@ -110,8 +110,23 @@ public sealed class CommandNode<TContext> {
         return this;
     }
 
+    public CommandNode<TContext> Handle(Action<CommandValues> handler) {
+        Handler = (_, values) => handler(values);
+        return this;
+    }
+
+    public CommandNode<TContext> Handle(Action handler) {
+        Handler = (_, _) => handler();
+        return this;
+    }
+
     public CommandNode<TContext> Default(Action<TContext> handler) {
         DefaultHandler = handler;
+        return this;
+    }
+
+    public CommandNode<TContext> Default(Action handler) {
+        DefaultHandler = _ => handler();
         return this;
     }
 
