@@ -20,9 +20,7 @@ public sealed class CommandValues {
 
     public bool Has(string key) => _values.ContainsKey(key);
 
-    public T Get<T>(string key) => _values.TryGetValue(key, out var value) && value is T typed
-        ? typed
-        : throw new KeyNotFoundException($"Argument '{key}' is missing or not of type {typeof(T).Name}.");
+    public T Get<T>(string key) => _values.TryGetValue(key, out var value) && value is T typed ? typed : throw new KeyNotFoundException($"Argument '{key}' is missing or not of type {typeof(T).Name}.");
 
     public bool TryGet<T>(string key, out T value) {
         if (_values.TryGetValue(key, out var item) && item is T typed) {

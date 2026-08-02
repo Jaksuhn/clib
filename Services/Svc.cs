@@ -1,4 +1,5 @@
 using AllaganLib.GameSheets.Service;
+using Dalamud.Configuration;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -134,10 +135,13 @@ public class Svc {
                         && typeof(IPluginService).IsAssignableFrom(t))
                 .OrderBy(t => ((IPluginService)RuntimeHelpers.GetUninitializedObject(t)).InitOrder)
                 .ThenBy(t => t.FullName)) {
-            if (!Singletons.TryAdd(type, Activator.CreateInstance(type)!))
+            if (!Singletons.TryAdd(type, CreatePluginService(type)))
                 throw new InvalidOperationException($"[{nameof(Svc)}] {type.FullName} is already registered.");
         }
     }
+
+    private static object CreatePluginService(Type type)
+        => typeof(IPluginConfiguration).IsAssignableFrom(type) && Interface.GetPluginConfig() is { } config && type.IsInstanceOfType(config) ? config : Activator.CreateInstance(type)!;
 
     private static void RegisterPluginCommands() {
         var commandSets = Singletons.Values.OfType<IPluginCommands>().ToList();
