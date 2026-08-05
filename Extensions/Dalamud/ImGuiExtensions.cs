@@ -36,6 +36,7 @@ public static class ImGuiExtensions {
         public static void PushCursorY(float y) => ImGui.SetCursorPosY(ImGui.GetCursorPosY() + y);
         public static bool IsItemClickedWithModifier(ImGuiMouseButton button, ImGuiModFlags modifier) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods.HasFlag(modifier);
         public static bool IsItemClickedNoModifiers(ImGuiMouseButton button) => ImGui.IsItemClicked(button) && ImGui.GetIO().KeyMods == ImGuiModFlags.None;
+        public static void SetNextItemFullWidth() => ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
 
         public static void CopyableText(string s) {
             ImGui.Text(s);
