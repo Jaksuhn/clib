@@ -19,6 +19,9 @@ public static class IExcelRowExtensions {
         public static T GetRow(uint id, Dalamud.Game.ClientLanguage? language = null)
             => IDataManager.Get().GetExcelSheet<T>(language: language).GetRow(id);
 
+        public static T? GetRowOrNull(uint id, Dalamud.Game.ClientLanguage? language = null)
+            => IDataManager.Get().GetExcelSheet<T>(language: language).TryGetRow(id, out var row) ? row : null;
+
         public static bool TryGetRow(uint id, out T row, Dalamud.Game.ClientLanguage? language = null) {
             if (IDataManager.Get().GetExcelSheet<T>(language: language).TryGetRow(id, out var r)) {
                 row = r;

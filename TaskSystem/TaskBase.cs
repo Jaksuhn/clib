@@ -378,6 +378,11 @@ public abstract class TaskBase : AutoTask {
         await WaitUntil(() => IClientState.Get().TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "WaitingForTerritory");
     }
 
+    protected async Task WaitWhileBusy() {
+        using var scope = BeginScope("WaitWhileBusy");
+        await WaitWhile(() => Player.IsBusy, "WaitingForNotBusy");
+    }
+
     protected async Task InteractWith(IGameObject obj, Func<bool>? waitUntil = null, int? selectStringIndex = null, UiSkipOptions skip = UiSkipOptions.None) {
         using var scope = BeginScope("InteractWith");
 

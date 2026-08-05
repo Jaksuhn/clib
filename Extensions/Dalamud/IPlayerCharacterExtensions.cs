@@ -47,6 +47,6 @@ public static unsafe class IPlayerCharacterExtensions {
         /// </summary>
         public float PackedRotation => (ushort)(((IObjectTable.Get().LocalPlayer?.Rotation + Math.PI) / (2 * Math.PI) * 65536) ?? 0);
 
-        public bool HasChocoboStabled => PlayerState.Instance()->IsPlayerStateFlagSet(PlayerStateFlag.IsBuddyInStable);
+        public bool IsRevivable => (pc?.IsDead ?? false) && AgentRevive.Instance()->ReviveState != 0;
     }
 }
