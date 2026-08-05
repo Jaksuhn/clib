@@ -42,6 +42,8 @@ public static class IPlayerStateExtensions {
 
         public unsafe bool IsBuddyInStable => ps.IsLoaded && PlayerState.Instance()->IsPlayerStateFlagSet(PlayerStateFlag.IsBuddyInStable);
 
+        public unsafe bool InParty
+            => ps.IsLoaded && GroupManager.Instance()->GetGroup()->MemberCount > 0;
         public unsafe bool IsPartyLeader
             => ps.IsLoaded && IObjectTable.Get().LocalPlayer is { EntityId: var id } && GroupManager.Instance()->GetGroup()->MemberCount > 0 && GroupManager.Instance()->GetGroup()->IsEntityIdPartyLeader(id);
     }
