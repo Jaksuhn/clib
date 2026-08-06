@@ -130,21 +130,22 @@ public abstract class AutoTask {
     /// <param name="action">The action to perform</param>
     /// <param name="successCondition">Function that returns true when the action was successful</param>
     /// <param name="scopeName">Name for debug logging</param>
-    /// <param name="timeoutFrames">Number of frames to wait for success before retrying</param>
-    /// <param name="checkFrequency">How often to check the success condition</param>
+    /// <param name="timeoutSeconds">How long to wait for success before retrying</param>
+    /// <param name="checkFrequency">How often to check the success condition (in frames)</param>
     /// <param name="logContinuously">Whether to log waiting status continuously</param>
     /// <param name="maxRetries">Maximum number of retry attempts (0 for infinite)</param>
-    protected async Task TryUntil(Action action, Func<bool> successCondition, string scopeName, int timeoutFrames = 60, int checkFrequency = 1, bool logContinuously = false, int maxRetries = 0) {
+    protected async Task TryUntil(Action action, Func<bool> successCondition, string scopeName, float timeoutSeconds = 1f, int checkFrequency = 1, bool logContinuously = false, int maxRetries = 0) {
         using var scope = BeginScope(scopeName);
         var attempts = 0;
+        var timeoutMs = (long)(timeoutSeconds * 1000);
         while (maxRetries == 0 || attempts < maxRetries) {
             attempts++;
             Log($"Attempt {attempts}{(maxRetries > 0 ? $"/{maxRetries}" : "")}...");
             action();
 
-            // Wait for success condition
             var success = false;
-            for (var i = 0; i < timeoutFrames; i += checkFrequency) {
+            var deadline = Environment.TickCount64 + timeoutMs;
+            while (Environment.TickCount64 < deadline) {
                 if (successCondition()) {
                     success = true;
                     break;
