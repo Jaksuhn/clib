@@ -9,7 +9,7 @@ namespace clib.Services;
 // note: it's assumed that any created task will be executed (either by calling Run directly or by passing to Automation.Start)
 public abstract class AutoTask {
     // debug context scope
-    protected readonly struct DebugContext : IDisposable {
+    public readonly struct DebugContext : IDisposable {
         private readonly AutoTask _ctx;
         private readonly int _depth;
 
@@ -33,7 +33,18 @@ public abstract class AutoTask {
         }
     }
 
-    public string Status { get; protected set; } = ""; // user-facing status string
+    private sealed class LambdaAutoTask(Func<AutoTask, Task> execute, string? scope) : AutoTask {
+        public override string Name => scope ?? "Task";
+        protected override Task Execute() {
+            using var scope = BeginScope(Name);
+            return execute(this);
+        }
+    }
+
+    public static AutoTask From(Func<AutoTask, Task> execute, string? name = null) => new LambdaAutoTask(execute, name);
+
+    public virtual string Name => GetType().Name;
+    public string Status { get; set; } = ""; // user-facing status string
     private readonly CancellationTokenSource _cts = new();
     private readonly List<string> _debugContext = [];
 
@@ -77,30 +88,43 @@ public abstract class AutoTask {
     // implementations are typically expected to be async (coroutines)
     protected abstract Task Execute();
 
-    protected CancellationToken CancelToken => _cts.Token;
+    public CancellationToken CancelToken => _cts.Token;
 
     // wait for a few frames
-    protected Task NextFrame(int numFramesToWait = 1) => IFramework.Get().DelayTicks(numFramesToWait, _cts.Token);
+    public Task NextFrame(int numFramesToWait = 1) => IFramework.Get().DelayTicks(numFramesToWait, _cts.Token);
+
+    public async Task DelayMs(int ms) {
+        if (ms <= 0)
+            return;
+        var deadline = Environment.TickCount64 + ms;
+        while (Environment.TickCount64 < deadline) {
+            _cts.Token.ThrowIfCancellationRequested();
+            await NextFrame();
+        }
+    }
 
     /// <summary>
     /// Wait until condition function returns false, checking once every N frames
     /// </summary>
-    protected async Task WaitWhile(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false) {
+    public Task WaitWhile(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false, TimeSpan? timeout = null, bool abortOnTimeout = true)
+        => WaitWhileCore(condition, earlyStop: null, scopeName, checkFrequency, logContinuously, timeout, abortOnTimeout);
+
+    public Task WaitWhile(Func<bool> condition, Func<bool> earlyStop, string scopeName, int checkFrequency = 1, bool logContinuously = false, TimeSpan? timeout = null, bool abortOnTimeout = true)
+        => WaitWhileCore(condition, earlyStop, scopeName, checkFrequency, logContinuously, timeout, abortOnTimeout);
+
+    private async Task WaitWhileCore(Func<bool> condition, Func<bool>? earlyStop, string scopeName, int checkFrequency, bool logContinuously, TimeSpan? timeout, bool abortOnTimeout) {
         using var scope = BeginScope(scopeName);
         Log("waiting...");
+        var deadline = timeout is { } t ? Environment.TickCount64 + (long)t.TotalMilliseconds : (long?)null;
         while (condition()) {
-            if (logContinuously)
-                Log("waiting...");
-            await NextFrame(checkFrequency);
-        }
-    }
-
-    protected async Task WaitWhile(Func<bool> condition, Func<bool> earlyStop, string scopeName, int checkFrequency = 1, bool logContinuously = false) {
-        using var scope = BeginScope(scopeName);
-        Log($"waiting...");
-        while (condition()) {
-            if (earlyStop())
+            if (earlyStop?.Invoke() == true)
                 return;
+            if (deadline is { } d && Environment.TickCount64 >= d) {
+                if (abortOnTimeout)
+                    Error($"Timed out after {timeout}");
+                Log("timed out");
+                return;
+            }
             if (logContinuously)
                 Log("waiting...");
             await NextFrame(checkFrequency);
@@ -110,18 +134,20 @@ public abstract class AutoTask {
     /// <summary>
     /// Wait until condition function returns true, checking once every N frames
     /// </summary>
-    protected async Task WaitUntil(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false) => await WaitWhile(() => !condition(), scopeName, checkFrequency, logContinuously);
+    public Task WaitUntil(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false, TimeSpan? timeout = null, bool abortOnTimeout = true)
+        => WaitWhile(() => !condition(), scopeName, checkFrequency, logContinuously, timeout, abortOnTimeout);
 
-    protected async Task WaitUntil(Func<bool> condition, Func<bool> earlyStop, string scopeName, int checkFrequency = 1, bool logContinuously = false) => await WaitWhile(() => !condition(), earlyStop, scopeName, checkFrequency, logContinuously);
+    public Task WaitUntil(Func<bool> condition, Func<bool> earlyStop, string scopeName, int checkFrequency = 1, bool logContinuously = false, TimeSpan? timeout = null, bool abortOnTimeout = true)
+        => WaitWhile(() => !condition(), earlyStop, scopeName, checkFrequency, logContinuously, timeout, abortOnTimeout);
 
     /// <summary>
     /// Wait until a condition function returns true, then wait until it returns false.
     /// </summary>
     /// <remarks> Meant for functions like checking if an ipc is busy then checking til it's not. </remarks>
-    protected async Task WaitUntilThenFalse(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false) {
+    public async Task WaitUntilThenFalse(Func<bool> condition, string scopeName, int checkFrequency = 1, bool logContinuously = false, TimeSpan? timeout = null, bool abortOnTimeout = true) {
         using var scope = BeginScope(scopeName);
-        await WaitUntil(condition, scopeName, checkFrequency, logContinuously);
-        await WaitWhile(condition, scopeName, checkFrequency, logContinuously);
+        await WaitUntil(condition, scopeName, checkFrequency, logContinuously, timeout, abortOnTimeout);
+        await WaitWhile(condition, scopeName, checkFrequency, logContinuously, timeout, abortOnTimeout);
     }
 
     /// <summary>
@@ -134,7 +160,7 @@ public abstract class AutoTask {
     /// <param name="checkFrequency">How often to check the success condition (in frames)</param>
     /// <param name="logContinuously">Whether to log waiting status continuously</param>
     /// <param name="maxRetries">Maximum number of retry attempts (0 for infinite)</param>
-    protected async Task TryUntil(Action action, Func<bool> successCondition, string scopeName, float timeoutSeconds = 1f, int checkFrequency = 1, bool logContinuously = false, int maxRetries = 0) {
+    public async Task TryUntil(Action action, Func<bool> successCondition, string scopeName, float timeoutSeconds = 1f, int checkFrequency = 1, bool logContinuously = false, int maxRetries = 0) {
         using var scope = BeginScope(scopeName);
         var attempts = 0;
         var timeoutMs = (long)(timeoutSeconds * 1000);
@@ -169,25 +195,25 @@ public abstract class AutoTask {
         }
     }
 
-    protected void Log(string message) => IPluginLog.Get().Debug($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
-    protected void Verbose(string message) => IPluginLog.Get().Verbose($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
-    protected void Warning(string message) => IPluginLog.Get().Warning($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
-    protected void WarningIf(bool condition, string message) {
+    public void Log(string message) => IPluginLog.Get().Debug($"[{Name}] [{string.Join(" > ", _debugContext)}] {message}");
+    public void Verbose(string message) => IPluginLog.Get().Verbose($"[{Name}] [{string.Join(" > ", _debugContext)}] {message}");
+    public void Warning(string message) => IPluginLog.Get().Warning($"[{Name}] [{string.Join(" > ", _debugContext)}] {message}");
+    public void WarningIf(bool condition, string message) {
         if (condition)
             Warning(message);
     }
 
     // start a new debug context; should be disposed, so usually should be assigned to RAII variable
-    protected DebugContext BeginScope(string name) => new(this, name);
+    public DebugContext BeginScope(string name) => new(this, name);
 
     // abort a task unconditionally
-    protected void Error(string message) {
+    public void Error(string message) {
         IPluginLog.Get().Error($"Error: {message}");
-        throw new Exception($"[{GetType().Name}] [{string.Join(" > ", _debugContext)}] {message}");
+        throw new Exception($"[{Name}] [{string.Join(" > ", _debugContext)}] {message}");
     }
 
     // abort a task if condition is true
-    protected void ErrorIf(bool condition, string message) {
+    public void ErrorIf(bool condition, string message) {
         if (condition)
             Error(message);
     }
@@ -211,7 +237,7 @@ internal sealed class AutoTaskHookCleanup(IAutoTaskHooks hooks) : IDisposable {
 public sealed class Automation : IDisposable {
     public AutoTask? CurrentTask { get; private set; }
     public bool Running => CurrentTask != null;
-    public string Name => CurrentTask?.GetType().Name ?? "None";
+    public string Name => CurrentTask?.Name ?? "None";
     public string Status => CurrentTask?.Status ?? "Idle";
 
     private AutoTask? _queuedTask;
@@ -236,7 +262,7 @@ public sealed class Automation : IDisposable {
         }
 
         if (CurrentTask != null) {
-            IPluginLog.Get().Debug($"[{nameof(Automation)}] {task.GetType().Name} is starting and cancelling current task: {CurrentTask.GetType().Name}");
+            IPluginLog.Get().Debug($"[{nameof(Automation)}] {task.Name} is starting and cancelling current task: {CurrentTask.Name}");
         }
         Stop();
         CurrentTask = task;

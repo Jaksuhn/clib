@@ -69,6 +69,16 @@ public abstract class TaskBase : AutoTask {
     private readonly OverrideMovement movement = new();
     private static IPlayerCharacter? Player => IObjectTable.Get().LocalPlayer;
 
+    private sealed class LambdaTaskBase(Func<TaskBase, Task> execute, string? scope) : TaskBase {
+        public override string Name => scope ?? "Task";
+        protected override Task Execute() {
+            using var scope = BeginScope(Name);
+            return execute(this);
+        }
+    }
+
+    public static TaskBase From(Func<TaskBase, Task> execute, string? name = null) => new LambdaTaskBase(execute, name);
+
     protected TaskBase() {
         RegisterCleanup(movement);
     }
@@ -83,7 +93,7 @@ public abstract class TaskBase : AutoTask {
         ErrorIf(!Svc.Navmesh.IsReady, "Failed to build navmesh for the zone");
     }
 
-    protected async Task MoveToFlag(MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
+    public async Task MoveToFlag(MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
         using var scope = BeginScope("MoveToFlag");
         if (FlagMapMarker.Get() is not { } flag) {
             Error($"No flag set!");
@@ -107,7 +117,7 @@ public abstract class TaskBase : AutoTask {
         await MoveTo(pof, config, allowTeleportIfFaster, stopCondition, onStopReached);
     }
 
-    protected async Task MoveTo(uint territoryId, Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernetWithinTerritory = true) {
+    public async Task MoveTo(uint territoryId, Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernetWithinTerritory = true) {
         using var scope = BeginScope("MoveToCmb");
         var teleportTerritoryId = territoryId;
         var teleportDestination = dest;
@@ -122,7 +132,7 @@ public abstract class TaskBase : AutoTask {
         await NavmeshReady();
     }
 
-    protected async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernet = true) {
+    public async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernet = true) {
         using var scope = BeginScope("MoveTo");
         await WaitUntil(() => Player.Available, "WaitingForPlayer");
         var tolerance = Math.Max(config.Tolerance ?? 0, Svc.Navmesh.GetTolerance());
@@ -177,7 +187,7 @@ public abstract class TaskBase : AutoTask {
             await Dismount();
     }
 
-    protected async Task MoveToDirectly(Vector3 dest, Func<bool> stopCondition) {
+    public async Task MoveToDirectly(Vector3 dest, Func<bool> stopCondition) {
         using var scope = BeginScope("MoveDirectly");
         if (stopCondition())
             return;
@@ -189,15 +199,15 @@ public abstract class TaskBase : AutoTask {
         await WaitUntil(stopCondition, "WaitForCondition");
     }
 
-    protected async Task MoveToDirectly(Vector3 dest, float tolerance) {
+    public async Task MoveToDirectly(Vector3 dest, float tolerance) {
         using var scope = BeginScope("MoveDirectlyWithTolerance");
         await MoveToDirectly(dest, () => Player.WithinRange(dest, tolerance));
     }
 
-    protected async Task TeleportTo(uint territoryId, FlagMapMarker flag, bool allowSameZoneTeleport = false)
+    public async Task TeleportTo(uint territoryId, FlagMapMarker flag, bool allowSameZoneTeleport = false)
         => await TeleportTo(territoryId, new Vector3(flag.XFloat, 0, flag.YFloat), allowSameZoneTeleport);
 
-    protected async Task TeleportTo(uint territoryId, Vector3 destination, bool allowSameZoneTeleport = false) {
+    public async Task TeleportTo(uint territoryId, Vector3 destination, bool allowSameZoneTeleport = false) {
         using var scope = BeginScope("Teleport");
         if (!allowSameZoneTeleport && IClientState.Get().TerritoryType == territoryId)
             return; // already in correct zone
@@ -251,7 +261,7 @@ public abstract class TaskBase : AutoTask {
         ErrorIf(IClientState.Get().TerritoryType != territoryId, $"Failed to reach territory (exp: {territoryId}, act: {IClientState.Get().TerritoryType})");
     }
 
-    protected async Task UseAethernet(uint territoryId, Vector3 destination) {
+    public async Task UseAethernet(uint territoryId, Vector3 destination) {
         using var scope = BeginScope("UseAethernet");
         if (territoryId == 886) {
             // firmament special case
@@ -304,7 +314,7 @@ public abstract class TaskBase : AutoTask {
             await WaitUntil(() => GameMain.IsTerritoryLoaded && Player.Interactable, "TeleportFinishSameTerritory");
     }
 
-    protected async Task Mount() {
+    public async Task Mount() {
         using var scope = BeginScope(nameof(Mount));
         if (!Player.CanMount) return; // early return if not in mounting territories
 
@@ -316,7 +326,7 @@ public abstract class TaskBase : AutoTask {
         }
     }
 
-    protected async Task Dismount() {
+    public async Task Dismount() {
         using var scope = BeginScope("Dismount");
         if (Player is null || !Player.Mounted) return;
 
@@ -349,7 +359,7 @@ public abstract class TaskBase : AutoTask {
         }
     }
 
-    protected async Task WaitUntilSkipping(Func<bool> condition, string scopeName, UiSkipOptions skip, int? selectStringIndex = null) {
+    public async Task WaitUntilSkipping(Func<bool> condition, string scopeName, UiSkipOptions skip, int? selectStringIndex = null) {
         using var scope = BeginScope(scopeName);
         while (!condition()) {
             if (selectStringIndex is { } index && AtkUnitBase.IsAddonReady("SelectString")) {
@@ -373,17 +383,17 @@ public abstract class TaskBase : AutoTask {
         }
     }
 
-    protected async Task WaitUntilTerritory(uint territoryId) {
+    public async Task WaitUntilTerritory(uint territoryId) {
         using var scope = BeginScope("WaitUntilTerritory");
         await WaitUntil(() => IClientState.Get().TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "WaitingForTerritory");
     }
 
-    protected async Task WaitWhileBusy() {
+    public async Task WaitWhileBusy() {
         using var scope = BeginScope("WaitWhileBusy");
         await WaitWhile(() => Player.IsBusy, "WaitingForNotBusy");
     }
 
-    protected async Task InteractWith(IGameObject obj, Func<bool>? waitUntil = null, int? selectStringIndex = null, UiSkipOptions skip = UiSkipOptions.None) {
+    public async Task InteractWith(IGameObject obj, Func<bool>? waitUntil = null, int? selectStringIndex = null, UiSkipOptions skip = UiSkipOptions.None) {
         using var scope = BeginScope("InteractWith");
 
         ErrorIf(waitUntil is null && (selectStringIndex != null || skip != UiSkipOptions.None), "Skip arguments provided but no wait condition");
