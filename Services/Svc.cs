@@ -82,6 +82,9 @@ public class Svc {
         return (T)instance;
     }
 
+    public static IEnumerable<T> GetServices<T>() where T : class
+        => Singletons.Values.OfType<T>();
+
     internal static void Init(IDalamudPluginInterface pi, object pluginInstance, CLibModule modules) {
         pi.Create<Svc>();
         Navmesh = new NavmeshIPC();
