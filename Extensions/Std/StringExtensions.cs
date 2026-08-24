@@ -7,42 +7,61 @@ using System.Text.RegularExpressions;
 namespace clib.Extensions;
 
 public static partial class StringExtensions {
-    public static bool ContainsIgnoreCase(this string s, string needle)
-        => s.Contains(needle, StringComparison.OrdinalIgnoreCase);
+    extension(string s) {
+        public bool ContainsIgnoreCase(string needle)
+            => s.Contains(needle, StringComparison.OrdinalIgnoreCase);
 
-    public static bool TryParseVector3(this string input, out Vector3 output) {
-        output = Vector3.Zero;
-        if (ParseVector3().Match(input) is { Success: true } match) {
-            var x = float.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
-            var y = float.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
-            var z = float.Parse(match.Groups[5].Value, CultureInfo.InvariantCulture);
-            output = new Vector3(x, y, z);
-            return true;
+        public bool TryParseVector3(out Vector3 output) {
+            output = Vector3.Zero;
+            if (ParseVector3().Match(s) is { Success: true } match) {
+                var x = float.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+                var y = float.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
+                var z = float.Parse(match.Groups[5].Value, CultureInfo.InvariantCulture);
+                output = new Vector3(x, y, z);
+                return true;
+            }
+            return false;
         }
-        return false;
-    }
 
-    public static string ToBase64(this string s) {
-        var jsonBytes = Encoding.UTF8.GetBytes(s);
-        using var output = new MemoryStream();
-        using (var brotli = new BrotliStream(output, CompressionLevel.Optimal))
-            brotli.Write(jsonBytes, 0, jsonBytes.Length);
-        return Convert.ToBase64String(output.ToArray());
-    }
+        public string ToBase64() {
+            var jsonBytes = Encoding.UTF8.GetBytes(s);
+            using var output = new MemoryStream();
+            using (var brotli = new BrotliStream(output, CompressionLevel.Optimal))
+                brotli.Write(jsonBytes, 0, jsonBytes.Length);
+            return Convert.ToBase64String(output.ToArray());
+        }
 
-    public static string FromBase64(this string s) {
-        var compressedBytes = Convert.FromBase64String(s);
-        using var input = new MemoryStream(compressedBytes);
-        using var brotli = new BrotliStream(input, CompressionMode.Decompress);
-        using var output = new MemoryStream();
-        brotli.CopyTo(output);
-        return Encoding.UTF8.GetString(output.ToArray());
-    }
+        public string FromBase64() {
+            var compressedBytes = Convert.FromBase64String(s);
+            using var input = new MemoryStream(compressedBytes);
+            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
+            using var output = new MemoryStream();
+            brotli.CopyTo(output);
+            return Encoding.UTF8.GetString(output.ToArray());
+        }
 
-    public static string ToTitleCase(this string s) => CultureInfo.InvariantCulture.TextInfo.ToTitleCase(s.ToLower());
-    public static string GetLast(this string source, int tail_length) => tail_length >= source.Length ? source : source[^tail_length..];
-    public static string SplitWords(this string source) => SplitWords().Replace(source, " ").Trim();
-    public static string FilterNonAlphanumeric(this string input) => FilterNonAlphanumeric().Replace(input, string.Empty);
+        public int FromRomanNumeral() {
+            static int ToNum(char c) => c switch {
+                'I' => 1,
+                'V' => 5,
+                'X' => 10,
+                'L' => 50,
+                'C' => 100,
+                'D' => 500,
+                'M' => 1000,
+                _ => 0
+            };
+            return s.Select((c, i) => {
+                var cur = ToNum(c);
+                return i + 1 < s.Length && cur < ToNum(s[i + 1]) ? -cur : cur;
+            }).Sum();
+        }
+
+        public string ToTitleCase() => CultureInfo.InvariantCulture.TextInfo.ToTitleCase(s.ToLower());
+        public string GetLast(int tail_length) => tail_length >= s.Length ? s : s[^tail_length..];
+        public string SplitWords() => SplitWords().Replace(s, " ").Trim();
+        public string FilterNonAlphanumeric() => FilterNonAlphanumeric().Replace(s, string.Empty);
+    }
 
     [GeneratedRegex("(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")]
     // smart word split for things in pascal case while also handling acronyms/initialisms
