@@ -10,6 +10,8 @@ public static partial class StringExtensions {
     extension(string s) {
         public bool ContainsIgnoreCase(string needle)
             => s.Contains(needle, StringComparison.OrdinalIgnoreCase);
+        public bool IsEmpty => string.IsNullOrEmpty(s);
+        public bool EqualsIgnoreCase(string other) => string.Equals(s, other, StringComparison.OrdinalIgnoreCase);
 
         public bool TryParseVector3(out Vector3 output) {
             output = Vector3.Zero;

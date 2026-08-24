@@ -13,9 +13,21 @@ public static class IGameObjectExtensions {
         public unsafe Character* Character => (Character*)obj.Address;
 
         public int HuntRank => NotoriousMonster.FirstOrNull(r => r.BNpcBase.RowId == obj.BaseId) is { Rank: var rank } ? rank : 0;
+        public unsafe uint NameplateIconId => ((GameObject*)obj.Address)->NamePlateIconId;
+        public unsafe bool IsFlying => obj is ICharacter chr && chr.Character->MoveController.MovementState is MovementStateOptions.Flying;
+
+        public float DistanceTo() => Vector3.Distance(obj.Position, IObjectTable.Get().LocalPlayer?.Position ?? obj.Position);
+        public float DistanceTo(IGameObject other) => Vector3.Distance(obj.Position, other.Position);
+        public float DistanceTo(Vector3 position) => Vector3.Distance(obj.Position, position);
+
+        public bool IsInLineOfSight() => IObjectTable.Get().LocalPlayer is { Position: var pos } && IsInLineOfSight(obj, pos);
+        public bool IsInLineOfSight(Vector3 point) {
+            var adjustedOrigin = obj.Position.AddY(2);
+            var adjustedTarget = point.AddY(2);
+            return !BGCollisionModule.RaycastMaterialFilter(adjustedOrigin, Vector3.Normalize(adjustedTarget - adjustedOrigin), out _, Vector3.Distance(adjustedOrigin, adjustedTarget));
+        }
     }
 
-    public static float DistanceTo(this IGameObject? obj, Vector3 position) => obj is not null ? Vector3.Distance(obj.Position, position) : 0f;
     public static float FlatDistanceTo(this IGameObject? obj, Vector3 position) {
         if (obj is null) return 0f;
         var dx = obj.Position.X - position.X;
@@ -30,12 +42,6 @@ public static class IGameObjectExtensions {
         return cs == null || cs->EventHandler == null ? null : cs->EventHandler->Info;
     }
     public static unsafe bool IsInInteractRange(this IGameObject obj) => EventFramework.Instance()->CheckInteractRange((GameObject*)IObjectTable.Get().LocalPlayer!.Address, (GameObject*)obj.Address, 1, false);
-    public static unsafe bool IsInLineOfSight(this IGameObject? obj, Vector3 point) {
-        if (obj is null) return false;
-        var adjustedOrigin = obj.Position.AddY(2);
-        var adjustedTarget = point.AddY(2);
-        return !BGCollisionModule.RaycastMaterialFilter(adjustedOrigin, Vector3.Normalize(adjustedTarget - adjustedOrigin), out _, Vector3.Distance(adjustedOrigin, adjustedTarget));
-    }
 
     public static unsafe bool CanRidePillion(this IGameObject? obj) {
         if (obj == null) return false;

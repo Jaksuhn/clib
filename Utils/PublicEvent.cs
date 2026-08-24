@@ -143,63 +143,63 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     };
 
     public Vector3 Position => GetValue(
-        fate => fate.As<FateContext>()->Location,
+        fate => fate.Cast<FateContext>()->Location,
         dynamicEvent => dynamicEvent.MapMarker.Position,
         mechaEvent => mechaEvent.MapMarkers[0].MapMarkerData.Position,
         Vector3.Zero
     );
 
     public float Radius => GetValue(
-        fate => fate.As<FateContext>()->Radius,
+        fate => fate.Cast<FateContext>()->Radius,
         dynamicEvent => dynamicEvent.MapMarker.Radius,
         mechaEvent => mechaEvent.MapMarkers[0].MapMarkerData.Radius,
         0f
     );
 
     public int Progress => GetValue(
-        fate => fate.As<FateContext>()->Progress,
+        fate => fate.Cast<FateContext>()->Progress,
         dynamicEvent => dynamicEvent.Progress,
         mechaEvent => mechaEvent.EventProgress,
         0
     );
 
     public int Duration => GetValue(
-        fate => fate.As<FateContext>()->Duration,
+        fate => fate.Cast<FateContext>()->Duration,
         dynamicEvent => (int)dynamicEvent.SecondsDuration,
         mechaEvent => mechaEvent.EventEndTimestamp - mechaEvent.EventStartTimestamp,
         0
     );
 
     public float TimeRemaining => GetValue(
-        fate => fate.As<FateContext>()->StartTimeEpoch + fate.As<FateContext>()->Duration - DateTimeOffset.Now.ToUnixTimeSeconds(),
+        fate => fate.Cast<FateContext>()->StartTimeEpoch + fate.Cast<FateContext>()->Duration - DateTimeOffset.Now.ToUnixTimeSeconds(),
         dynamicEvent => dynamicEvent.SecondsLeft,
         mechaEvent => mechaEvent.EventStartTimestamp + (mechaEvent.EventEndTimestamp - mechaEvent.EventStartTimestamp) - DateTimeOffset.Now.ToUnixTimeSeconds(),
         -1f
     );
 
     public int StartTimeEpoch => GetValue(
-        fate => fate.As<FateContext>()->StartTimeEpoch,
+        fate => fate.Cast<FateContext>()->StartTimeEpoch,
         dynamicEvent => dynamicEvent.StartTimestamp,
         mechaEvent => mechaEvent.EventStartTimestamp,
         0
     );
 
     public int EndTimeEpoch => GetValue(
-        fate => fate.As<FateContext>()->StartTimeEpoch + fate.As<FateContext>()->Duration,
+        fate => fate.Cast<FateContext>()->StartTimeEpoch + fate.Cast<FateContext>()->Duration,
         dynamicEvent => (int)(dynamicEvent.StartTimestamp + dynamicEvent.SecondsDuration),
         mechaEvent => mechaEvent.EventEndTimestamp,
         0
     );
 
     public bool HasBonus => GetValue(
-        fate => fate.As<FateContext>()->IsBonus,
+        fate => fate.Cast<FateContext>()->IsBonus,
         _ => false,
         _ => false,
         false
     );
 
     public byte Level => GetValue(
-        fate => fate.As<FateContext>()->Level,
+        fate => fate.Cast<FateContext>()->Level,
         dynamicEvent => (byte)dynamicEvent.MapMarker.RecommendedLevel,
         mechaEvent => (byte)mechaEvent.MapMarkers[0].MapMarkerData.RecommendedLevel,
         (byte)0
@@ -213,7 +213,7 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     };
 
     public uint MotivationNpcId => GetValue(
-        fate => fate.As<FateContext>()->MotivationNpc,
+        fate => fate.Cast<FateContext>()->MotivationNpc,
         _ => 0u,
         _ => 0u,
         0u
@@ -221,28 +221,28 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
 
     public IGameObject? MotivationNpc => GetValue(
         // sometimes when they're initially loaded, the gameobject is garbage with an entity id of 200000001 and object kind MountType
-        fate => IObjectTable.Get().FirstOrDefault(o => o.EntityId == fate.As<FateContext>()->MotivationNpc && o.ObjectKind == ObjectKind.BattleNpc),
+        fate => IObjectTable.Get().FirstOrDefault(o => o.EntityId == fate.Cast<FateContext>()->MotivationNpc && o.ObjectKind == ObjectKind.BattleNpc),
         _ => null,
         _ => null,
         null
     );
 
     public IGameObject? ObjectiveNpc => GetValue(
-        fate => IObjectTable.Get().FirstOrDefault(o => o.EntityId == fate.As<FateContext>()->ObjectiveNpc),
+        fate => IObjectTable.Get().FirstOrDefault(o => o.EntityId == fate.Cast<FateContext>()->ObjectiveNpc),
         _ => null,
         _ => null,
         null
     );
 
     public ItemHandle? EventItem => GetValue(
-        fate => (ItemHandle)fate.As<FateContext>()->TurnInEventItem,
+        fate => (ItemHandle)fate.Cast<FateContext>()->TurnInEventItem,
         _ => null,
         _ => null,
         null
     );
 
     public FateState State => GetValue(
-        fate => fate.As<FateContext>()->State,
+        fate => fate.Cast<FateContext>()->State,
         dynamicEvent => ToFateState(dynamicEvent.State),
         mechaEvent => ToFateState(mechaEvent.Flags),
         (FateState)0
@@ -263,7 +263,7 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     }
 
     public FateRule Rule => GetValue(
-        fate => (FateRule)fate.As<FateContext>()->Rule,
+        fate => (FateRule)fate.Cast<FateContext>()->Rule,
         _ => FateRule.Normal,
         _ => FateRule.Normal,
         FateRule.None
