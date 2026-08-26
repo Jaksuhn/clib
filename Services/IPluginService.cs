@@ -5,7 +5,7 @@
 /// Disposed in <see cref="CLibMain.Dispose"/> / <see cref="CLibMain.DisposeAsync"/>.
 /// Types that also implement <c>IPluginConfiguration</c> are loaded from the plugin config file when present.
 /// </summary>
-public interface IPluginService {
-    /// <remarks>Initialises in ascending order.</remarks>
-    int InitOrder => 0;
-}
+/// <remarks>
+/// Instances are registered before constructors run, so constructors may <c>Get()</c> other plugin services.
+/// </remarks>
+public interface IPluginService;
