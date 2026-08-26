@@ -136,7 +136,7 @@ public unsafe class PublicEvent(nint address, FateType fateType, uint id) {
     }
 
     private T GetValue<T>(Func<nint, T> getFate, Func<DynamicEvent, T> getDynamicEvent, Func<WKSMechaEvent, T> getMechaEvent, T defaultValue = default!) => FateType switch {
-        FateType.Normal => getFate((nint)GetFate()),
+        FateType.Normal => GetFate() is not null and var fate ? getFate((nint)fate) : defaultValue,
         FateType.DynamicEvent => getDynamicEvent(GetDynamicEvent()),
         FateType.MechaEvent => getMechaEvent(GetMechaEvent()),
         _ => defaultValue,
