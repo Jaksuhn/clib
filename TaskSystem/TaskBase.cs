@@ -83,16 +83,6 @@ public abstract class TaskBase : AutoTask {
         RegisterCleanup(movement);
     }
 
-    private async Task NavmeshReady() {
-        using var scope = BeginScope("WaitingForNavmesh");
-        Status = "Waiting for Navmesh";
-        await WaitUntil(() => Svc.Navmesh.IsReady || Svc.Navmesh.BuildProgress >= 0, "WaitForBuildStart");
-        if (Svc.Navmesh.BuildProgress >= 0) {
-            await WaitWhile(() => Svc.Navmesh.BuildProgress >= 0, "BuildMesh");
-        }
-        ErrorIf(!Svc.Navmesh.IsReady, "Failed to build navmesh for the zone");
-    }
-
     public async Task MoveToFlag(MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
         using var scope = BeginScope("MoveToFlag");
         if (FlagMapMarker.Get() is not { } flag) {
@@ -132,12 +122,18 @@ public abstract class TaskBase : AutoTask {
         await NavmeshReady();
     }
 
-    public async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernet = true) {
-        using var scope = BeginScope("MoveTo");
+    public async Task MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernet = true)
+        => await MoveTo(dest, config, allowTeleportIfFaster, stopCondition, onStopReached, allowAethernet, throwOnFailure: true);
+
+    public Task<bool> TryMoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null, bool allowAethernet = true)
+        => MoveTo(dest, config, allowTeleportIfFaster, stopCondition, onStopReached, allowAethernet, throwOnFailure: false);
+
+    private async Task<bool> MoveTo(Vector3 dest, MovementConfig config, bool allowTeleportIfFaster, Func<bool>? stopCondition, Func<Task>? onStopReached, bool allowAethernet, bool throwOnFailure) {
+        using var scope = BeginScope(throwOnFailure ? "MoveTo" : "TryMoveTo");
         await WaitUntil(() => Player.Available, "WaitingForPlayer");
         var tolerance = Math.Max(config.Tolerance ?? 0, Svc.Navmesh.GetTolerance());
         if (Player.WithinRange(dest, tolerance))
-            return;
+            return true;
 
         if (allowTeleportIfFaster && Coords.IsTeleportingFaster(dest)) {
             await TeleportTo(IClientState.Get().TerritoryType, dest, allowSameZoneTeleport: true);
@@ -150,41 +146,53 @@ public abstract class TaskBase : AutoTask {
         if (config.Movement.HasFlag(MovementOptions.Mount) || config.Movement.HasFlag(MovementOptions.Fly))
             await Mount();
 
-        if (config.Pathing == PathingStrategy.Direct)
+        if (config.Pathing == PathingStrategy.Direct) {
             await MoveToDirectly(dest, tolerance);
+            return Player.WithinRange(dest, tolerance);
+        }
+
+        if (!await TryNavmeshReady()) {
+            if (throwOnFailure)
+                Error("Failed to build navmesh for the zone");
+            return false;
+        }
+
+        await WaitWhile(() => Svc.Navmesh.PathfindInProgress, "WaitingForInProgressCalls");
+
+        // TODO: revist this
+        //var fly = Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly;
+        //var pathTask = Svc.Navmesh.PathfindWithTolerance(Player!.Position, dest, fly, config.Tolerance ?? 3f);
+        //ErrorIf(pathTask is null, "Failed to pathfind");
+
+        //var waypoints = await pathTask!;
+        //ErrorIf(waypoints is not { Count: > 0 }, "Failed to produce a path"); // TODO: teleport to nearest aetheryte on failure or something
+        //ErrorIf(!Svc.Navmesh.MoveTo(waypoints!, fly), "Failed to MoveTo");
+
+        if (!Svc.Navmesh.PathfindAndMoveCloseTo(dest, Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly, config.Tolerance ?? 3f)) {
+            if (throwOnFailure)
+                Error("Failed to start pathfinding to destination");
+            return false;
+        }
+
+        Status = $"Moving to {dest}";
+        using var stop = new OnDispose(Svc.Navmesh.Stop);
+        await NextFrame(); // tick so that vnav has a chance to flip to IsRunning
+
+        if (stopCondition is null) {
+            await WaitWhile(() => !Player.WithinRange(dest, tolerance) && (Svc.Navmesh.PathfindingInProgress || Svc.Navmesh.IsRunning()), "Navigate");
+        }
         else {
-            await NavmeshReady();
-            await WaitWhile(() => Svc.Navmesh.PathfindInProgress, "WaitingForInProgressCalls");
-
-            // TODO: revist this
-            //var fly = Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly;
-            //var pathTask = Svc.Navmesh.PathfindWithTolerance(Player!.Position, dest, fly, config.Tolerance ?? 3f);
-            //ErrorIf(pathTask is null, "Failed to pathfind");
-
-            //var waypoints = await pathTask!;
-            //ErrorIf(waypoints is not { Count: > 0 }, "Failed to produce a path"); // TODO: teleport to nearest aetheryte on failure or something
-            //ErrorIf(!Svc.Navmesh.MoveTo(waypoints!, fly), "Failed to MoveTo");
-
-            ErrorIf(!Svc.Navmesh.PathfindAndMoveCloseTo(dest, Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly, config.Tolerance ?? 3f), "Failed to start pathfinding to destination");
-
-            Status = $"Moving to {dest}";
-            using var stop = new OnDispose(Svc.Navmesh.Stop);
-            await NextFrame(); // tick so that vnav has a chance to flip to IsRunning
-
-            if (stopCondition is null) {
-                await WaitWhile(() => !Player.WithinRange(dest, tolerance) && (Svc.Navmesh.PathfindingInProgress || Svc.Navmesh.IsRunning()), "Navigate");
-            }
-            else {
-                await WaitWhile(() => !Player.WithinRange(dest, tolerance) && !stopCondition() && (Svc.Navmesh.PathfindingInProgress || Svc.Navmesh.IsRunning()), "Navigate");
-                if (stopCondition() && onStopReached is not null) {
-                    Svc.Navmesh.Stop(); // must be stopped because onStopReached's MoveTo (if present) calls !PathfindingInProgress
+            await WaitWhile(() => !Player.WithinRange(dest, tolerance) && !stopCondition() && (Svc.Navmesh.PathfindingInProgress || Svc.Navmesh.IsRunning()), "Navigate");
+            if (stopCondition()) {
+                await StopPathfinding();
+                if (onStopReached is not null)
                     await onStopReached();
-                }
             }
         }
 
         if (config.Movement.HasFlag(MovementOptions.Dismount) && Player.WithinRange(dest, tolerance)) // only dismount if we're close
             await Dismount();
+        return true;
     }
 
     public async Task MoveToDirectly(Vector3 dest, Func<bool> stopCondition) {
@@ -212,6 +220,8 @@ public abstract class TaskBase : AutoTask {
         if (!allowSameZoneTeleport && IClientState.Get().TerritoryType == territoryId)
             return; // already in correct zone
 
+        await StopPathfinding();
+
         // must wait for ui or else a world travel (that fades ui) will conflict because teleport is called before it fades back in
         await WaitWhile(() => Player.IsUiFading, "WaitForUiUnfade");
 
@@ -223,6 +233,9 @@ public abstract class TaskBase : AutoTask {
             Status = $"Teleporting to {destinationName}";
 
             while (true) { // infinite loops are my passion
+                await StopPathfinding();
+                await WaitWhile(() => Player.IsBusy, "WaitForTeleportReady");
+
                 var sawCast = false;
                 var sawUiFade = false;
                 ErrorIf(!ActionManager.Teleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
@@ -417,5 +430,28 @@ public abstract class TaskBase : AutoTask {
             await NextFrame();
         }
         ErrorIf(true, $"Failed to interact with object after {maxAttempts} tries");
+    }
+
+    private async Task<bool> TryNavmeshReady() {
+        using var scope = BeginScope("WaitingForNavmesh");
+        Status = "Waiting for Navmesh";
+        await WaitUntil(() => Svc.Navmesh.IsReady || Svc.Navmesh.BuildProgress >= 0, "WaitForBuildStart");
+        if (Svc.Navmesh.BuildProgress >= 0)
+            await WaitWhile(() => Svc.Navmesh.BuildProgress >= 0, "BuildMesh");
+        return Svc.Navmesh.IsReady;
+    }
+
+    private async Task NavmeshReady() {
+        if (!await TryNavmeshReady())
+            Error("Failed to build navmesh for the zone");
+    }
+
+    private async Task StopPathfinding() {
+        Svc.Navmesh.Stop();
+        movement.Enabled = false;
+        if (Svc.Navmesh.PathfindingInProgress) {
+            await WaitWhile(() => Svc.Navmesh.PathfindingInProgress, "WaitForPathfindingStop");
+            Svc.Navmesh.Stop();
+        }
     }
 }
