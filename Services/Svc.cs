@@ -64,6 +64,7 @@ public class Svc {
     internal static NavmeshIPC Navmesh { get; private set; } = null!;
 
     private static readonly ConcurrentDictionary<Type, object> Singletons = new();
+    private static readonly Dictionary<Type, ConstructorInfo> Unconstructed = [];
 
     public static void Register<T>() where T : class, new()
         => Register(() => new T());
@@ -79,6 +80,7 @@ public class Svc {
     public static T Get<T>() where T : class {
         if (!Singletons.TryGetValue(typeof(T), out var instance))
             throw new InvalidOperationException($"[{nameof(Svc)}] {typeof(T).FullName} has not been registered.");
+        ConstructIfNeeded(typeof(T));
         return (T)instance;
     }
 
@@ -117,6 +119,7 @@ public class Svc {
             }
         }
 
+        Unconstructed.Clear();
         Singletons.Clear();
     }
 
@@ -135,18 +138,52 @@ public class Svc {
     }
 
     private static void RegisterPluginServices(Assembly assembly) {
-        foreach (var type in assembly.GetTypes()
-                .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(IPluginService).IsAssignableFrom(t))
-                .OrderBy(t => ((IPluginService)RuntimeHelpers.GetUninitializedObject(t)).InitOrder)
-                .ThenBy(t => t.FullName)) {
-            if (!Singletons.TryAdd(type, CreatePluginService(type)))
-                throw new InvalidOperationException($"[{nameof(Svc)}] {type.FullName} is already registered.");
+        var types = assembly.GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(IPluginService).IsAssignableFrom(t))
+            .OrderBy(t => t.FullName, StringComparer.Ordinal)
+            .ToArray();
+
+        foreach (var type in types)
+            RegisterPluginService(type, allowConfigFile: typeof(IPluginConfiguration).IsAssignableFrom(type));
+
+        foreach (var type in Unconstructed.Keys.ToArray())
+            ConstructIfNeeded(type);
+    }
+
+    private static void RegisterPluginService(Type type, bool allowConfigFile) {
+        if (allowConfigFile && TryLoadPluginConfig(type, out var loaded)) {
+            AddSingleton(type, loaded);
+            return;
         }
+
+        var ctor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public, binder: null, types: Type.EmptyTypes, modifiers: null)
+            ?? throw new InvalidOperationException($"[{nameof(Svc)}] {type.FullName} requires a public parameterless constructor.");
+
+        AddSingleton(type, RuntimeHelpers.GetUninitializedObject(type));
+        Unconstructed[type] = ctor;
+    }
+
+    private static void ConstructIfNeeded(Type type) {
+        if (!Unconstructed.Remove(type, out var ctor))
+            return;
+        ctor.Invoke(Singletons[type], null);
+    }
+
+    private static void AddSingleton(Type type, object instance) {
+        if (!Singletons.TryAdd(type, instance))
+            throw new InvalidOperationException($"[{nameof(Svc)}] {type.FullName} is already registered.");
     }
 
     // need this because GetPluginConfig() wouldn't work from clib
-    private static object CreatePluginService(Type type)
-        => typeof(IPluginConfiguration).IsAssignableFrom(type) && Interface.ConfigFile is { Exists: true } file && JsonConvert.DeserializeObject(File.ReadAllText(file.FullName), type) is { } loaded ? loaded : Activator.CreateInstance(type)!;
+    private static bool TryLoadPluginConfig(Type type, out object loaded) {
+        loaded = null!;
+        if (Interface.ConfigFile is not { Exists: true } file)
+            return false;
+        if (JsonConvert.DeserializeObject(File.ReadAllText(file.FullName), type) is not { } deserialized)
+            return false;
+        loaded = deserialized;
+        return true;
+    }
 
     private static void RegisterPluginCommands() {
         var commandSets = Singletons.Values.OfType<IPluginCommands>().ToList();
