@@ -153,7 +153,7 @@ public abstract class TaskBase : AutoTask {
 
         if (!await TryNavmeshReady()) {
             if (throwOnFailure)
-                Error("Failed to build navmesh for the zone");
+                Error($"Failed to build navmesh for zone #{IClientState.Get().TerritoryType}");
             return false;
         }
 
@@ -170,7 +170,7 @@ public abstract class TaskBase : AutoTask {
 
         if (!Svc.Navmesh.PathfindAndMoveCloseTo(dest, Player.InFlight || config.Movement.HasFlag(MovementOptions.Fly) && Control.CanFly, config.Tolerance ?? 3f)) {
             if (throwOnFailure)
-                Error("Failed to start pathfinding to destination");
+                Error($"Failed to start pathfinding to destination [#{IClientState.Get().TerritoryType} - {dest}]");
             return false;
         }
 
