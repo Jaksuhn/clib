@@ -15,6 +15,7 @@ public static class IGameObjectExtensions {
         public int HuntRank => NotoriousMonster.FirstOrNull(r => r.BNpcBase.RowId == obj.BaseId) is { Rank: var rank } ? rank : 0;
         public unsafe uint NameplateIconId => ((GameObject*)obj.Address)->NamePlateIconId;
         public unsafe bool IsFlying => obj is ICharacter chr && chr.Character->MoveController.MovementState is MovementStateOptions.Flying;
+        public bool IsLeveNode => obj is { ObjectKind: Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint, NameplateIconId: 71244 };
 
         public float DistanceTo() => Vector3.Distance(obj.Position, IObjectTable.Get().LocalPlayer?.Position ?? obj.Position);
         public float DistanceTo(IGameObject other) => Vector3.Distance(obj.Position, other.Position);
