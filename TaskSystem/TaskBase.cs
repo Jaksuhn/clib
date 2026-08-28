@@ -398,6 +398,9 @@ public abstract class TaskBase : AutoTask {
 
     public async Task WaitUntilTerritory(uint territoryId) {
         using var scope = BeginScope("WaitUntilTerritory");
+        var t = $"[#{territoryId}] {Sheets.TerritoryType.GetRowRef(territoryId).Value.PlaceName.Value.Name}";
+        Status = t;
+        Log($"waiting for territory {t}...");
         await WaitUntil(() => IClientState.Get().TerritoryType == territoryId && GameMain.IsTerritoryLoaded && Player.Interactable, "WaitingForTerritory");
     }
 

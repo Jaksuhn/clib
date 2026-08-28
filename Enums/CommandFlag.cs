@@ -269,10 +269,6 @@ public enum CommandFlag {
     /// Return to the nearest safe point on the current map if current race is not Lalafell
     /// </summary>
     ReturnIfNotLalafell = 214,
-
-    /// <summary>
-    /// Alias for <see cref="ReturnIfNotLalafell"/> (legacy clib name).
-    /// </summary>
     InstantReturn = ReturnIfNotLalafell,
 
     /// <summary>
