@@ -172,5 +172,18 @@ public static class ImGuiExtensions {
             }
             return false;
         }
+
+        public static bool CollectionCheckbox<T>(string label, T value, ICollection<T> collection) {
+            var enabled = collection.Contains(value);
+            if (!ImGui.Checkbox(label, ref enabled))
+                return false;
+
+            if (enabled)
+                collection.Add(value);
+            else
+                collection.Remove(value);
+
+            return true;
+        }
     }
 }

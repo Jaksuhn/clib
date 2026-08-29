@@ -63,6 +63,8 @@ public static partial class StringExtensions {
         public string GetLast(int tail_length) => tail_length >= s.Length ? s : s[^tail_length..];
         public string SplitWords() => SplitWords().Replace(s, " ").Trim();
         public string FilterNonAlphanumeric() => FilterNonAlphanumeric().Replace(s, string.Empty);
+
+        public string EnsureIsCommand() => s.StartsWith('/') ? s : $"/{s}";
     }
 
     [GeneratedRegex("(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")]

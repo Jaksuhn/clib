@@ -1,5 +1,6 @@
 using AllaganLib.GameSheets.Service;
 using Dalamud.Configuration;
+using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Newtonsoft.Json;
@@ -19,6 +20,7 @@ public class Svc {
     public static SheetManager SheetManager { get; private set; } = null!;
 
     internal static NavmeshIPC Navmesh { get; private set; } = null!;
+    internal static WindowSystem Windows { get; private set; } = null!;
 
     private static readonly ConcurrentDictionary<Type, object> Singletons = new();
     private static readonly Dictionary<Type, ConstructorInfo> Unconstructed = [];
@@ -46,7 +48,10 @@ public class Svc {
 
     internal static void Init(IDalamudPluginInterface pi, object pluginInstance, CLibModule modules) {
         pi.Create<Svc>();
-        Navmesh = new NavmeshIPC();
+        Navmesh = new();
+        Windows = new();
+
+        pi.UiBuilder.Draw += Windows.Draw;
 
         if (modules.HasFlag(CLibModule.SheetManager))
             SheetManager = new(pi, IDataManager.Get().GameData, new());
@@ -60,6 +65,9 @@ public class Svc {
     }
 
     internal static async ValueTask DisposeAsync() {
+        Interface.UiBuilder.Draw -= Windows.Draw;
+
+        await DisposeObjectAsync(Windows).ConfigureAwait(false);
         await DisposeObjectAsync(Items).ConfigureAwait(false);
         await DisposeObjectAsync(Automation).ConfigureAwait(false);
         await DisposeObjectAsync(SheetManager).ConfigureAwait(false);
