@@ -12,6 +12,8 @@ public static class ImGuiExtensions {
     internal static double lastSearchTime;
     internal static Item[] itemSearchResults = [];
 
+    internal static string enumComboSearch = string.Empty;
+
     extension(ImGui) {
         public static void TooltipOnHover(string text) {
             if (ImGui.IsItemHovered())
@@ -184,6 +186,42 @@ public static class ImGuiExtensions {
                 collection.Remove(value);
 
             return true;
+        }
+
+        public static bool EnumCombo<T>(string id, ref T value, Func<T, bool>? filter = null, int searchThreshold = 20) where T : struct, Enum {
+            filter ??= _ => true;
+
+            var values = Enum.GetValues<T>();
+            if (values.Length > searchThreshold)
+                ImGui.SetNextWindowSizeConstraints(Vector2.Zero, new Vector2(float.MaxValue, 250));
+
+            using var combo = ImRaii.Combo(id, value.ToString());
+            if (!combo) return false;
+
+            if (values.Length > searchThreshold) {
+                ImGui.SetNextItemWidth(-1);
+                ImGui.InputTextWithHint("##search", "Search...", ref enumComboSearch, 128);
+            }
+
+            var changed = false;
+            foreach (var option in values) {
+                if (!filter(option))
+                    continue;
+
+                var label = option.ToString();
+                if (!enumComboSearch.IsEmpty && !label.ContainsIgnoreCase(enumComboSearch))
+                    continue;
+
+                if (ImGui.Selectable(label, option.Equals(value))) {
+                    value = option;
+                    changed = true;
+                }
+
+                if (option.Equals(value))
+                    ImGui.SetItemDefaultFocus();
+            }
+
+            return changed;
         }
     }
 }
