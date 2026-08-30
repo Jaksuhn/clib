@@ -1,4 +1,5 @@
 using AllaganLib.GameSheets.Service;
+using clib.Configuration;
 using Dalamud.Configuration;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
@@ -109,14 +110,14 @@ public class Svc {
             .ToArray();
 
         foreach (var type in types)
-            RegisterPluginService(type, allowConfigFile: typeof(IPluginConfiguration).IsAssignableFrom(type));
+            RegisterPluginService(type, assembly, allowConfigFile: typeof(IPluginConfiguration).IsAssignableFrom(type));
 
         foreach (var type in Unconstructed.Keys.ToArray())
             ConstructIfNeeded(type);
     }
 
-    private static void RegisterPluginService(Type type, bool allowConfigFile) {
-        if (allowConfigFile && TryLoadPluginConfig(type, out var loaded)) {
+    private static void RegisterPluginService(Type type, Assembly assembly, bool allowConfigFile) {
+        if (allowConfigFile && TryLoadPluginConfig(type, assembly, out var loaded)) {
             AddSingleton(type, loaded);
             return;
         }
@@ -140,14 +141,30 @@ public class Svc {
     }
 
     // need this because GetPluginConfig() wouldn't work from clib
-    private static bool TryLoadPluginConfig(Type type, out object loaded) {
+    private static bool TryLoadPluginConfig(Type type, Assembly assembly, out object loaded) {
         loaded = null!;
         if (Interface.ConfigFile is not { Exists: true } file)
             return false;
-        if (JsonConvert.DeserializeObject(File.ReadAllText(file.FullName), type) is not { } deserialized)
+        if (JsonConvert.DeserializeObject(File.ReadAllText(file.FullName), type) is not IPluginConfiguration config)
             return false;
-        loaded = deserialized;
+
+        if (ConfigHelper.RunMigrationChain(config, assembly, out var final))
+            SavePluginConfig(final);
+
+        loaded = final;
         return true;
+    }
+
+    private static void SavePluginConfig(object config) {
+        if (Interface.ConfigFile is not { Directory.Exists: true } file)
+            return;
+
+        try {
+            File.WriteAllText(file.FullName, JsonConvert.SerializeObject(config, Formatting.Indented));
+        }
+        catch (Exception ex) {
+            IPluginLog.Get().Error(ex, $"[{nameof(Svc)}] Failed to save migrated config");
+        }
     }
 
     private static void RegisterPluginCommands() {
