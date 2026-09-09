@@ -10,6 +10,11 @@ public static unsafe class AtkComponentButtonExtensions {
                 if (ptr == null) return;
 
                 var ownerNode = ptr->OwnerNode;
+                if (ownerNode == null) return;
+
+                if (!ptr->IsEnabled)
+                    ownerNode->AtkResNode.NodeFlags |= NodeFlags.Enabled;
+
                 var evt = ownerNode->AtkResNode.AtkEventManager.Event;
                 ownerNode->OwnerAddon->ReceiveEvent(evt->State.EventType, (int)evt->Param, evt);
             }
