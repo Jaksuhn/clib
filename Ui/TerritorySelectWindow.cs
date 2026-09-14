@@ -96,9 +96,9 @@ public sealed class TerritorySelectWindow : Window {
     public override void Draw() {
         DrawToolbar();
 
-        var rowHeight = ImGui.GetTextLineHeightWithSpacing();
-        var footerHeight = rowHeight + ImGui.GetStyle().ItemSpacing.Y;
-        using (ImRaii.Child("TerritoryTable", new Vector2(0, ImGui.GetContentRegionAvail().Y - footerHeight))) {
+        var rowHeight = ImGui.GetFrameHeight() + ImGui.GetStyle().CellPadding.Y * 2f;
+        var footerHeight = ImGui.GetTextLineHeightWithSpacing() + ImGui.GetStyle().ItemSpacing.Y;
+        using (ImRaii.Child("TerritoryTable", new Vector2(0, Math.Max(0f, ImGui.GetContentRegionAvail().Y - footerHeight)), false, ImGuiWindowFlags.NoScrollbar)) {
             _table.Draw(rowHeight);
         }
 
