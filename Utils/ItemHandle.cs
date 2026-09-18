@@ -195,6 +195,23 @@ public class ItemHandle {
     public MirageLocation MirageLocation => Svc.Items.GetMirageLocation(ItemId);
     public List<(uint ItemId, uint Amount)> GetCosts() => Svc.Items.GetItemCosts(ItemId);
     public bool HasAnyCosts => Svc.Items.HasAnyCosts(ItemId);
+    public unsafe (Item RewardItem, int Amount)? CollectabilityReward {
+        get {
+            if (!IsCollectible || ItemLocation is null) return null;
+            var shopItem = CollectablesShopItem.FirstOrNull(r => r.Item.RowId == BaseItemId);
+            if (shopItem is null) return null;
+            var rewardItem = Item.GetRow(CurrencyManager.Instance()->GetItemIdBySpecialId((byte)shopItem.Value.CollectablesShopRewardScrip.Value.Currency));
+            var rewardAmounts = shopItem.Value.CollectablesShopRewardScrip.Value.Map(r => (r.LowReward, r.MidReward, r.HighReward));
+            var rewardThresholds = shopItem.Value.CollectablesShopRefine.Value.Map(r => (r.LowCollectability, r.MidCollectability, r.HighCollectability));
+            var collectability = ItemLocation.GetInventoryItem()->GetCollectability();
+            var amount = new[] {
+                (Threshold: rewardThresholds.HighCollectability, Reward: rewardAmounts.HighReward),
+                (Threshold: rewardThresholds.MidCollectability,  Reward: rewardAmounts.MidReward),
+                (Threshold: rewardThresholds.LowCollectability,  Reward: rewardAmounts.LowReward),
+            }.FirstOrDefault(t => collectability >= t.Threshold).Reward;
+            return (rewardItem, amount);
+        }
+    }
 
     public override string ToString() => IsValid ? $"[#{ItemId}] {GameData.Value.Name}" : $"{nameof(ItemHandle)}#Invalid";
 }

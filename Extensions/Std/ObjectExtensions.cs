@@ -27,4 +27,7 @@ public static class ObjectExtensions {
     }
 
     public static T? CallMethod<T>(this object obj, string name, object[] @params, bool matchExactArgumentTypes = false) => (T?)CallMethod(obj, name, @params, matchExactArgumentTypes);
+
+    public static TResult Map<T, TResult>(this T source, Func<T, TResult> selector)
+       => selector(source);
 }
