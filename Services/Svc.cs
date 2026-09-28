@@ -145,10 +145,32 @@ public class Svc {
         loaded = null!;
         if (Interface.ConfigFile is not { Exists: true } file)
             return false;
-        if (JsonConvert.DeserializeObject(File.ReadAllText(file.FullName), type) is not IPluginConfiguration config)
+
+        string json;
+        try {
+            json = File.ReadAllText(file.FullName);
+        }
+        catch (Exception ex) {
+            IPluginLog.Get().Error(ex, $"[{nameof(Svc)}] Failed to read config file");
+            return false;
+        }
+
+        var jsonMigrated = ConfigHelper.RunJsonMigrationChain(json, type, assembly, out json);
+
+        IPluginConfiguration? config;
+        try {
+            config = JsonConvert.DeserializeObject(json, type, ConfigHelper.DefaultPluginConfigLoadSettings) as IPluginConfiguration;
+        }
+        catch (Exception ex) {
+            IPluginLog.Get().Error(ex, $"[{nameof(Svc)}] Failed to deserialize config");
+            return false;
+        }
+
+        if (config is null)
             return false;
 
-        if (ConfigHelper.RunMigrationChain(config, assembly, out var final))
+        var objectMigrated = ConfigHelper.RunMigrationChain(config, assembly, out var final);
+        if (jsonMigrated || objectMigrated)
             SavePluginConfig(final);
 
         loaded = final;
