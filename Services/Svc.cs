@@ -80,8 +80,8 @@ public class Svc {
             try {
                 await DisposeObjectAsync(s).ConfigureAwait(false);
             }
-            catch {
-                IPluginLog.Get().Error($"[{nameof(Svc)}] Failed disposal of {s.GetType().FullName}");
+            catch (Exception ex) {
+                IPluginLog.Get().Error(ex, $"[{nameof(Svc)}] Failed disposal of {s.GetType().FullName}");
             }
         }
 
