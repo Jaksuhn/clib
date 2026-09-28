@@ -11,5 +11,6 @@ public static class InventoryItemExtensions {
         /// Use with <see cref="RowRef.TryGetValue{T}(out T)"/> since this will return either an Item or EventItem row
         /// </summary>
         public RowRef GameData => ItemUtil.GetBaseId(item.ItemId).Kind is ItemKind.EventItem ? RowRef.Create<EventItem>(IDataManager.Get().Excel, item.ItemId) : RowRef.Create<Item>(IDataManager.Get().Excel, item.GetBaseItemId());
+        public ItemHandle Handle => item;
     }
 }
