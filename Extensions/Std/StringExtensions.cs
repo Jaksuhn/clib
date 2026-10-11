@@ -10,7 +10,6 @@ public static partial class StringExtensions {
     extension(string s) {
         public bool ContainsIgnoreCase(string needle)
             => s.Contains(needle, StringComparison.OrdinalIgnoreCase);
-        public bool IsEmpty => string.IsNullOrEmpty(s);
         public bool EqualsIgnoreCase(string other) => string.Equals(s, other, StringComparison.OrdinalIgnoreCase);
 
         public bool TryParseVector3(out Vector3 output) {
@@ -65,6 +64,10 @@ public static partial class StringExtensions {
         public string FilterNonAlphanumeric() => FilterNonAlphanumeric().Replace(s, string.Empty);
 
         public string EnsureIsCommand() => s.StartsWith('/') ? s : $"/{s}";
+    }
+
+    extension(string? s) {
+        public bool IsEmpty => string.IsNullOrEmpty(s);
     }
 
     [GeneratedRegex("(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")]
