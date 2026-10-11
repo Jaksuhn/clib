@@ -1,5 +1,7 @@
 using clib.Services;
 using Dalamud.Configuration;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection;
@@ -8,6 +10,10 @@ namespace clib.Configuration;
 
 public static class ConfigHelper {
     private static readonly string[] ConfigExtensions = [".json", ".yaml", ".yml"];
+
+    public static JsonSerializerSettings DefaultPluginConfigLoadSettings { get; } = new() {
+        ObjectCreationHandling = ObjectCreationHandling.Replace,
+    };
 
     public static bool RunMigrationChain(IPluginConfiguration config, Assembly? assembly, out IPluginConfiguration final, bool makeBackups = true) {
         assembly ??= config.GetType().Assembly;
@@ -179,5 +185,77 @@ public static class ConfigHelper {
         catch (Exception ex) {
             IPluginLog.Get().Warning(ex, "Migration backup skipped");
         }
+    }
+
+    /// <summary>
+    /// Runs all <see cref="IConfigJsonMigration{T}"/> steps for <paramref name="configType"/> until none remain.
+    /// </summary>
+    public static bool RunJsonMigrationChain(string json, Type configType, Assembly? assembly, out string migratedJson, bool makeBackups = true) {
+        assembly ??= configType.Assembly;
+        migratedJson = json;
+
+        JObject root;
+        try {
+            root = JObject.Parse(json);
+        }
+        catch (Exception ex) {
+            IPluginLog.Get().Warning(ex, "Failed to parsed JSON, skipping migrations");
+            return false;
+        }
+
+        var migrated = false;
+
+        while (TryGetNextJsonMigration(configType, assembly, GetJsonVersion(root), out var migration, out var targetVersion)) {
+            if (makeBackups)
+                BackupMigration(GetJsonVersion(root), targetVersion);
+
+            IPluginLog.Get().Info($"Migrating config from version {GetJsonVersion(root)} to {targetVersion}");
+            InvokeJsonMigration(migration, root);
+            root["Version"] = targetVersion;
+            migrated = true;
+        }
+
+        if (migrated)
+            migratedJson = root.ToString(Formatting.None);
+
+        return migrated;
+    }
+
+    private static int GetJsonVersion(JObject root)
+        => root["Version"]?.Value<int?>() ?? 1;
+
+    private static bool TryGetNextJsonMigration(Type configType, Assembly assembly, int version, out object migration, out int targetVersion) {
+        migration = null!;
+        targetVersion = 0;
+
+        object? best = null;
+        var bestTarget = int.MaxValue;
+
+        foreach (var type in assembly.GetTypes().Where(t => t is { IsAbstract: false, IsInterface: false })) {
+            var jsonType = type.GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IConfigJsonMigration<>));
+            if (jsonType?.GetGenericArguments()[0] != configType)
+                continue;
+
+            var instance = CreateInstance(type);
+            var target = (int)jsonType.GetProperty(nameof(IConfigJsonMigration<>.TargetVersion))!.GetValue(instance)!;
+            if (target <= version || target >= bestTarget)
+                continue;
+
+            best = instance;
+            bestTarget = target;
+        }
+
+        if (best == null)
+            return false;
+
+        migration = best;
+        targetVersion = bestTarget;
+        return true;
+    }
+
+    private static void InvokeJsonMigration(object migration, JObject root) {
+        var jsonType = migration.GetType().GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IConfigJsonMigration<>));
+        jsonType.GetMethod(nameof(IConfigJsonMigration<>.Migrate))!.Invoke(migration, [root]);
     }
 }
