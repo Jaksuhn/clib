@@ -66,7 +66,7 @@ public enum UiSkipOptions {
 }
 
 public abstract class TaskBase : AutoTask {
-    private readonly OverrideMovement movement = new();
+    private OverrideMovement? movement;
     private static IPlayerCharacter? Player => IObjectTable.Get().LocalPlayer;
 
     private sealed class LambdaTaskBase(Func<TaskBase, Task> execute, string? scope) : TaskBase {
@@ -79,8 +79,14 @@ public abstract class TaskBase : AutoTask {
 
     public static TaskBase From(Func<TaskBase, Task> execute, string? name = null) => new LambdaTaskBase(execute, name);
 
-    protected TaskBase() {
-        RegisterCleanup(movement);
+    private OverrideMovement Movement {
+        get {
+            if (movement is null) {
+                movement = new OverrideMovement();
+                RegisterCleanup(movement);
+            }
+            return movement;
+        }
     }
 
     public async Task MoveToFlag(MovementConfig config, bool allowTeleportIfFaster = true, Func<bool>? stopCondition = null, Func<Task>? onStopReached = null) {
@@ -201,9 +207,10 @@ public abstract class TaskBase : AutoTask {
             return;
 
         Status = $"Moving to {dest}";
-        movement.DesiredPosition = dest;
-        movement.Enabled = true;
-        using var stop = new OnDispose(() => movement.Enabled = false);
+        var mover = Movement;
+        mover.DesiredPosition = dest;
+        mover.Enabled = true;
+        using var stop = new OnDispose(() => mover.Enabled = false);
         await WaitUntil(stopCondition, "WaitForCondition");
     }
 
@@ -451,7 +458,8 @@ public abstract class TaskBase : AutoTask {
 
     private async Task StopPathfinding() {
         Svc.Navmesh.Stop();
-        movement.Enabled = false;
+        if (movement is { } mover)
+            mover.Enabled = false;
         if (Svc.Navmesh.PathfindingInProgress) {
             await WaitWhile(() => Svc.Navmesh.PathfindingInProgress, "WaitForPathfindingStop");
             Svc.Navmesh.Stop();
