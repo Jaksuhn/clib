@@ -236,6 +236,10 @@ public abstract class TaskBase : AutoTask {
                 await StopPathfinding();
                 await WaitWhile(() => Player.IsBusy, "WaitForTeleportReady");
 
+                // A previous task's teleport may have completed while we were waiting.
+                if (!allowSameZoneTeleport && IClientState.Get().TerritoryType == destinationId)
+                    break;
+
                 var sawCast = false;
                 var sawUiFade = false;
                 ErrorIf(!ActionManager.Teleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
