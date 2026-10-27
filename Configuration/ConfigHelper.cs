@@ -194,6 +194,10 @@ public static class ConfigHelper {
         assembly ??= configType.Assembly;
         migratedJson = json;
 
+        // skip building a JObject for up to date configs
+        if (TryReadJsonVersion(json, out var currentVersion) && !TryGetNextJsonMigration(configType, assembly, currentVersion, out _, out _))
+            return false;
+
         JObject root;
         try {
             root = JObject.Parse(json);
@@ -223,6 +227,44 @@ public static class ConfigHelper {
 
     private static int GetJsonVersion(JObject root)
         => root["Version"]?.Value<int?>() ?? 1;
+
+    // streams top-level properties to find Version so enormous configs don't need to be read unnecessarily
+    private static bool TryReadJsonVersion(string json, out int version) {
+        version = 1;
+        try {
+            using var reader = new JsonTextReader(new StringReader(json)) { DateParseHandling = DateParseHandling.None };
+            if (!reader.Read() || reader.TokenType != JsonToken.StartObject)
+                return false;
+
+            while (reader.Read()) {
+                if (reader.TokenType == JsonToken.EndObject)
+                    return true;
+                if (reader.TokenType != JsonToken.PropertyName)
+                    return false;
+
+                if ((string?)reader.Value != "Version") {
+                    reader.Skip();
+                    continue;
+                }
+
+                if (!reader.Read())
+                    return false;
+
+                switch (reader.TokenType) {
+                    case JsonToken.Integer:
+                        version = Convert.ToInt32(reader.Value);
+                        return true;
+                    case JsonToken.Null:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        }
+        catch (JsonException) { }
+
+        return false;
+    }
 
     private static bool TryGetNextJsonMigration(Type configType, Assembly assembly, int version, out object migration, out int targetVersion) {
         migration = null!;
