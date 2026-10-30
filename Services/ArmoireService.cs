@@ -11,7 +11,7 @@ namespace clib.Services;
 internal sealed unsafe class ArmoireService : IDisposable {
     public event Action? Changed;
 
-    private static readonly IEnumerable<Sheets.Cabinet> CabinetRows = Sheets.Cabinet.Where(r => r.RowId > 0 && r.Item.RowId > 0);
+    private static readonly IEnumerable<Sheets.Cabinet> CabinetRows = Sheets.Cabinet.Where(r => r.Item.RowId > 0);
     private static readonly FrozenDictionary<uint, List<uint>> CabinetRowsByItemId = CabinetRows.GroupBy(r => r.Item.RowId).ToFrozenDictionary(g => g.Key, g => g.Select(r => r.RowId).ToList());
     private static readonly FrozenDictionary<uint, uint> CabinetByRowId = CabinetRows.ToFrozenDictionary(r => r.RowId, r => r.Item.RowId);
     private readonly HashSet<uint> _ownedItemIds = [];
