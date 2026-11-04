@@ -1,3 +1,4 @@
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using Lumina.Excel.Sheets;
 using Lumina.Extensions;
 
@@ -35,9 +36,8 @@ public static class TerritoryTypeExtensions {
 
     // all from https://github.com/karashiiro/FFXIVWeather.Lumina/blob/master/FFXIVWeather.Lumina/FFXIVWeatherLuminaService.cs
     internal static DateTime GetCurrentWeatherRootTime(double initialOffset = 0 * Minutes) {
-        var now = DateTime.UtcNow;
-        var adjustedNow = now.AddMilliseconds(-now.Millisecond).AddSeconds(initialOffset);
-        var rootTime = adjustedNow;
+        var now = DateTimeOffset.FromUnixTimeSeconds(Framework.GetServerTime()).UtcDateTime;
+        var rootTime = now.AddSeconds(initialOffset);
         var seconds = (long)(rootTime - UnixEpoch).TotalSeconds % WeatherPeriod;
         rootTime = rootTime.AddSeconds(-seconds);
         return rootTime;
