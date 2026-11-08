@@ -225,7 +225,15 @@ public abstract class TaskBase : AutoTask {
         // must wait for ui or else a world travel (that fades ui) will conflict because teleport is called before it fades back in
         await WaitWhile(() => Player.IsUiFading, "WaitForUiUnfade");
 
-        var closestAetheryteId = Coords.FindClosestAetheryte(territoryId, destination, includeAethernet: true) ?? 0;
+        // TODO: I need to generic system for all these firmament et al special cases
+        var teleportTerritoryId = territoryId;
+        var teleportDestination = destination;
+        if (territoryId == 886) {
+            teleportTerritoryId = 418;
+            teleportDestination = Coords.AetherytePosition(70);
+        }
+
+        var closestAetheryteId = Coords.FindClosestAetheryte(teleportTerritoryId, teleportDestination, includeAethernet: true) ?? 0;
         var teleportAetheryteId = Coords.FindPrimaryAetheryte(closestAetheryteId);
         ErrorIf(teleportAetheryteId == 0, $"Failed to find aetheryte in [{territoryId}] {Sheets.TerritoryType.GetRowRef(territoryId).Value.PlaceName.Value.Name}");
         if (Sheets.Aetheryte.GetRowRef(teleportAetheryteId) is { Value.Territory.RowId: var destinationId, Value.PlaceName.Value.Name: var destinationName } &&
