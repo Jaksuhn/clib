@@ -15,11 +15,11 @@ public static unsafe class AtkUnitBaseExtensions {
             return addon != null && addon->IsVisible && addon->IsReady && addon->IsFullyLoaded();
         }
 
-        public static bool CloseAddon(string name) {
+        public static bool CloseAddon(string name, bool fireCallback = true) {
             var addon = RaptureAtkUnitManager.Instance()->GetAddonByName(name);
             if (addon == null || !addon->IsVisible)
                 return false;
-            addon->Close(false);
+            addon->Close(fireCallback);
             return true;
         }
     }
