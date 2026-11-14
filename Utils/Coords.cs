@@ -20,7 +20,8 @@ public static class Coords {
         // (coord / scale * 2) * (scale / 100) = coord / 50
         // * 2048 / 41 / 50 = 0.999024
         const float factor = 2048.0f / (50 * 41);
-        return (coord * factor - 1024f) / scale - offset * 0.001f;
+        // map offsets are already in world units (the *0.001 only applies to raw map link coords, which are scaled by 1000)
+        return (coord * factor - 1024f) / scale - offset;
     }
 
     public static uint? FindClosestAetheryteToFlag(bool includeAethernet = true)
