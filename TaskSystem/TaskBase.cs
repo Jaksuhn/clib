@@ -298,8 +298,7 @@ public abstract class TaskBase : AutoTask {
                 await MoveTo(firmamentObjPos, MovementConfig.Default.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false, allowAethernet: false);
             if (Player.Mounted)
                 await Dismount();
-            ErrorIf(!TargetSystem.InteractWith(firmamentObjId), "Failed to interact with aetheryte");
-            await WaitUntilSkipping(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectFirmament", UiSkipOptions.Talk);
+            await InteractUntil(firmamentObjId, () => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectFirmament", UiSkipOptions.Talk);
             PacketDispatcher.TeleportToFirmament(70);
             await WaitUntilTerritory(territoryId);
             return;
@@ -324,12 +323,10 @@ public abstract class TaskBase : AutoTask {
             await MoveTo(aetherytePos, MovementConfig.Default.WithTolerance(InteractRange.Aetheryte), allowTeleportIfFaster: false, allowAethernet: false);
         if (Player.Mounted)
             await Dismount();
-        ErrorIf(!TargetSystem.InteractWith(aetheryteId), "Failed to interact with aetheryte");
-
         if (Sheets.Aetheryte.GetRow(sourceAetheryteId).IsAetheryte)
-            await WaitUntilSkipping(() => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectAethernet", UiSkipOptions.Talk);
+            await InteractUntil(aetheryteId, () => AtkUnitBase.IsAddonReady("SelectString"), "WaitSelectAethernet", UiSkipOptions.Talk);
         else
-            await WaitUntil(() => AtkUnitBase.IsAddonReady("TelepotTown"), "WaitForAddon");
+            await InteractUntil(aetheryteId, () => AtkUnitBase.IsAddonReady("TelepotTown"), "WaitForAddon");
         PacketDispatcher.TeleportToAethernet(sourceAetheryteId, destinationAetheryteId);
         await WaitUntilThenFalse(() => ICondition.Get()[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas], "TeleportStart");
 
@@ -406,6 +403,16 @@ public abstract class TaskBase : AutoTask {
             Log("waiting...");
             await NextFrame();
         }
+    }
+
+    public async Task InteractUntil(ulong instanceId, Func<bool> condition, string scopeName, UiSkipOptions skip = UiSkipOptions.None) {
+        using var scope = BeginScope(scopeName);
+        await WaitUntil(() => Player.CanInteract && !Player.IsMoving, "WaitForInteractReady");
+        ErrorIf(!TargetSystem.InteractWith(instanceId), $"Failed to find object {instanceId:X} to interact with");
+
+        var deadline = DateTime.Now.AddSeconds(5);
+        await WaitUntilSkipping(() => condition() || DateTime.Now > deadline && !ICondition.Get()[Dalamud.Game.ClientState.Conditions.ConditionFlag.OccupiedInEvent], "WaitForInteractResult", skip);
+        ErrorIf(!condition(), $"Interact with object {instanceId:X} was not accepted");
     }
 
     public async Task WaitUntilTerritory(uint territoryId) {

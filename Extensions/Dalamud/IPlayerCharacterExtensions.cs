@@ -31,6 +31,10 @@ public static unsafe class IPlayerCharacterExtensions {
             ICondition.Get()[ConditionFlag.InCombat] ||
             !GameMain.IsTerritoryLoaded;
 
+        // mirrors EventFramework.InteractWithObject
+        public bool CanInteract
+            => get_Available(pc) && pc!.Character->Mount.MountId == 0 && ActionManager.Instance()->AnimationLock <= 0 && !get_IsJumping(pc) && !ICondition.Get().IsUnavailable();
+
         public bool IsUiFading => RaptureAtkUnitManager.Instance() is not null and var mgr && mgr->IsUiFading;
 
         public RowRef<TerritoryType> Territory => TerritoryType.GetRowRef(IClientState.Get().TerritoryType);
