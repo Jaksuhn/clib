@@ -252,6 +252,7 @@ public abstract class TaskBase : AutoTask {
                 var sawUiFade = false;
                 ErrorIf(!ActionManager.Teleport(teleportAetheryteId), $"Failed to teleport to {teleportAetheryteId}");
 
+                var castDeadline = Environment.TickCount64 + 3000;
                 while (true) {
                     var isUiFading = Player.IsUiFading;
                     var isCasting = Player?.IsCasting ?? false;
@@ -270,6 +271,12 @@ public abstract class TaskBase : AutoTask {
                     // id resets after cast but elapsed doesn't until a new cast occurs. I'm assuming that it cannot be 5 and the teleport still gets cancelled
                     if (sawCast && !isCasting && !sawUiFade && ActionManager.GetCastAction() is not { Elapsed: 5 })
                         break;
+
+                    // I think teleport can somehow return true without the cast going off, so this is (yet another) hack to just retry in that event
+                    if (!sawCast && !sawUiFade && Environment.TickCount64 > castDeadline) {
+                        Warning("Teleport cast never started, retrying");
+                        break;
+                    }
 
                     await NextFrame();
                 }
