@@ -412,14 +412,38 @@ public abstract class TaskBase : AutoTask {
         }
     }
 
-    public async Task InteractUntil(ulong instanceId, Func<bool> condition, string scopeName, UiSkipOptions skip = UiSkipOptions.None) {
+    public async Task InteractUntil(ulong instanceId, Func<bool> condition, string scopeName, UiSkipOptions skip = UiSkipOptions.None, int attempts = 3) {
         using var scope = BeginScope(scopeName);
-        await WaitUntil(() => Player.CanInteract && !Player.IsMoving, "WaitForInteractReady");
-        ErrorIf(!TargetSystem.InteractWith(instanceId), $"Failed to find object {instanceId:X} to interact with");
+        for (var attempt = 1; ; attempt++) {
+            await WaitUntil(() => Player.CanInteract && !Player.IsMoving, "WaitForInteractReady");
+            ErrorIf(!TargetSystem.InteractWith(instanceId), $"Failed to find object {instanceId:X} to interact with");
 
-        var deadline = DateTime.Now.AddSeconds(5);
-        await WaitUntilSkipping(() => condition() || DateTime.Now > deadline && !ICondition.Get()[Dalamud.Game.ClientState.Conditions.ConditionFlag.OccupiedInEvent], "WaitForInteractResult", skip);
-        ErrorIf(!condition(), $"Interact with object {instanceId:X} was not accepted");
+            var deadline = DateTime.Now.AddSeconds(5);
+            await WaitUntilSkipping(() => condition() || DateTime.Now > deadline && !ICondition.Get()[Dalamud.Game.ClientState.Conditions.ConditionFlag.OccupiedInEvent], "WaitForInteractResult", skip);
+            if (condition())
+                return;
+            ErrorIf(attempt >= attempts, $"Interact with object {instanceId:X} was not accepted");
+            Warning($"Interact with object {instanceId:X} was not accepted, retrying ({attempt}/{attempts})");
+            await DelayMs(500);
+        }
+    }
+
+    public async Task OpenShop(ulong vendorInstanceId, uint shopId, int attempts = 3) {
+        using var scope = BeginScope(nameof(OpenShop));
+        if (AgentShop.IsShopOpen(shopId))
+            return;
+        for (var attempt = 1; ; attempt++) {
+            await WaitUntil(() => Player.CanInteract && !Player.IsMoving, "WaitForInteractReady");
+            ErrorIf(!AgentShop.OpenShop(vendorInstanceId, shopId), $"Failed to open shop {shopId:X}");
+
+            var deadline = DateTime.Now.AddSeconds(5);
+            await WaitUntilSkipping(() => AgentShop.IsShopOpen(shopId) || DateTime.Now > deadline && !ICondition.Get()[Dalamud.Game.ClientState.Conditions.ConditionFlag.OccupiedInEvent], "WaitShopOpen", UiSkipOptions.Talk);
+            if (AgentShop.IsShopOpen(shopId))
+                return;
+            ErrorIf(attempt >= attempts, $"Shop {shopId:X} didn't open");
+            Warning($"Shop {shopId:X} didn't open, retrying ({attempt}/{attempts})");
+            await DelayMs(500);
+        }
     }
 
     public async Task WaitUntilTerritory(uint territoryId) {
