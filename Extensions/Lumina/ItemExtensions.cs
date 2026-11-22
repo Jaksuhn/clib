@@ -20,7 +20,7 @@ public static class ItemExtensions {
             { FingerL: 1 } => InventoryType.ArmoryRings,
             { FingerR: 1 } => InventoryType.ArmoryRings,
             { SoulCrystal: 1 } => InventoryType.ArmorySoulCrystal,
-            _ => throw new ArgumentOutOfRangeException(nameof(item), item, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(item), item, $"[#{item.RowId}] {item.Name} has an invalid equip slot: {item.EquipSlotCategory.RowId}")
         };
 
         /// <summary>
@@ -41,7 +41,7 @@ public static class ItemExtensions {
             { FingerL: 1 } => 11,
             { FingerR: 1 } => 12,
             { SoulCrystal: 1 } => 13,
-            _ => throw new ArgumentOutOfRangeException(nameof(item), item, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(item), item, $"[#{item.RowId}] {item.Name} has an invalid equip slot: {item.EquipSlotCategory.RowId}")
         };
 
         // https://github.com/pupwife/DispellerPlugin/blob/3f3eb599ac71f81666a735bb3988a1fbc54d97ae/Services/ModelDetectionService.cs#L12-L26
