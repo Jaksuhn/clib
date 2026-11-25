@@ -1,4 +1,4 @@
-﻿using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.Interop;
 using Lumina.Excel.Sheets;
@@ -13,8 +13,8 @@ public static unsafe class AgentWorldTravelExtensions {
             Travel(ref instance, (ushort)rowId);
     }
     public static void Travel(ref this AgentWorldTravel instance, ushort destinationWorldId) {
-        if (IClientState.Get().TerritoryType is not (129 or 130 or 132)) return; // is there really no sheet column that indicates this
-        if (IDataManager.Get().GetRow<World>(destinationWorldId)?.DataCenter.RowId != IPlayerState.Get().CurrentWorld.Value.DataCenter.RowId) return;
+        if (!TerritoryType.GetRow(IClientState.Get().TerritoryType).IsWorldTravelTerritory) return;
+        if (World.GetRowOrNull(destinationWorldId) is not { IsOnCurrentDataCenter: true }) return;
 
         instance.DestinationWorldId = destinationWorldId;
         instance.SetupWorldTravelInfo((ushort)IPlayerState.Get().CurrentWorld.RowId, destinationWorldId);

@@ -64,11 +64,25 @@ public static partial class StringExtensions {
         public string FilterNonAlphanumeric() => FilterNonAlphanumeric().Replace(s, string.Empty);
 
         public string EnsureIsCommand() => s.StartsWith('/') ? s : $"/{s}";
+
+        public string RemoveNotoriousMonsterNames(char? mask = null)
+            => NotoriousMonsterNames.Value.Replace(s, m => mask is { } c ? new string(c, m.Length) : string.Empty);
     }
 
     extension(string? s) {
         public bool IsEmpty => string.IsNullOrEmpty(s);
     }
+
+    private static readonly Lazy<Regex> NotoriousMonsterNames = new(() => {
+        var names = Sheets.NotoriousMonster
+            .Where(n => n.BNpcName.RowId != 0)
+            .Select(n => n.BNpcName.Value.Singular.ExtractText())
+            .Where(n => n.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(n => n.Length)
+            .Select(Regex.Escape);
+        return new Regex($@"\b(?:{string.Join('|', names)})\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    });
 
     [GeneratedRegex("(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")]
     // smart word split for things in pascal case while also handling acronyms/initialisms
